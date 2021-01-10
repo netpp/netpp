@@ -21,7 +21,7 @@ public:
 	{ ++writeTriggerCount; }
 	void handleError() override
 	{ ++errorTriggerCount; }
-	void handleDisconnect() override
+	void handleClose() override
 	{ ++disconnectTriggerCount; }
 
 	int readTriggerCount;

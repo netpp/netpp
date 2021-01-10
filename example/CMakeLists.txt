@@ -8,3 +8,4 @@ include_directories(${CMAKE_SOURCE_DIR}/thirdParty/spdlog/include)
 
 add_subdirectory(echo)
 add_subdirectory(daytime)
+add_subdirectory(signal_handle)

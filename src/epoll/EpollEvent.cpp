@@ -35,7 +35,7 @@ void EpollEvent::handleEvents()
 		if (activeEvents & WriteEvent)
 			handler->handleWrite();
 		if (activeEvents & DisconnEvent)
-			handler->handleDisconnect();
+			handler->handleClose();
 		if (activeEvents & ErrEvent)
 			handler->handleError();
 	}

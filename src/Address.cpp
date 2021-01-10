@@ -12,7 +12,7 @@ extern "C" {
 using std::string;
 
 namespace netpp {
-Address::Address(const std::string &ip, unsigned int port)
+Address::Address(const std::string &ip, unsigned port)
 {
 	std::memset(&m_addr, 0, sizeof(m_addr));
 	m_addr.sin_family = AF_INET;
@@ -23,7 +23,7 @@ Address::Address(const std::string &ip, unsigned int port)
 	m_addr.sin_port = ::htons(port);
 }
 
-Address::Address(sockaddr_in addr)
+Address::Address(::sockaddr_in addr)
 	: m_addr{addr}
 {}
 

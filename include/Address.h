@@ -16,17 +16,17 @@ namespace netpp {
 class Address {
 public:
 	explicit Address(const std::string &ip = "0.0.0.0", unsigned port = 11111);
-	explicit Address(sockaddr_in addr);
+	explicit Address(::sockaddr_in addr);
 
 	std::string ip() const;
 	unsigned port() const;
 
 	// bool ipv6();
 
-	inline const sockaddr_in *sockAddrIn() const { return &m_addr; }
+	inline const ::sockaddr_in *sockAddrIn() const { return &m_addr; }
 
 private:
-	sockaddr_in m_addr;
+	::sockaddr_in m_addr;
 };
 }
 

@@ -48,10 +48,10 @@ void Epoll::updateEvent(EpollEvent *channelEvent)
 	epoll_event event = channelEvent->epollEvent();
 	if (_events.find(channelFd) == _events.end())		// add channel
 	{
-		SPDLOG_LOGGER_TRACE(logger, "add channel id:{} events:{}", channelFd, event.events);
+		SPDLOG_LOGGER_TRACE(logger, "add channel id:{} events:{}", channelFd);
 		_events[channelFd] = channelEvent;
 		if (epoll_ctl(m_epfd, EPOLL_CTL_ADD, channelFd, &event) != 0/* && errno == EEXIST*/)
-			SPDLOG_LOGGER_ERROR(logger, "Failed to add channel: {} id:{} event{}", strerror(errno), channelFd, event.events);
+			SPDLOG_LOGGER_ERROR(logger, "Failed to add channel: {} id:{} event{}", strerror(errno), channelFd);
 	}
 	else	// update channel
 	{
@@ -60,9 +60,9 @@ void Epoll::updateEvent(EpollEvent *channelEvent)
 			SPDLOG_LOGGER_TRACE(logger, "Channel for socket {} is changed", channelFd);
 			_events[channelFd] = channelEvent;
 		}
-		SPDLOG_LOGGER_TRACE(logger, "update channel id:{} events:{}", channelFd, event.events);
+		SPDLOG_LOGGER_TRACE(logger, "update channel id:{} events:{}", channelFd);
 		if (epoll_ctl(m_epfd, EPOLL_CTL_MOD, channelFd, &event) != 0/* && errno == ENOENT*/)
-			SPDLOG_LOGGER_ERROR(logger, "Failed to update channel: {} id:{} event{}", strerror(errno), channelFd, event.events);
+			SPDLOG_LOGGER_ERROR(logger, "Failed to update channel: {} id:{} event{}", strerror(errno), channelFd);
 	}
 }
 

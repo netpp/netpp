@@ -22,7 +22,7 @@ public:
 	void handleRead() override;
 	void handleWrite() override {}
 	void handleError() override {}
-	void handleDisconnect() override {}
+	void handleClose() override {}
 
 private:
 	Timer *_timer;

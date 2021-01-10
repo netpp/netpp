@@ -13,19 +13,19 @@ namespace netpp::epoll {
 class EventHandler {
 public:
 	explicit EventHandler(int fd)
-		: m_fd{fd}
+		: _fd{fd}
 	{}
 	virtual ~EventHandler() = default;
 
 	virtual void handleRead() = 0;
 	virtual void handleWrite() = 0;
 	virtual void handleError() = 0;
-	virtual void handleDisconnect() = 0;
+	virtual void handleClose() = 0;
 
-	inline int fd() const { return m_fd; }
+	inline int fd() const { return _fd; }
 
 protected:
-	int m_fd;
+	int _fd;
 	std::unique_ptr<EpollEvent> m_epollEvent;
 };
 

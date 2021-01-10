@@ -10,7 +10,7 @@
 
 namespace netpp::support {
 class ThreadPool {
-	typedef RunnableWrapper TaskType;
+	using TaskType = RunnableWrapper;
 public:
 	/**
 	 * @brief Construct a new Thread Pool object

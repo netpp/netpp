@@ -3,7 +3,7 @@
 //
 
 #include "Channel.h"
-#include "handlers/SocketEventHandler.h"
+#include "handlers/TcpConnection.h"
 #include "EventLoop.h"
 
 namespace netpp {

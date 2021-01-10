@@ -6,9 +6,9 @@
 #define NETPP_EVENTS_H
 
 #include <memory>
+#include "signal/Signals.h"
 
 namespace netpp {
-
 class Channel;
 
 class Events {
@@ -20,6 +20,7 @@ public:
 	virtual void onWriteCompleted() {};
 	virtual void onDisconnect() {};
 	virtual void onError() {};
+	virtual void onSignal([[maybe_unused]] signal::Signals signal) {};
 	virtual std::unique_ptr<Events> clone() = 0;
 };
 

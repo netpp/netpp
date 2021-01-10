@@ -3,7 +3,7 @@
 //
 
 #include "TcpClient.h"
-#include "handlers/SocketEventHandler.h"
+#include "handlers/Connector.h"
 
 using std::make_unique;
 

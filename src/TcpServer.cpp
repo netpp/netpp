@@ -4,7 +4,7 @@
 
 #include "TcpServer.h"
 #include "EventLoop.h"
-#include "handlers/SocketEventHandler.h"
+#include "handlers/Acceptor.h"
 
 namespace netpp {
 TcpServer::TcpServer(EventLoopDispatcher *dispatcher, std::unique_ptr<Events> &&eventsPrototype)
