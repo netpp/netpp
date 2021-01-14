@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "epoll/EventHandler.h"
-#include "Socket.h"
+#include "support/Socket.h"
 #include "Timer.h"
 #include "Events.h"
 #include "Address.h"
@@ -16,7 +16,7 @@ namespace netpp::handlers {
 // TODO: close connector
 class Connector : public epoll::EventHandler {
 public:
-	Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<Socket> &&socket);
+	Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<support::Socket> &&socket);
 	~Connector() override = default;
 
 	void connect();
@@ -27,15 +27,15 @@ public:
 
 	static bool makeConnector(EventLoopDispatcher *dispatcher,
 								  Address serverAddr,
-								  std::unique_ptr<Events> &&eventsPrototype);
+								  std::unique_ptr<support::EventInterface> &&eventsPrototype);
 
 private:
 	void reconnect();
 
 	EventLoopDispatcher *_dispatcher;
-	std::unique_ptr<Socket> m_socket;
+	std::unique_ptr<support::Socket> m_socket;
 	std::unique_ptr<Timer> m_retryTimer;
-	std::unique_ptr<Events> m_events;
+	std::unique_ptr<support::EventInterface> m_events;
 };
 }
 

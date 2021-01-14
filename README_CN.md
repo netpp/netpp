@@ -11,6 +11,8 @@ clang >= 10.0.1
 ### 使用cmake
 ```
 git clone https://github.com/netpp/netpp.git
+git submodule init
+git submodule update
 mkdir build
 cd build
 cmake ../
@@ -20,42 +22,43 @@ make netpp -j8
 示例代码位于/example目录下。
 
 ### 开始
-需要继承接口Events来实现业务逻辑。
+需要定义事件处理器实现业务逻辑。
 ```c++
-#include "Events.h"
-class Echo : public netpp::Events {
+class Echo {
 public:
-    void onMessageReceived(netpp::Channel *channel) override;
-    std::unique_ptr<netpp::Events> clone() override;
+    void onMessageReceived(std::shared_ptr<netpp::Channel> channel);
 };
 ```
-Events类提供了以下接口：
-* onConnected
-* onMessageReceived
-* onWriteCompleted
-* onDisconnect
-* onError
+netpp提供了以下事件：
+* onConnected&nbsp;// 连接成功时
+* onMessageReceived&nbsp;// 收到消息时
+* onWriteCompleted&nbsp;// 数据写完时
+* onDisconnect&nbsp;// 断开连接时
+* onError&nbsp;// 出现错误时
+* onSignal&nbsp;// 发生信号时
 
-在main()函数中，应该首先初始化日志和创建事件循环分派器
+应该首先初始化日志和创建事件循环分派器
 ```c++
 netpp::initLogger();
 netpp::core::EventLoopDispatcher dispatcher;
 ```
-在此基础上，开启一个服务器
+在此基础上，开启一个服务器，并指派事件处理器
 ```c++
-netpp::TcpServer server(&dispatcher, std::make_unique<Echo>());
+std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
+netpp::TcpServer server(&dispatcher, std::move(events));
 server.listen((netpp::Address("0.0.0.0", 12345)));
 ```
 或者客户端
 ```c++
-netpp::TcpClient client(&dispatcher, std::make_unique<Echo>());
+std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
+netpp::TcpClient client(&dispatcher, std::move(events));
 client.connect(netpp::Address("127.0.0.1", 12345));
 ```
-调用服务端的listen或客户端的connect方法不会进行事件循环，需要显式调用
+进行事件循环
 ```c++
 dispatcher.startLoop();
 ```
-查看/example/echo来获取更详细的信息。
+查看/example/*中的示例来获取更详细的信息。
 
 ## 可能用到的一些类
 * TcpClient - 客户端
@@ -63,5 +66,5 @@ dispatcher.startLoop();
 * Events - 提供事件处理器的接口
 * Timer - 计时器
 * Address - linux结构体sockaddr_in的封装
-* Channel - 对于一个socket读写通道的描述
+* Channel - 对于一个tcp连接读写通道的描述
 * ByteArray - 一个以大端方式保存的字节缓冲区

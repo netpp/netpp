@@ -22,7 +22,7 @@ void SignalHandler::handleRead()
 		m_events->onSignal(signal::toNetppSignal(signals[i]));
 }
 
-void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<Events> &&eventsPrototype)
+void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	// construct SignalPipe
 	signal::SignalPipe::instance();

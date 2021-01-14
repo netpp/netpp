@@ -14,14 +14,14 @@ class Channel;
 
 class TcpServer {
 public:
-	explicit TcpServer(EventLoopDispatcher *dispatcher, std::unique_ptr<Events> &&eventsPrototype);
+	explicit TcpServer(EventLoopDispatcher *dispatcher, std::unique_ptr<support::EventInterface> &&eventsPrototype);
 
 	void listen(Address listenAddr);
 
 private:
 	Channel *_acceptorChannel;
 	EventLoopDispatcher *_dispatcher;
-	std::unique_ptr<Events> _eventPrototype;
+	std::unique_ptr<support::EventInterface> _eventPrototype;
 };
 }
 

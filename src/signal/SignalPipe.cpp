@@ -25,6 +25,7 @@ bool SignalPipe::isPipeOpened()
 void SignalPipe::handleSignal(int sig)
 {
 	// No mutex acquired, m_signalPipe won't change during runtime
+	// FIXME: if no SignalHandler constructed, will never read from pipe
 	if (SignalPipe::instance().isPipeOpened())
 		::write(m_signalPipe[1], &sig, sizeof(int));
 	else

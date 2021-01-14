@@ -10,11 +10,9 @@
 #include "Channel.h"
 #include "EventLoopDispatcher.h"
 
-class Echo : public netpp::Events {
+class Echo {
 public:
-	~Echo() override = default;
-
-	void onMessageReceived(std::shared_ptr<netpp::Channel> channel) override
+	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
 		std::size_t size = channel->availableRead();
 		std::string data = channel->retrieveString(size);
@@ -25,20 +23,15 @@ public:
 		channel->send();
 	}
 
-	void onConnected(std::shared_ptr<netpp::Channel> channel) override
+	void onConnected(std::shared_ptr<netpp::Channel> channel)
 	{
 		channel->writeString("hello netpp");
 		channel->send();
 	}
 
-	void onWriteCompleted() override
+	void onWriteCompleted()
 	{
 		SPDLOG_LOGGER_TRACE(netpp::logger, "Write completed");
-	}
-
-	std::unique_ptr<netpp::Events> clone() override
-	{
-		return std::make_unique<Echo>();
 	}
 };
 
@@ -46,7 +39,8 @@ int main()
 {
 	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher;
-	netpp::TcpClient client(&dispatcher, std::make_unique<Echo>());
+	std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
+	netpp::TcpClient client(&dispatcher, std::move(events));
 	client.connect(netpp::Address("127.0.0.1", 12345));
 	dispatcher.startLoop();
 	return 0;

@@ -8,11 +8,13 @@ netpp is an event based, modern c++ network library, based on reactor pattern an
 * Testing [gtest](https://github.com/google/googletest)
 ## How to compile
 ### Requires
-cmake >= 3.18.0  
+cmake >= 3.16.0  
 clang >= 10.0.1
 ### Build with cmake
 ```
 git clone https://github.com/netpp/netpp.git
+git submodule init
+git submodule update
 mkdir build
 cd build
 cmake ../
@@ -22,42 +24,43 @@ make netpp -j8
 Examples are under /example directory.
 
 ### Start
-To define business logic, you should subclass interface Events. 
+Define bevent handler to implement business logic. 
 ```c++
-#include "Events.h"
-class Echo : public netpp::Events {
+class Echo {
 public:
-    void onMessageReceived(netpp::Channel *channel) override;
-    std::unique_ptr<netpp::Events> clone() override;
+    void onMessageReceived(std::shared_ptr<netpp::Channel> channel);
 };
 ```
-Events class provides methods:
-* onConnected
-* onMessageReceived
-* onWriteCompleted
-* onDisconnect
-* onError
+netpp provides following events:
+* onConnected&nbsp;// on connect success
+* onMessageReceived&nbsp;// on received data
+* onWriteCompleted&nbsp;// on write all
+* onDisconnect&nbsp;// on disconnect
+* onError&nbsp;// on error occur
+* onSignal&nbsp;// on signal emit
 
-In main() function, you should first initialize logger and create an event loop dispatcher.
+Firstly initialize logger and create an event loop dispatcher.
 ```c++
 netpp::initLogger();
 netpp::core::EventLoopDispatcher dispatcher;
 ```
-Then you can start a server using
+Create a server, and assign event handler
 ```c++
-netpp::TcpServer server(&dispatcher, std::make_unique<Echo>());
+std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
+netpp::TcpServer server(&dispatcher, std::move(events));
 server.listen((netpp::Address("0.0.0.0", 12345)));
 ```
 or a client using.
 ```c++
-netpp::TcpClient client(std::make_unique<Echo>());
+std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
+netpp::TcpClient client(&dispatcher, std::move(events));
 client.connect(netpp::Address("127.0.0.1", 12345));
 ```
-The TcpServer's listen or TcpClient's connect won't start an event loop, call this at end.
+Start an event loop.
 ```c++
 dispatcher.startLoop();
 ```
-For more information, take a look at /example/echo.
+For more information, take a look at /example/*.
 
 ## The classes you might needs
 * TcpClient - the client

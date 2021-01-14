@@ -8,7 +8,7 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::handlers {
-Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<Socket> &&socket)
+Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<support::Socket> &&socket)
 		: EventHandler(socket->fd()), _dispatcher(dispatcher), m_socket{std::move(socket)}
 {}
 
@@ -58,10 +58,10 @@ void Connector::handleClose()
 
 bool Connector::makeConnector(EventLoopDispatcher *dispatcher,
 											 Address serverAddr,
-											 std::unique_ptr<Events> &&eventsPrototype)
+											 std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	EventLoop *loop = dispatcher->dispatchEventLoop();
-	auto connector = make_shared<Connector>(dispatcher, make_unique<Socket>(serverAddr));
+	auto connector = make_shared<Connector>(dispatcher, make_unique<support::Socket>(serverAddr));
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connector);
 	auto eventPtr = event.get();
 	connector->m_events = std::move(eventsPrototype);
@@ -80,7 +80,7 @@ void Connector::reconnect()
 	m_retryTimer->setOnTimeout([=]{
 		auto oldSocket = std::move(m_socket);
 		// FIXME: crate new socket may failed
-		m_socket = make_unique<Socket>(oldSocket->getAddr());
+		m_socket = make_unique<support::Socket>(oldSocket->getAddr());
 		_fd = m_socket->fd();
 		m_epollEvent->setEnableWrite(true);
 		connect();

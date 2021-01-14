@@ -1,69 +1,30 @@
-//
-// Created by gaojian on 2020/7/5.
-//
+#ifndef NETPP_SOCKETIO_H
+#define NETPP_SOCKETIO_H
 
-#ifndef NETPP_SOCKET_H
-#define NETPP_SOCKET_H
-
-#include "Address.h"
 #include <memory>
 
+struct iovec;
 namespace netpp {
 class ByteArray;
 }
 
-namespace netpp {
-class Socket {
-public:
-	Socket();
-	explicit Socket(const Address &addr);
-	Socket(int fd, const Address &addr);
-
-	Socket(Socket &&other) = delete;
-	Socket(const Socket &) = delete;
-	Socket &operator=(Socket &rh) = delete;
-	~Socket();
-
-	inline int fd() const { return m_socketFd; }
-
-	/**
-	 * @brief Bind address and start listen
-	 */
-	void listen();
-
-	/**
-	 * @brief Accept a connect
-	 */
-	std::unique_ptr<Socket> accept() const;
-
-	/**
-	 * @brief Connect to server
-	 */
-	void connect();
-
-	/**
-	 * @brief Get socket error code
-	 */
-	int getError() const;
-	inline Address getAddr() const { return m_addr; };
-
-	/**
-	 * @brief Shutdown write side of socket
-	 */
-	void shutdownWrite();
-
-private:
-	Address m_addr;
-	int m_socketFd;
-};
+namespace netpp::support {
+class Socket;
 
 /**
  * @brief Read/Write on socket from/into ByteArray
  */
-class SocketIO {
-public:
-	static void read(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
-	static void write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
+namespace SocketIO {
+	void read(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
+	/**
+	 * @brief write to a socket
+	 * 
+	 * @param socket	a socket object
+	 * @param byteArray	the buffer
+	 * @return true		write all
+	 * @return false	not write all, more data in buffer to write
+	 */
+	bool write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
 };
 
 /**
@@ -121,4 +82,4 @@ public:
 };
 }
 
-#endif //NETPP_SOCKET_H
+#endif

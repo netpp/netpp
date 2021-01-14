@@ -8,13 +8,17 @@
 #include <atomic>
 
 namespace netpp {
+namespace support {
+class ByteArrayIOVectorReaderWithLock;
+class ByteArrayIOVectorWriterWithLock;
+}
 /**
  * @brief Save bytes in network ending(big ending)
  */
 class ByteArray {
 	// access buffer directly
-	friend class ByteArrayIOVectorReaderWithLock;
-	friend class ByteArrayIOVectorWriterWithLock;
+	friend class support::ByteArrayIOVectorReaderWithLock;
+	friend class support::ByteArrayIOVectorWriterWithLock;
 public:
 	ByteArray();
 
@@ -66,6 +70,7 @@ private:
 	/**
 	 * @brief The node of buffer
 	 */
+	// TODO: remove unused buffer node
 	struct BufferNode {
 		BufferNode();
 		constexpr static std::size_t BufferSize = 1024;

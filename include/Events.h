@@ -5,30 +5,36 @@
 #ifndef NETPP_EVENTS_H
 #define NETPP_EVENTS_H
 
-#include <memory>
-#include "signal/Signals.h"
+#include "support/EventsInterface.h"
 
 namespace netpp {
-class Channel;
-
-class Events {
+template<typename Impl>
+class Events final : public support::EventInterface {
 public:
-	virtual ~Events() = default;
+	explicit Events(Impl impl) : m_impl{impl} {}
 
-	virtual void onConnected([[maybe_unused]] std::shared_ptr<netpp::Channel> channel) {};
-	virtual void onMessageReceived([[maybe_unused]] std::shared_ptr<netpp::Channel> channel) {};
-	virtual void onWriteCompleted() {};
-	virtual void onDisconnect() {};
-	virtual void onError() {};
-	virtual void onSignal([[maybe_unused]] signal::Signals signal) {};
-	virtual std::unique_ptr<Events> clone() = 0;
-};
+	void onConnected(std::shared_ptr<netpp::Channel> channel) override
+	{ if constexpr (support::hasConnected<Impl>::value) m_impl.onConnected(channel); }
 
-class DefaultEvents : public Events {
-public:
-	~DefaultEvents() override = default;
+	void onMessageReceived(std::shared_ptr<netpp::Channel> channel) override
+	{ if constexpr (support::hasMessageReceived<Impl>::value) m_impl.onMessageReceived(channel); }
+
+	void onWriteCompleted() override
+	{ if constexpr (support::hasWriteCompleted<Impl>::value) m_impl.onWriteCompleted(); }
+
+	void onDisconnect() override
+	{ if constexpr (support::hasDisconnect<Impl>::value) m_impl.onDisconnect(); }
+
+	void onError() override
+	{ if constexpr (support::hasError<Impl>::value) m_impl.onError(); }
+
+	void onSignal(signal::Signals signal) override
+	{ if constexpr (support::hasSignal<Impl>::value) m_impl.onSignal(signal); }
 	
-	std::unique_ptr<Events> clone() override { return std::make_unique<DefaultEvents>(); }
+	std::unique_ptr<support::EventInterface> clone() override { return std::make_unique<Events<Impl>>(m_impl); }
+
+private:
+	Impl m_impl;
 };
 }
 

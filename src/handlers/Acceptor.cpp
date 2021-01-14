@@ -7,7 +7,7 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::handlers {
-Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<Socket> &&socket)
+Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<support::Socket> &&socket)
 		: EventHandler(socket->fd()), _dispatcher{dispatcher}, m_socket{std::move(socket)}
 {}
 
@@ -18,6 +18,7 @@ void Acceptor::listen()
 
 void Acceptor::handleRead()
 {
+	// FIXME: accept may failed due to fd limit
 	std::shared_ptr<Channel> channel = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
 															   std::move(m_socket->accept()),
 															   m_events->clone());
@@ -38,10 +39,10 @@ void Acceptor::handleClose()
 
 bool Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 											Address listenAddr,
-											std::unique_ptr<Events> &&eventsPrototype)
+											std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	EventLoop *loop = dispatcher->dispatchEventLoop();
-	auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<Socket>(listenAddr));
+	auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<support::Socket>(listenAddr));
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor);
 	epoll::EpollEvent *eventPtr = event.get();
 	acceptor->m_events = std::move(eventsPrototype);
