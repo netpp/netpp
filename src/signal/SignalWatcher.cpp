@@ -41,25 +41,21 @@ std::shared_ptr<SignalSet> SignalWatcher::m_watchingSignals = std::make_shared<S
 
 void SignalWatcher::watch(Signals signal)
 {
-	if (!setSignalAction(signal, &signal::SignalPipe::handleSignal))
-		SPDLOG_LOGGER_ERROR(logger, "Failed to watch signal {}", signalAsString(signal));
+	setSignalAction(signal, &signal::SignalPipe::handleSignal);
 }
 
 void SignalWatcher::restore(Signals signal)
 {
-	if (!setSignalAction(signal, SIG_DFL))
-		SPDLOG_LOGGER_ERROR(logger, "Failed to restore signal {}", signalAsString(signal));
+	setSignalAction(signal, SIG_DFL);
 }
 
-bool SignalWatcher::setSignalAction(Signals signal, void(*action)(int))
+void SignalWatcher::setSignalAction(Signals signal, void(*action)(int))
 {
 	struct ::sigaction act;
 	act.sa_handler = action;
 	act.sa_flags = SA_RESTART;
 	::sigfillset(&act.sa_mask);
-	if (::sigaction(toLinuxSignal(signal), &act, nullptr) == 0)
-		return true;
-	else
-		return false;
+	// install action will always success
+	::sigaction(toLinuxSignal(signal), &act, nullptr);
 }
 }

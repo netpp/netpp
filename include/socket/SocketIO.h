@@ -8,7 +8,7 @@ namespace netpp {
 class ByteArray;
 }
 
-namespace netpp::support {
+namespace netpp::socket {
 class Socket;
 
 /**

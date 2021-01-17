@@ -6,27 +6,26 @@
 #define NETPP_ADDRESS_H
 
 #include <string>
+#include <memory>
 
-extern "C" {
-#include <netinet/in.h>
-}
+struct sockaddr_in;
 
 namespace netpp {
 // TODO: suppor ipv6
 class Address {
 public:
 	explicit Address(const std::string &ip = "0.0.0.0", unsigned port = 11111);
-	explicit Address(::sockaddr_in addr);
+	explicit Address(std::shared_ptr<::sockaddr_in> addr);
 
 	std::string ip() const;
 	unsigned port() const;
 
 	// bool ipv6();
 
-	inline const ::sockaddr_in *sockAddrIn() const { return &m_addr; }
+	inline ::sockaddr_in *sockAddrIn() { return m_addr.get(); }
 
 private:
-	::sockaddr_in m_addr;
+	std::shared_ptr<::sockaddr_in> m_addr;
 };
 }
 

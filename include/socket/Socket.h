@@ -7,15 +7,16 @@
 
 #include "Address.h"
 #include <memory>
+#include "socket/SocketEnums.h"
 
 namespace netpp {
 class ByteArray;
 }
 
-namespace netpp::support {
+namespace netpp::socket {
+
 class Socket {
 public:
-	Socket();
 	explicit Socket(const Address &addr);
 	Socket(int fd, const Address &addr);
 
@@ -44,7 +45,7 @@ public:
 	/**
 	 * @brief Get socket error code
 	 */
-	int getError() const;
+	SocketError getError() const;
 	inline Address getAddr() const { return m_addr; };
 
 	/**

@@ -14,7 +14,7 @@ public:
 	void restore(Signals signal);
 
 private:
-	bool setSignalAction(Signals signal, void(*action)(int));
+	void setSignalAction(Signals signal, void(*action)(int));
 	// static std::shared_ptr<SignalSet> m_watchingSignals;
 };
 }

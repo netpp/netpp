@@ -27,7 +27,7 @@ public:
 
 private:
 	int m_epfd;
-	std::vector<epoll_event> m_activeEvents;
+	std::vector<::epoll_event> m_activeEvents;
 	std::map<int, EpollEvent *> _events;
 };
 }

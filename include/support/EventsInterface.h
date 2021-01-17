@@ -34,7 +34,7 @@ public:
 	virtual std::unique_ptr<support::EventInterface> clone() = 0;
 };
 
-// TODO: move this into Events.cpp to optimize complier time
+// TODO: move this into Events.cpp to optimize compile time
 ASSERT_HAS_EVENT_METHOD(Connected, std::shared_ptr<netpp::Channel>)
 ASSERT_HAS_EVENT_METHOD(MessageReceived, std::shared_ptr<netpp::Channel>)
 ASSERT_HAS_EVENT_METHOD(WriteCompleted)

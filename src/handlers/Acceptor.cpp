@@ -7,7 +7,7 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::handlers {
-Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<support::Socket> &&socket)
+Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
 		: EventHandler(socket->fd()), _dispatcher{dispatcher}, m_socket{std::move(socket)}
 {}
 
@@ -42,7 +42,7 @@ bool Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 											std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	EventLoop *loop = dispatcher->dispatchEventLoop();
-	auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<support::Socket>(listenAddr));
+	auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<socket::Socket>(listenAddr));
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor);
 	epoll::EpollEvent *eventPtr = event.get();
 	acceptor->m_events = std::move(eventsPrototype);

@@ -1,5 +1,5 @@
-#include "support/SocketIO.h"
-#include "support/Socket.h"
+#include "socket/SocketIO.h"
+#include "socket/Socket.h"
 #include "ByteArray.h"
 extern "C" {
 #include <sys/socket.h>
@@ -7,7 +7,7 @@ extern "C" {
 #include <unistd.h>
 }
 
-namespace netpp::support {
+namespace netpp::socket {
 ByteArray2IOVector::ByteArray2IOVector()
 	: m_vec{nullptr}, m_count{0}, _buffer{nullptr}
 {}
@@ -132,6 +132,17 @@ void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
 	ByteArrayIOVectorWriterWithLock vec(buffer);
 	std::size_t num = ::readv(socket->fd(), vec.vec(), vec.count());
+	if (num == -1)
+	{
+		// TODO: handle readv error
+		switch (errno)
+		{
+			case EINVAL:
+			case EOPNOTSUPP:
+			default:
+				break;
+		}
+	}
 	vec.adjustByteArray(num);
 }
 
@@ -140,6 +151,17 @@ bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 	ByteArrayIOVectorReaderWithLock vec(buffer);
 	std::size_t expectSize = buffer->readableBytes();
 	std::size_t num = ::writev(socket->fd(), vec.vec(), vec.count());
+	if (num == -1)
+	{
+		// TODO: handle writev error
+		switch (errno)
+		{
+			case EINVAL:
+			case EOPNOTSUPP:
+			default:
+				break;
+		}
+	}
 	vec.adjustByteArray(num);
 	return (expectSize > num);
 }

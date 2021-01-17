@@ -2,21 +2,21 @@
 #include "Log.h"
 #include "EventLoop.h"
 #include "Channel.h"
-#include "support/SocketIO.h"
+#include "socket/SocketIO.h"
 
 using std::make_unique;
 using std::make_shared;
 
 namespace netpp::handlers {
-TcpConnection::TcpConnection(std::unique_ptr<support::Socket> &&socket, EventLoop *loop)
-		: EventHandler(socket->fd()), _loop{loop}, m_state{TcpState::Connected}, 
+TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop)
+		: EventHandler(socket->fd()), _loop{loop}, m_state{socket::TcpState::Connected}, 
 		m_isWaitWriting{false}, m_socket{std::move(socket)}, 
 		m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
 {}
 
 void TcpConnection::handleRead()
 {
-	support::SocketIO::read(m_socket.get(), m_receiveBuffer);
+	socket::SocketIO::read(m_socket.get(), m_receiveBuffer);
 	SPDLOG_LOGGER_TRACE(logger, "Available size", m_receiveBuffer->readableBytes());
 	auto channel = make_shared<Channel>(shared_from_this(), m_writeBuffer, m_receiveBuffer);
 	m_events->onMessageReceived(channel);
@@ -24,12 +24,12 @@ void TcpConnection::handleRead()
 
 void TcpConnection::handleWrite()
 {
-	if (support::SocketIO::write(m_socket.get(), m_writeBuffer))	// if write all
+	if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))	// if write all
 	{
 		m_epollEvent->setEnableWrite(false);
 		m_events->onWriteCompleted();
 		m_isWaitWriting = false;
-		if (m_state == TcpState::Disconnecting)
+		if (m_state == socket::TcpState::Disconnecting)
 			m_socket->shutdownWrite();
 	}
 }
@@ -46,10 +46,10 @@ void TcpConnection::handleClose()
 	m_events->onDisconnect();
 	m_epollEvent->disableEvents();
 	// extern TcpConnection life after remove
-	// FIXME: complier might optimize
+	// FIXME: compiler might optimize this variable
 	auto externLife = shared_from_this();
 	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
-	m_state = TcpState::Disconnected;
+	m_state = socket::TcpState::Disconnected;
 }
 
 void TcpConnection::sendInLoop()
@@ -60,14 +60,14 @@ void TcpConnection::sendInLoop()
 
 void TcpConnection::closeAfterWriteCompleted()
 {
-	// FIXME: force close socket if other side not close connection
+	// FIXME: force close socket if peer not close connection
 	// nothing to write, close direcly
 	if (!m_isWaitWriting)
 		m_socket->shutdownWrite();
-	m_state = TcpState::Disconnecting;
+	m_state = socket::TcpState::Disconnecting;
 }
 
-std::shared_ptr<Channel> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<support::Socket> &&socket,
+std::shared_ptr<Channel> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
 												 std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	auto connection = std::make_shared<TcpConnection>(std::move(socket), loop);

@@ -57,7 +57,7 @@ void Timer::start()
 	m_event->setEnableRead(true);
 	// get first trigger time
 	timespec now{0};
-	if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
+	if (::clock_gettime(CLOCK_MONOTONIC, &now) == -1)
 		return;
 	unsigned sec = now.tv_sec + m_interval / 1000;
 	long nsec = now.tv_nsec + (static_cast<long>(m_interval) % 1000) * 1000 * 1000;

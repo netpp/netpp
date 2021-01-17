@@ -23,6 +23,7 @@ public:
 		ReadEvent	= EPOLLIN,
 		DisconnEvent= EPOLLRDHUP,
 		ErrEvent	= EPOLLERR,
+		OutOfBand	= EPOLLPRI
 	};
 
 	EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler);
@@ -31,16 +32,16 @@ public:
 	int fd() const;
 	
 	/**
-	 * @brief Return current enabled epoll events
+	 * @brief Return current activing epoll events
 	 */
-	inline epoll_event epollEvent() const { return m_events; }
+	inline ::epoll_event activeEvent() const { return m_events; }
 
 	/**
 	 * @brief Set active events, used by poller
 	 * 
 	 * @param events activing events
 	 */
-	void updateActiveEvents(uint32_t events) { activeEvents = events; }
+	void setActiveEvents(uint32_t events) { activeEvents = events; }
 
 	void handleEvents();
 
@@ -61,7 +62,7 @@ public:
 private:
 	Epoll *_poll;
 	std::weak_ptr<EventHandler> _eventHandler;
-	epoll_event m_events;
+	::epoll_event m_events;
 	uint32_t activeEvents;
 };
 }

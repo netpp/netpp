@@ -2,7 +2,7 @@
 #define NETPP_ACCEPTOR_H
 
 #include "epoll/EventHandler.h"
-#include "support/Socket.h"
+#include "socket/Socket.h"
 #include "Events.h"
 #include "Address.h"
 
@@ -14,7 +14,7 @@ namespace netpp::handlers {
 // TODO: close acceptor
 class Acceptor : public epoll::EventHandler {
 public:
-	Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<support::Socket> &&socket);
+	Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);
 	~Acceptor() override = default;
 
 	void listen();
@@ -29,7 +29,7 @@ public:
 
 private:
 	EventLoopDispatcher *_dispatcher;
-	std::unique_ptr<support::Socket> m_socket;
+	std::unique_ptr<socket::Socket> m_socket;
 	std::unique_ptr<support::EventInterface> m_events;
 };
 }
