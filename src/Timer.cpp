@@ -5,7 +5,7 @@
 #include "Timer.h"
 #include "EventLoop.h"
 #include "Log.h"
-
+#include "stub/IO.h"
 extern "C" {
 #include <unistd.h>
 }
@@ -30,7 +30,8 @@ Timer::Timer(EventLoop *loop)
 
 Timer::~Timer()
 {
-	::close(m_timerFd);
+	if (stub::close(m_timerFd) == -1)
+		SPDLOG_LOGGER_WARN(logger, "failed to close timer");
 }
 
 void Timer::onTimeOut()

@@ -15,13 +15,13 @@ public:
 	{}
 	~Handler() override = default;
 
-	void handleRead() override
+	void handleRead() noexcept override
 	{ ++readTriggerCount; }
-	void handleWrite() override
+	void handleWrite() noexcept override
 	{ ++writeTriggerCount; }
-	void handleError() override
+	void handleError() noexcept override
 	{ ++errorTriggerCount; }
-	void handleClose() override
+	void handleClose() noexcept override
 	{ ++disconnectTriggerCount; }
 
 	int readTriggerCount;

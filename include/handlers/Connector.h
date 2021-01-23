@@ -16,21 +16,21 @@ namespace netpp::handlers {
 // TODO: close connector
 class Connector : public epoll::EventHandler {
 public:
-	Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);
+	Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket) noexcept;
 	~Connector() override = default;
 
-	void connect();
-	void handleRead() override;
-	void handleWrite() override;
-	void handleError() override;
-	void handleClose() override;
+	void connect() noexcept;
+	void handleRead() noexcept override;
+	void handleWrite() noexcept override;
+	void handleError() noexcept override;
+	void handleClose() noexcept override;
 
 	static bool makeConnector(EventLoopDispatcher *dispatcher,
 								  Address serverAddr,
-								  std::unique_ptr<support::EventInterface> &&eventsPrototype);
+								  std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
 
 private:
-	void reconnect();
+	void reconnect() noexcept;
 
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;

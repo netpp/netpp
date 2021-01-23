@@ -24,12 +24,11 @@ void initLogger(std::string logfile, spdlog::level::level_enum level)
 //	log = spdlog::stdout_color_mt("console");
 //	log = std::make_shared<spdlog::async_logger>("multi_sink",
 	spdlog::init_thread_pool(50, std::thread::hardware_concurrency() > 2 ? 2 : 1);
-	logger = std::make_shared<spdlog::async_logger>("multi_sink",
+	logger = std::make_shared<spdlog::async_logger>("netpp_sink",
 													std::initializer_list<std::shared_ptr<spdlog::sinks::sink>>{
 															console_sink, file_sink},
 													spdlog::thread_pool());
 	logger->set_level(level);
-	logger->flush_on(level);
 	logger->set_pattern("[%Y-%m-%d %T.%e] [pid %5P] [tid %5t] [%=8l] %@ %v");
 	spdlog::set_error_handler(
 			[](const std::string &msg) { std::cerr << "Log error handler: " << msg << std::endl; }

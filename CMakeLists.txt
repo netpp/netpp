@@ -17,10 +17,14 @@ include/handlers/Acceptor.h include/handlers/Connector.h include/handlers/TcpCon
 include/support/ThreadBase.hpp include/support/ThreadPool.hpp include/support/EventsInterface.h
 include/signal/Signals.h include/signal/SignalWatcher.h include/signal/SignalPipe.h
 include/socket/Socket.h include/socket/SocketIO.h
+include/stub/IO.h include/stub/Socket.h
+include/error/Exception.h include/error/SocketError.h
 include/Address.h include/ByteArray.h include/Channel.h include/EventLoop.h include/EventLoopDispatcher.h include/Events.h include/Log.h include/TcpClient.h include/TcpServer.h include/Timer.h
 src/epoll/Epoll.cpp src/epoll/EpollEvent.cpp
 src/handlers/Acceptor.cpp src/handlers/Connector.cpp src/handlers/TcpConnection.cpp src/handlers/TimerHandler.cpp src/handlers/SignalHandler.cpp
 src/support/ThreadPool.cpp
-src/socket/Socket.cpp src/socket/SocketIO.cpp
 src/signal/Signals.cpp src/signal/SignalWatcher.cpp src/signal/SignalPipe.cpp
+src/socket/Socket.cpp src/socket/SocketIO.cpp
+src/stub/IO.cpp src/stub/Socket.cpp
+src/error/Exception.cpp src/error/SocketError.cpp
 src/Address.cpp src/ByteArray.cpp src/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/Log.cpp src/TcpClient.cpp src/TcpServer.cpp src/Timer.cpp)

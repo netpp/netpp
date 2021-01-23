@@ -7,17 +7,34 @@
 
 #include "Address.h"
 #include <memory>
-#include "socket/SocketEnums.h"
 
 namespace netpp {
 class ByteArray;
+namespace error {
+enum class SocketError;
+}
 }
 
 namespace netpp::socket {
 
 class Socket {
 public:
+	/**
+	 * @brief create a socket
+	 * 
+	 * @param addr	address
+	 * @throw SocketException on @code EACCES EAFNOSUPPORT
+	 * @throw ResourceLimitException on @code EMFILE ENFILE ENOBUFS ENOMEM
+	 */
 	explicit Socket(const Address &addr);
+
+	/**
+	 * @brief create a Socket object on existent fd
+	 * 
+	 * @param fd	file descriptor
+	 * @param addr	address
+	 * @throw SocketException on fd is -1
+	 */
 	Socket(int fd, const Address &addr);
 
 	Socket(Socket &&other) = delete;
@@ -25,33 +42,41 @@ public:
 	Socket &operator=(Socket &rh) = delete;
 	~Socket();
 
-	inline int fd() const { return m_socketFd; }
+	inline int fd() const noexcept { return m_socketFd; }
 
 	/**
 	 * @brief Bind address and start listen
+	 * 
+	 * @throw SocketException on @code EADDRINUSE
+	 * @throw ResourceLimitException on @code ENOMEM
 	 */
 	void listen();
 
 	/**
 	 * @brief Accept a connect
+	 * 
+	 * @throw SocketException on @code ECONNABORTED
+	 * @throw ResourceLimitException on @code EMFILE ENFILE ENOBUFS ENOMEM EPERM
 	 */
 	std::unique_ptr<Socket> accept() const;
 
 	/**
 	 * @brief Connect to server
+	 * 
+	 * @throw SocketException on @code EADDRINUSE EADDRNOTAVAIL ECONNREFUSED EINPROGRESS ENETUNREACH ETIMEDOUT
 	 */
 	void connect();
 
 	/**
 	 * @brief Get socket error code
 	 */
-	SocketError getError() const;
-	inline Address getAddr() const { return m_addr; };
+	error::SocketError getError() const noexcept;
+	inline Address getAddr() const noexcept { return m_addr; };
 
 	/**
 	 * @brief Shutdown write side of socket
 	 */
-	void shutdownWrite();
+	void shutdownWrite() noexcept;
 
 private:
 	Address m_addr;

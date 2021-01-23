@@ -15,7 +15,16 @@ class Socket;
  * @brief Read/Write on socket from/into ByteArray
  */
 namespace SocketIO {
+	/**
+	 * @brief read from socket
+	 * 
+	 * @param socket	a socket object
+	 * @param byteArray	the buffer
+	 * @throw ResourceLimitException on @code ENOMEM
+	 * @throw SocketException on @code ECONNREFUSED ENOTCONN
+	 */
 	void read(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
+
 	/**
 	 * @brief write to a socket
 	 * 
@@ -23,6 +32,8 @@ namespace SocketIO {
 	 * @param byteArray	the buffer
 	 * @return true		write all
 	 * @return false	not write all, more data in buffer to write
+	 * @throw SocketException on @code ECONNRESET EDESTADDRREQ EISCONN EMSGSIZE ENOTCONN EPIPE
+	 * @throw ResourceLimitException on @code ENOMEM
 	 */
 	bool write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
 };

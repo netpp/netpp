@@ -2,27 +2,26 @@
 #include "signal/SignalPipe.h"
 #include "EventLoop.h"
 #include "epoll/EpollEvent.h"
-extern "C" {
-#include <unistd.h>
-}
+#include "signal/Signals.h"
+#include "stub/IO.h"
 
 namespace netpp::handlers {
-SignalHandler::SignalHandler()
+SignalHandler::SignalHandler() noexcept
 	: EventHandler(-1)
 {}
 
-void SignalHandler::handleRead()
+void SignalHandler::handleRead() noexcept
 {
 	constexpr int maxSignalRead = 100;
 	int signals[maxSignalRead];
 	int signalRead = 0;
 	if (signal::SignalPipe::instance().isPipeOpened())
-		signalRead = (::read(signal::SignalPipe::m_signalPipe[0], signals, sizeof(int) * maxSignalRead) / sizeof(int));
+		signalRead = (stub::read(signal::SignalPipe::m_signalPipe[0], signals, sizeof(int) * maxSignalRead) / sizeof(int));
 	for (int i = 0; i < signalRead; ++i)
 		m_events->onSignal(signal::toNetppSignal(signals[i]));
 }
 
-void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype)
+void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept
 {
 	// construct SignalPipe
 	signal::SignalPipe::instance();

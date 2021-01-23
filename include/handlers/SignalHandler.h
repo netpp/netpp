@@ -11,15 +11,15 @@ class EventLoop;
 namespace netpp::handlers {
 class SignalHandler : public epoll::EventHandler {
 public:
-	SignalHandler();
+	SignalHandler() noexcept;
 	~SignalHandler() override = default;
 
-	void handleRead() override;
-	void handleWrite() override {};
-	void handleError() override {};
-	void handleClose() override {};
+	void handleRead() noexcept override;
+	void handleWrite() noexcept override {};
+	void handleError() noexcept override {};
+	void handleClose() noexcept override {};
 
-	static void makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	static void makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
 private:
 	std::unique_ptr<support::EventInterface> m_events;
 };

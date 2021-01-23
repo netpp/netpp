@@ -1,10 +1,11 @@
 #include "socket/SocketIO.h"
 #include "socket/Socket.h"
 #include "ByteArray.h"
+#include <cstring>
+#include "stub/IO.h"
 extern "C" {
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include <unistd.h>
 }
 
 namespace netpp::socket {
@@ -131,38 +132,26 @@ void ByteArrayIOVectorWriterWithLock::adjustByteArray(std::size_t size)
 void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
 	ByteArrayIOVectorWriterWithLock vec(buffer);
-	std::size_t num = ::readv(socket->fd(), vec.vec(), vec.count());
-	if (num == -1)
-	{
-		// TODO: handle readv error
-		switch (errno)
-		{
-			case EINVAL:
-			case EOPNOTSUPP:
-			default:
-				break;
-		}
-	}
-	vec.adjustByteArray(num);
+	::msghdr msg;
+	std::memset(&msg, 0, sizeof(::msghdr));
+	msg.msg_iov = vec.vec();
+	msg.msg_iovlen = vec.count();
+	::ssize_t num = stub::recvmsg(socket->fd(), &msg, 0);
+	if (num != -1)
+		vec.adjustByteArray(num);
 }
 
 bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
 	ByteArrayIOVectorReaderWithLock vec(buffer);
 	std::size_t expectSize = buffer->readableBytes();
-	std::size_t num = ::writev(socket->fd(), vec.vec(), vec.count());
-	if (num == -1)
-	{
-		// TODO: handle writev error
-		switch (errno)
-		{
-			case EINVAL:
-			case EOPNOTSUPP:
-			default:
-				break;
-		}
-	}
-	vec.adjustByteArray(num);
-	return (expectSize > num);
+	::msghdr msg;
+	std::memset(&msg, 0, sizeof(::msghdr));
+	msg.msg_iov = vec.vec();
+	msg.msg_iovlen = vec.count();
+	::ssize_t actualSend = stub::sendmsg(socket->fd(), &msg, MSG_NOSIGNAL);
+	if (actualSend != -1)
+		vec.adjustByteArray(actualSend);
+	return (actualSend <= expectSize);
 }
 }

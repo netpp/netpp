@@ -14,7 +14,7 @@ public:
 	static void handleSignal(int sig);
 
 private:
-	SignalPipe();
+	SignalPipe() noexcept;
 	inline static SignalPipe &instance()
 	{
 		static SignalPipe instance;

@@ -44,7 +44,7 @@ private:
 	std::function<void()> m_callback;
 
 	// linux timer fd
-	itimerspec m_timerSpec;
+	::itimerspec m_timerSpec;
 	int m_timerFd;
 	uint64_t m_timeOutCount;
 

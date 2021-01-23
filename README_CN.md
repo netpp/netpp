@@ -30,12 +30,12 @@ public:
 };
 ```
 netpp提供了以下事件：
-* onConnected&nbsp;// 连接成功时
-* onMessageReceived&nbsp;// 收到消息时
-* onWriteCompleted&nbsp;// 数据写完时
-* onDisconnect&nbsp;// 断开连接时
-* onError&nbsp;// 出现错误时
-* onSignal&nbsp;// 发生信号时
+* onConnected
+* onMessageReceived
+* onWriteCompleted
+* onDisconnect
+* onError
+* onSignal
 
 应该首先初始化日志和创建事件循环分派器
 ```c++

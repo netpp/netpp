@@ -10,22 +10,6 @@ enum class TcpState {
 	Disconnected
 };
 
-enum class SocketError {
-#ifdef SOCKET_ERROR_DEF
-#undef SOCKET_ERROR_DEF
-#endif
-#ifdef LAST_SOCKET_ERROR_DEF
-#undef LAST_SOCKET_ERROR_DEF
-#endif
-#ifndef SOCKET_ERROR_DEF
-#define SOCKET_ERROR_DEF(error) E_##error,
-#endif
-#ifndef LAST_SOCKET_ERROR_DEF
-#define LAST_SOCKET_ERROR_DEF(error) E_##error
-#endif
-#include "SocketError.def"
-};
-
 enum class SocketOptions {
 #ifdef SOCKET_OPT_DEF
 #undef SOCKET_OPT_DEF

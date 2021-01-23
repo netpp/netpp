@@ -14,18 +14,18 @@ namespace netpp::handlers {
 // TODO: close acceptor
 class Acceptor : public epoll::EventHandler {
 public:
-	Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);
+	Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket) noexcept;
 	~Acceptor() override = default;
 
-	void listen();
+	void listen() noexcept;
 
-	void handleRead() override;
-	void handleWrite() override;
-	void handleError() override;
-	void handleClose() override;
+	void handleRead() noexcept override;
+	void handleWrite() noexcept override;
+	void handleError() noexcept override;
+	void handleClose() noexcept override;
 	static bool makeAcceptor(EventLoopDispatcher *dispatcher,
 								 Address listenAddr,
-								 std::unique_ptr<support::EventInterface> &&eventsPrototype);
+								 std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
 
 private:
 	EventLoopDispatcher *_dispatcher;

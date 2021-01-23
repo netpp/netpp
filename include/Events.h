@@ -25,8 +25,8 @@ public:
 	void onDisconnect() override
 	{ if constexpr (support::hasDisconnect<Impl>::value) m_impl.onDisconnect(); }
 
-	void onError() override
-	{ if constexpr (support::hasError<Impl>::value) m_impl.onError(); }
+	void onError(error::SocketError code) override
+	{ if constexpr (support::hasError<Impl>::value) m_impl.onError(code); }
 
 	void onSignal(signal::Signals signal) override
 	{ if constexpr (support::hasSignal<Impl>::value) m_impl.onSignal(signal); }

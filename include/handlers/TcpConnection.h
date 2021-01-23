@@ -9,26 +9,29 @@
 
 namespace netpp {
 class EventLoop;
+namespace socket {
+enum class TcpState;
+}
 }
 
 namespace netpp::handlers {
 // TODO: kick idle connections
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
 public:
-	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop);
+	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop) noexcept;
 	~TcpConnection() override = default;
 
-	void handleRead() override;
-	void handleWrite() override;
-	void handleError() override;
-	void handleClose() override;
+	void handleRead() noexcept override;
+	void handleWrite() noexcept override;
+	void handleError() noexcept override;
+	void handleClose() noexcept override;
 
-	inline EventLoop *getConnectionLoop() { return _loop; }
-	void sendInLoop();
-	void closeAfterWriteCompleted();
+	inline EventLoop *getConnectionLoop() noexcept { return _loop; }
+	void sendInLoop() noexcept;
+	void closeAfterWriteCompleted() noexcept;
 
 	static std::shared_ptr<Channel> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-									  std::unique_ptr<support::EventInterface> &&eventsPrototype);
+									  std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
 
 private:
 	EventLoop *_loop;

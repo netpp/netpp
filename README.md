@@ -32,12 +32,12 @@ public:
 };
 ```
 netpp provides following events:
-* onConnected&nbsp;// on connect success
-* onMessageReceived&nbsp;// on received data
-* onWriteCompleted&nbsp;// on write all
-* onDisconnect&nbsp;// on disconnect
-* onError&nbsp;// on error occur
-* onSignal&nbsp;// on signal emit
+* onConnected
+* onMessageReceived
+* onWriteCompleted
+* onDisconnect
+* onError
+* onSignal
 
 Firstly initialize logger and create an event loop dispatcher.
 ```c++
