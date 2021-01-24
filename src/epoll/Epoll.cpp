@@ -24,7 +24,7 @@ Epoll::~Epoll()
 
 std::vector<EpollEvent *> Epoll::poll()
 {
-	int nums = ::epoll_wait(m_epfd, &m_activeEvents[0], m_activeEvents.size(), -1);
+	int nums = ::epoll_wait(m_epfd, &m_activeEvents[0], m_activeEvents.size(), 500);
 
 	if (nums == m_activeEvents.size())
 	{

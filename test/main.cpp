@@ -7,7 +7,7 @@ void initTestLogger()
 {
 	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_st>();
 	auto file_sink = std::make_shared<spdlog::sinks::daily_file_sink_st>("netpptest.log", 0, 0);
-	netpp::logger = std::make_shared<spdlog::logger>("multi_sink",
+	netpp::logger = std::make_shared<spdlog::logger>("netpp_test_sink",
 													std::initializer_list<std::shared_ptr<spdlog::sinks::sink>>{
 															console_sink, file_sink});
 	netpp::logger->set_level(spdlog::level::err);

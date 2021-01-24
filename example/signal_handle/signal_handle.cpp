@@ -15,12 +15,6 @@ public:
 
 int main()
 {
-	std::cout << netpp::support::hasConnected<SignalEvent>::value
-	<< netpp::support::hasMessageReceived<SignalEvent>::value
-	<< netpp::support::hasWriteCompleted<SignalEvent>::value
-	<< netpp::support::hasDisconnect<SignalEvent>::value
-	<< netpp::support::hasError<SignalEvent>::value
-	<< netpp::support::hasSignal<SignalEvent>::value;
 	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher;
 	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();

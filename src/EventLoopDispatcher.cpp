@@ -13,6 +13,13 @@ EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount)
 		m_loops.emplace_back(std::make_unique<EventLoop>());
 }
 
+EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount, unsigned timeWheelRotateInterval, unsigned timeWheelBucketCount)
+	: m_dispatchIndex{0}, m_threadPool{loopsCount - 1}/*one loop will run in main thread*/
+{
+	for (unsigned i = 0; i < loopsCount; ++i)
+		m_loops.emplace_back(std::make_unique<EventLoop>(timeWheelRotateInterval, timeWheelBucketCount));
+}
+
 EventLoop *EventLoopDispatcher::dispatchEventLoop()
 {
 	if (m_loops.size() == 0)

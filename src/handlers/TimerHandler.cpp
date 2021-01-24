@@ -3,21 +3,18 @@
 //
 
 #include "handlers/TimerHandler.h"
-#include "Timer.h"
+#include "time/Timer.h"
 #include "Log.h"
 
 namespace netpp::handlers {
-TimerHandler::TimerHandler(Timer *timer) noexcept
+TimerHandler::TimerHandler(time::Timer *timer) noexcept
 	: epoll::EventHandler(timer->fd()), _timer{timer}
 {}
 
 void TimerHandler::handleRead() noexcept
 {
-	try {
+	uint64_t tirggeredCount;
+	if (::read(_timer->fd(), &tirggeredCount, sizeof(uint64_t)) != -1)
 		_timer->onTimeOut();
-	} catch (...) {
-		SPDLOG_LOGGER_CRITICAL(logger, "exception throwed while executing timeout method, stop");
-		std::abort();
-	}
 }
 }

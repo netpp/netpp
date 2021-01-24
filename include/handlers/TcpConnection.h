@@ -12,10 +12,12 @@ class EventLoop;
 namespace socket {
 enum class TcpState;
 }
+namespace time {
+class TimeWheelEntry;
+}
 }
 
 namespace netpp::handlers {
-// TODO: kick idle connections
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
 public:
 	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop) noexcept;
@@ -34,6 +36,9 @@ public:
 									  std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
 
 private:
+	void renewWheel();
+	void closeWrite();
+
 	EventLoop *_loop;
 	socket::TcpState m_state;
 	bool m_isWaitWriting;
@@ -41,6 +46,9 @@ private:
 	std::shared_ptr<ByteArray> m_writeBuffer;
 	std::shared_ptr<ByteArray> m_receiveBuffer;
 	std::unique_ptr<support::EventInterface> m_events;
+
+	std::weak_ptr<time::TimeWheelEntry> _idleConnectionWheel;
+	std::weak_ptr<time::TimeWheelEntry> _halfCloseWheel;
 };
 }
 

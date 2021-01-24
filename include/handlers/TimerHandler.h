@@ -9,14 +9,14 @@
 #include <memory>
 #include "epoll/EventHandler.h"
 
-namespace netpp {
+namespace netpp::time {
 class Timer;
 }
 
 namespace netpp::handlers {
 class TimerHandler : public epoll::EventHandler {
 public:
-	explicit TimerHandler(Timer *timer) noexcept;
+	explicit TimerHandler(time::Timer *timer) noexcept;
 	~TimerHandler() override = default;
 
 	void handleRead() noexcept override;
@@ -25,7 +25,7 @@ public:
 	void handleClose() noexcept override {}
 
 private:
-	Timer *_timer;
+	time::Timer *_timer;
 };
 }
 

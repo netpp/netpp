@@ -35,18 +35,21 @@ void Connector::handleWrite() noexcept
 	SPDLOG_LOGGER_TRACE(logger, "Connector write available");
 	error::SocketError err = m_socket->getError();
 	// TODO: maybe can retry in other situations
-	if (err == error::SocketError::E_TIMEDOUT)
+	if (err == error::SocketError::E_TIMEDOUT || err == error::SocketError::E_CONNREFUSED)
 	{
 		SPDLOG_LOGGER_ERROR(logger, "Connector error {}", error::errorAsString(err));
 		if (!m_retryTimer)
-			m_retryTimer = make_unique<Timer>(EventLoop::thisLoop());
+		{
+			m_retryTimer = make_unique<time::Timer>(EventLoop::thisLoop());
+			setupTimer();
+		}
 		reconnect();
 	}
 	else if (err == error::SocketError::E_INPROGRESS)
 	{
 		SPDLOG_LOGGER_TRACE(logger, "connecting, wait for connect done");
 	}
-	else	// connect success or other error
+	else if (err == error::SocketError::E_NOERROR)
 	{
 		if (m_retryTimer)
 		{
@@ -60,11 +63,17 @@ void Connector::handleWrite() noexcept
 		SPDLOG_LOGGER_TRACE(logger, "Connected to server");
 		m_events->onConnected(channel);
 	}
+	else
+	{
+		SPDLOG_LOGGER_WARN(logger, "other connect error", error::errorAsString(err));
+		m_events->onError(err);
+	}
+	
 }
 
 void Connector::handleError() noexcept
 {
-	// TODO: will EPOLLERR happend in acceptor?
+	// TODO: will EPOLLERR happend in connector?
 	m_events->onError(error::SocketError::E_EPOLLERR);
 }
 
@@ -96,23 +105,27 @@ bool Connector::makeConnector(EventLoopDispatcher *dispatcher,
 	return false;
 }
 
+void Connector::setupTimer()
+{
+	m_retryTimer->setOnTimeout([=]{
+		auto oldSocket = std::move(m_socket);
+		m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
+		_fd = m_socket->fd();
+		m_epollEvent->setEnableWrite(true);
+		connect();
+	});
+	m_retryTimer->setSingleShot(false);
+	m_retryTimer->setInterval(100);
+	m_retryTimer->start();
+}
+
 void Connector::reconnect() noexcept
 {
 	try {
 		m_epollEvent->disableEvents();
-		m_retryTimer->setOnTimeout([=]{
-			auto oldSocket = std::move(m_socket);
-			m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
-			_fd = m_socket->fd();
-			m_epollEvent->setEnableWrite(true);
-			connect();
-		});
 		unsigned currentInterval = m_retryTimer->interval();
-		if (currentInterval == 0)
-			m_retryTimer->setInterval(100);
-		else if (currentInterval < 4000)
+		if (currentInterval < 4000)
 			m_retryTimer->setInterval(currentInterval * 2);
-		m_retryTimer->start();
 		SPDLOG_LOGGER_INFO(logger, "Connector error on fd {}, retry in {} mseconds", m_socket->fd(), currentInterval);
 	} catch (error::SocketException &se) {
 		m_events->onError(se.getErrorCode());

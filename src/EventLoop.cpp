@@ -10,6 +10,11 @@ namespace netpp {
 
 thread_local EventLoop *EventLoop::_thisThreadLoop = nullptr;
 
+EventLoop::EventLoop(unsigned tickInterval, unsigned bucketCount)
+{
+	m_kickIdleConnectionWheel = std::make_unique<time::TimeWheel>(this, tickInterval, bucketCount);
+}
+
 EventLoop::~EventLoop()
 {
 	_thisThreadLoop = nullptr;
@@ -17,10 +22,10 @@ EventLoop::~EventLoop()
 
 [[noreturn]] void EventLoop::run()
 {
-	_thisThreadLoop = this;
-	while (true)
+	try
 	{
-		try
+		_thisThreadLoop = this;
+		while (true)
 		{
 			std::vector<epoll::EpollEvent *> activeChannels = m_poll.poll();
 			for (auto &c : activeChannels)
@@ -28,17 +33,20 @@ EventLoop::~EventLoop()
 			std::vector<std::function<void()>> funs;
 			{
 				std::lock_guard lck(m_functorMutex);
-				funs = m_pendingFuns;
-				m_pendingFuns.clear();
+				if (!m_pendingFuns.empty())
+				{
+					funs = m_pendingFuns;
+					m_pendingFuns.clear();
+				}
 			}
 			for (auto &f : funs)
 				f();
 		}
-		catch (...)
-		{
-			SPDLOG_LOGGER_CRITICAL(logger, "Exeception from event loop");
-			throw;
-		}
+	}
+	catch (...)
+	{
+		SPDLOG_LOGGER_CRITICAL(logger, "Exeception from event loop");
+		throw;
 	}
 }
 

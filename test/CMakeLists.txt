@@ -6,4 +6,4 @@ include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/googletest/googletest/in
 include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/spdlog/include)
 
 link_libraries(gtest pthread netpp dl)
-add_executable(test main.cpp ByteArrayTest.cpp ThreadPoolTest.cpp HandlerEpollEventTest.cpp SignalTest.cpp)
+add_executable(test main.cpp ByteArrayTest.cpp ThreadPoolTest.cpp HandlerEpollEventTest.cpp SignalTest.cpp TimerTest.cpp)

@@ -6,6 +6,7 @@
 #define NETPP_EVENTLOOP_H
 
 #include "epoll/Epoll.h"
+#include "time/TimeWheel.h"
 #include <unordered_set>
 #include <functional>
 #include <mutex>
@@ -17,7 +18,18 @@ class EventHandler;
 }
 class EventLoop {
 public:
+	/**
+	 * @brief Default constructed EventLoop won't create timewheel
+	 * 
+	 */
 	EventLoop() = default;
+	/**
+	 * @brief Construct an EventLoop with timewheel
+	 * 
+	 * @param tickInterval	Wheel rotate interval, by milliseconds
+	 * @param bucketCount	Contains n buckets
+	 */
+	EventLoop(unsigned tickInterval, unsigned bucketCount);
 	~EventLoop();
 
 	[[noreturn]] void run();
@@ -25,10 +37,12 @@ public:
 	void removeEventHandlerFromLoop(std::shared_ptr<epoll::EventHandler> handler);
 
 	/**
-	 * @brief return this thread's event loop, only avaiable after run
+	 * @brief return this thread's event loop
+	 * @note only avaiable AFTER loop start
 	 */
 	static inline EventLoop *thisLoop() { return _thisThreadLoop; }
 	inline epoll::Epoll *getPoll() { return &m_poll; }
+	time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
 
 	void runInLoop(std::function<void()> functor);
 
@@ -39,6 +53,8 @@ private:
 
 	std::mutex m_functorMutex;
 	std::vector<std::function<void()>> m_pendingFuns;
+
+	std::unique_ptr<time::TimeWheel> m_kickIdleConnectionWheel;
 };
 }
 

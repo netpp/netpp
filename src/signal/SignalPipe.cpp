@@ -3,6 +3,7 @@
 #include "stub/IO.h"
 
 namespace netpp::signal {
+// FIXME: use signalfd instead of pipe
 int SignalPipe::m_signalPipe[2] = {-1, -1};
 
 SignalPipe::~SignalPipe()

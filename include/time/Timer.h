@@ -16,7 +16,11 @@ namespace netpp {
 class EventLoop;
 }
 
-namespace netpp {
+namespace netpp::time {
+/**
+ * @brief The timer lives in event loop
+ * 
+ */
 class Timer {
 public:
 	explicit Timer(EventLoop *loop);
@@ -38,6 +42,8 @@ public:
 	inline uint64_t triggeredCount() const { return m_timeOutCount; }
 
 private:
+	void setTime();
+	
 	unsigned m_interval;
 	bool m_singleShot;
 	bool m_running;

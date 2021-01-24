@@ -65,6 +65,24 @@ void Socket::shutdownWrite() noexcept
 
 error::SocketError Socket::getError() const noexcept
 {
+#ifdef SOCKET_ERROR_DEF
+#undef SOCKET_ERROR_DEF
+#endif
+#ifdef SOCKET_ERROR_NONE_LINUX
+#undef SOCKET_ERROR_NONE_LINUX
+#endif
+#ifdef LAST_SOCKET_ERROR_DEF
+#undef LAST_SOCKET_ERROR_DEF
+#endif
+#ifndef SOCKET_ERROR_DEF
+#define SOCKET_ERROR_DEF(code) case E##code: socketError = error::SocketError::E_##code;	break;
+#endif
+#ifndef SOCKET_ERROR_NONE_LINUX
+#define SOCKET_ERROR_NONE_LINUX(code) ;
+#endif
+#ifndef LAST_SOCKET_ERROR_DEF
+#define LAST_SOCKET_ERROR_DEF(code) SOCKET_ERROR_DEF(code)
+#endif
 	error::SocketError socketError = error::SocketError::E_UNKOWN;
 	int optval;
 	socklen_t optlen = static_cast<socklen_t>(sizeof optval);
@@ -72,20 +90,8 @@ error::SocketError Socket::getError() const noexcept
 	{
 		switch (optval)
 		{
-#ifdef SOCKET_ERROR_DEF
-#undef SOCKET_ERROR_DEF
-#endif
-#ifdef LAST_SOCKET_ERROR_DEF
-#undef LAST_SOCKET_ERROR_DEF
-#endif
-#ifndef SOCKET_ERROR_DEF
-#define SOCKET_ERROR_DEF(error) case E##error: socketError = error::SocketError::E_##error;
-#endif
-#ifndef LAST_SOCKET_ERROR_DEF
-#define LAST_SOCKET_ERROR_DEF(error) SOCKET_ERROR_DEF(error)
-#endif
-		default:
-			socketError = error::SocketError::E_UNKOWN;
+			case 0: socketError = error::SocketError::E_NOERROR;	break;
+#include "error/SocketError.def"
 		}
 	}
 	return socketError;

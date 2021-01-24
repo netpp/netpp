@@ -12,7 +12,10 @@
 namespace netpp {
 class EventLoopDispatcher {
 public:
+	// TODO: maybe move params into config class
 	explicit EventLoopDispatcher(unsigned loopsCount = 1);
+	EventLoopDispatcher(unsigned loopsCount, unsigned timeWheelRotateInterval, unsigned timeWheelBucketCount);
+
 	void startLoop();
 
 	EventLoop *dispatchEventLoop();

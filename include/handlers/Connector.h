@@ -4,7 +4,7 @@
 #include <memory>
 #include "epoll/EventHandler.h"
 #include "socket/Socket.h"
-#include "Timer.h"
+#include "time/Timer.h"
 #include "Events.h"
 #include "Address.h"
 
@@ -30,11 +30,12 @@ public:
 								  std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
 
 private:
+	void setupTimer();
 	void reconnect() noexcept;
 
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;
-	std::unique_ptr<Timer> m_retryTimer;
+	std::unique_ptr<time::Timer> m_retryTimer;
 	std::unique_ptr<support::EventInterface> m_events;
 };
 }
