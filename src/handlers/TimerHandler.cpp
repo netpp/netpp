@@ -7,11 +7,11 @@
 #include "Log.h"
 
 namespace netpp::handlers {
-TimerHandler::TimerHandler(time::Timer *timer) noexcept
-	: epoll::EventHandler(timer->fd()), _timer{timer}
+TimerHandler::TimerHandler(time::Timer *timer)
+	: _timer{timer}
 {}
 
-void TimerHandler::handleRead() noexcept
+void TimerHandler::handleRead()
 {
 	uint64_t tirggeredCount;
 	if (::read(_timer->fd(), &tirggeredCount, sizeof(uint64_t)) != -1)

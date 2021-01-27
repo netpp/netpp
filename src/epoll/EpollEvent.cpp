@@ -8,21 +8,16 @@
 #include "Log.h"
 
 namespace netpp::epoll {
-EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler)
-		: m_events{DisconnEvent | ErrEvent}, activeEvents{0}, _eventHandler{handler}, _poll{poll}
+EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
+	: activeEvents{0}, _eventHandler{handler}, _watchingFd{fd}, _poll{poll}
 {
-	m_events.data.ptr = this;
+	m_watchingEvents.events = EPOLLRDHUP | EPOLLERR;
+	m_watchingEvents.data.ptr = this;
 }
 
 EpollEvent::~EpollEvent()
-{}
-
-int EpollEvent::fd() const
 {
-	auto handler = _eventHandler.lock();
-	if (handler)
-		return handler->fd();
-	return 0;
+	disableEvents();
 }
 
 void EpollEvent::handleEvents()
@@ -30,14 +25,14 @@ void EpollEvent::handleEvents()
 	auto handler = _eventHandler.lock();
 	if (handler)
 	{
-		if (activeEvents & ReadEvent)
-			handler->handleRead();
-		if (activeEvents & WriteEvent)
-			handler->handleWrite();
-		if (activeEvents & DisconnEvent)
-			handler->handleClose();
-		if (activeEvents & ErrEvent)
+		if (activeEvents & EPOLLERR)
 			handler->handleError();
+		if (activeEvents & EPOLLRDHUP)	// BUG: epoll did not trigger this event
+			handler->handleClose();
+		if (activeEvents & EPOLLIN)
+			handler->handleRead();
+		if (activeEvents & EPOLLOUT)
+			handler->handleWrite();
 	}
 }
 
@@ -45,9 +40,9 @@ void EpollEvent::setEnableWrite(bool enable)
 {
 	SPDLOG_LOGGER_TRACE(logger, "Set enable write {}", enable);
 	if (enable)
-		m_events.events |= WriteEvent;
+		m_watchingEvents.events |= EPOLLOUT;
 	else
-		m_events.events &= ~WriteEvent;
+		m_watchingEvents.events &= ~EPOLLOUT;
 	_poll->updateEvent(this);
 }
 
@@ -55,9 +50,9 @@ void EpollEvent::setEnableRead(bool enable)
 {
 	SPDLOG_LOGGER_TRACE(logger, "Set enable read {}", enable);
 	if (enable)
-		m_events.events |= ReadEvent;
+		m_watchingEvents.events |= EPOLLIN;
 	else
-		m_events.events &= ~ReadEvent;
+		m_watchingEvents.events &= ~EPOLLIN;
 	_poll->updateEvent(this);
 }
 

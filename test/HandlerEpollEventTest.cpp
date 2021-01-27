@@ -11,7 +11,7 @@ class Handler : public netpp::epoll::EventHandler {
 	friend class EpollEventTest;
 public:
 	Handler()
-		: EventHandler(0), readTriggerCount{0}, writeTriggerCount{0}, errorTriggerCount{0}, disconnectTriggerCount{0}
+		: readTriggerCount{0}, writeTriggerCount{0}, errorTriggerCount{0}, disconnectTriggerCount{0}
 	{}
 	~Handler() override = default;
 
@@ -39,7 +39,7 @@ protected:
 	{
 		epoll = std::make_unique<netpp::epoll::Epoll>();
 		handler = std::make_shared<Handler>();
-		handler->setEpollEvent(std::make_unique<netpp::epoll::EpollEvent>(epoll.get(), handler));
+		handler->setEpollEvent(std::make_unique<netpp::epoll::EpollEvent>(epoll.get(), handler, 0));
 		event = handler->getEpollEvent();
 	}
 	void TearDown() override {}

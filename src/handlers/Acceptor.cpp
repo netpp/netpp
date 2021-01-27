@@ -9,11 +9,11 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::handlers {
-Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket) noexcept
-		: EventHandler(socket->fd()), _dispatcher{dispatcher}, m_socket{std::move(socket)}
+Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
+		: _dispatcher{dispatcher}, m_socket{std::move(socket)}
 {}
 
-void Acceptor::listen() noexcept
+void Acceptor::listen()
 {
 	try {
 		m_socket->listen();
@@ -22,7 +22,7 @@ void Acceptor::listen() noexcept
 	}
 }
 
-void Acceptor::handleRead() noexcept
+void Acceptor::handleRead()
 {
 	try {
 		std::unique_ptr<socket::Socket> commingConnection = m_socket->accept();
@@ -34,30 +34,30 @@ void Acceptor::handleRead() noexcept
 	} catch (error::SocketException &se) {
 		m_events->onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getErrorCode());
+		m_events->onError(rle.getSocketErrorCode());
 	}
 }
 
-void Acceptor::handleWrite() noexcept
+void Acceptor::handleWrite()
 {}
 
-void Acceptor::handleError() noexcept
+void Acceptor::handleError()
 {
 	// TODO: will EPOLLERR happend in acceptor?
 	m_events->onError(error::SocketError::E_EPOLLERR);
 }
 
-void Acceptor::handleClose() noexcept
+void Acceptor::handleClose()
 {}
 
 bool Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 											Address listenAddr,
-											std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept
+											std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	try {
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<socket::Socket>(listenAddr));
-		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor);
+		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor, acceptor->m_socket->fd());
 		epoll::EpollEvent *eventPtr = event.get();
 		acceptor->m_events = std::move(eventsPrototype);
 		acceptor->m_epollEvent = std::move(event);
@@ -70,7 +70,7 @@ bool Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 	} catch (error::SocketException &se) {
 		eventsPrototype->onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
-		eventsPrototype->onError(rle.getErrorCode());
+		eventsPrototype->onError(rle.getSocketErrorCode());
 	}
 	return false;
 }

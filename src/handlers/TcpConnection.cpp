@@ -49,13 +49,13 @@ private:
 	std::weak_ptr<TcpConnection> _connection;
 };
 
-TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop) noexcept
-		: EventHandler(socket->fd()), _loop{loop}, m_state{socket::TcpState::Connected}, 
+TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop)
+		: _loop{loop}, m_state{socket::TcpState::Connected}, 
 		m_isWaitWriting{false}, m_socket{std::move(socket)}, 
 		m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
 {}
 
-void TcpConnection::handleRead() noexcept
+void TcpConnection::handleRead()
 {
 	try {
 		renewWheel();
@@ -68,11 +68,11 @@ void TcpConnection::handleRead() noexcept
 		m_events->onError(se.getErrorCode());
 		closeAfterWriteCompleted();
 	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getErrorCode());
+		m_events->onError(rle.getSocketErrorCode());
 	}
 }
 
-void TcpConnection::handleWrite() noexcept
+void TcpConnection::handleWrite()
 {
 	try {
 		renewWheel();
@@ -90,18 +90,17 @@ void TcpConnection::handleWrite() noexcept
 		m_isWaitWriting = false;
 		closeAfterWriteCompleted();
 	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getErrorCode());
+		m_events->onError(rle.getSocketErrorCode());
 	}
 }
 
-void TcpConnection::handleError() noexcept
+void TcpConnection::handleError()
 {
 	SPDLOG_LOGGER_ERROR(logger, "Socket {} error", m_socket->fd());
 	m_events->onError(error::SocketError::E_EPOLLERR);
 }
 
-// FIXME: did not call this if pair close write
-void TcpConnection::handleClose() noexcept
+void TcpConnection::handleClose()
 {
 	SPDLOG_LOGGER_TRACE(logger, "Socket {} disconnected", m_socket->fd());
 	m_events->onDisconnect();
@@ -112,13 +111,13 @@ void TcpConnection::handleClose() noexcept
 	m_state = socket::TcpState::Disconnected;
 }
 
-void TcpConnection::sendInLoop() noexcept
+void TcpConnection::sendInLoop()
 {
 	m_isWaitWriting = true;
 	m_epollEvent->setEnableWrite(true);
 }
 
-void TcpConnection::closeAfterWriteCompleted() noexcept
+void TcpConnection::closeAfterWriteCompleted()
 {
 	// nothing to write, close direcly
 	if (!m_isWaitWriting)
@@ -152,10 +151,10 @@ void TcpConnection::closeWrite()
 }
 
 std::shared_ptr<Channel> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-												 std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept
+												 std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	auto connection = std::make_shared<TcpConnection>(std::move(socket), loop);
-	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection);
+	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
 	connection->m_events = std::move(eventsPrototype);

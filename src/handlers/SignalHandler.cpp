@@ -1,35 +1,44 @@
 #include "handlers/SignalHandler.h"
-#include "signal/SignalPipe.h"
 #include "EventLoop.h"
 #include "epoll/EpollEvent.h"
 #include "signal/Signals.h"
 #include "stub/IO.h"
-
-namespace netpp::handlers {
-SignalHandler::SignalHandler() noexcept
-	: EventHandler(-1)
-{}
-
-void SignalHandler::handleRead() noexcept
-{
-	constexpr int maxSignalRead = 100;
-	int signals[maxSignalRead];
-	int signalRead = 0;
-	if (signal::SignalPipe::instance().isPipeOpened())
-		signalRead = (stub::read(signal::SignalPipe::m_signalPipe[0], signals, sizeof(int) * maxSignalRead) / sizeof(int));
-	for (int i = 0; i < signalRead; ++i)
-		m_events->onSignal(signal::toNetppSignal(signals[i]));
+#include "signal/SignalFd.h"
+#include "error/Exception.h"
+extern "C" {
+#include <sys/signalfd.h>
 }
 
-void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept
+namespace netpp::handlers {
+void SignalHandler::handleRead()
 {
-	// construct SignalPipe
-	signal::SignalPipe::instance();
+	static constexpr int maxSignalRead = 20;
+	::signalfd_siginfo signals[maxSignalRead];
+	int readBytes = 0;
+	readBytes = stub::read(
+		signal::SignalFd::instance.signalFd,
+		signals,
+		sizeof(::signalfd_siginfo) * maxSignalRead
+	);
+	int readNum = readBytes / sizeof(::signalfd_siginfo);
+	// TODO: can pass more signal info to user
+	for (int i = 0; i < readNum; ++i)
+	{
+		// watching this signal
+		if (signal::SignalFd::instance.watching(signals[i].ssi_signo))
+			m_events->onSignal(signal::toNetppSignal(signals[i].ssi_signo));
+		else
+			throw error::UnhandledSignal(signals[i]);
+	}
+}
 
+void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype)
+{
 	auto signalHandler = std::make_shared<SignalHandler>();
-	signalHandler->_fd = signal::SignalPipe::instance().m_signalPipe[0];
-
-	auto event = std::make_unique<epoll::EpollEvent>(loop->getPoll(), signalHandler);
+	auto event = std::make_unique<epoll::EpollEvent>(
+		loop->getPoll(), signalHandler,
+		signal::SignalFd::instance.signalFd
+	);
 	epoll::EpollEvent *eventPtr = event.get();
 
 	signalHandler->m_events = std::move(eventsPrototype);

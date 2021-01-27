@@ -22,7 +22,7 @@ Timer::Timer(EventLoop *loop)
 	SPDLOG_LOGGER_TRACE(logger, "Timer fd {}", m_timerFd);
 
 	m_handler = make_shared<handlers::TimerHandler>(this);
-	m_event = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler);
+	m_event = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
 }
 
 Timer::~Timer()

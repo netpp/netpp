@@ -14,24 +14,24 @@ class EventLoopDispatcher;
 
 namespace netpp::handlers {
 // TODO: close connector
-class Connector : public epoll::EventHandler {
+class Connector : public epoll::EventHandler, public std::enable_shared_from_this<Connector> {
 public:
-	Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket) noexcept;
+	Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);
 	~Connector() override = default;
 
-	void connect() noexcept;
-	void handleRead() noexcept override;
-	void handleWrite() noexcept override;
-	void handleError() noexcept override;
-	void handleClose() noexcept override;
+	void connect();
+	void handleRead() override;
+	void handleWrite() override;
+	void handleError() override;
+	void handleClose() override;
 
 	static bool makeConnector(EventLoopDispatcher *dispatcher,
 								  Address serverAddr,
-								  std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
+								  std::unique_ptr<support::EventInterface> &&eventsPrototype);
 
 private:
 	void setupTimer();
-	void reconnect() noexcept;
+	void reconnect();
 
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;

@@ -18,23 +18,15 @@ class EventHandler;
 
 class EpollEvent {
 public:
-	enum EventType : unsigned {
-		WriteEvent	= EPOLLOUT,
-		ReadEvent	= EPOLLIN,
-		DisconnEvent= EPOLLRDHUP,
-		ErrEvent	= EPOLLERR,
-		OutOfBand	= EPOLLPRI
-	};
-
-	EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler);
+	EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd);
 	~EpollEvent();
 
-	int fd() const;
+	int fd() const { return _watchingFd; }
 	
 	/**
 	 * @brief Return current activing epoll events
 	 */
-	inline ::epoll_event activeEvent() const { return m_events; }
+	inline ::epoll_event watchingEvent() const { return m_watchingEvents; }
 
 	/**
 	 * @brief Set active events, used by poller
@@ -62,7 +54,8 @@ public:
 private:
 	Epoll *_poll;
 	std::weak_ptr<EventHandler> _eventHandler;
-	::epoll_event m_events;
+	int _watchingFd;
+	::epoll_event m_watchingEvents;
 	uint32_t activeEvents;
 };
 }

@@ -10,11 +10,11 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::handlers {
-Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket) noexcept
-		: EventHandler(socket->fd()), _dispatcher(dispatcher), m_socket{std::move(socket)}
+Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
+		: _dispatcher(dispatcher), m_socket{std::move(socket)}
 {}
 
-void Connector::connect() noexcept
+void Connector::connect()
 {
 	try {
 		m_socket->connect();
@@ -27,10 +27,10 @@ void Connector::connect() noexcept
 	}
 }
 
-void Connector::handleRead() noexcept
+void Connector::handleRead()
 {}
 
-void Connector::handleWrite() noexcept
+void Connector::handleWrite()
 {
 	SPDLOG_LOGGER_TRACE(logger, "Connector write available");
 	error::SocketError err = m_socket->getError();
@@ -71,23 +71,23 @@ void Connector::handleWrite() noexcept
 	
 }
 
-void Connector::handleError() noexcept
+void Connector::handleError()
 {
 	// TODO: will EPOLLERR happend in connector?
 	m_events->onError(error::SocketError::E_EPOLLERR);
 }
 
-void Connector::handleClose() noexcept
+void Connector::handleClose()
 {}
 
 bool Connector::makeConnector(EventLoopDispatcher *dispatcher,
 											 Address serverAddr,
-											 std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept
+											 std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	try {
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto connector = make_shared<Connector>(dispatcher, make_unique<socket::Socket>(serverAddr));
-		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connector);
+		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
 		auto eventPtr = event.get();
 		connector->m_events = std::move(eventsPrototype);
 		connector->m_epollEvent = std::move(event);
@@ -100,7 +100,7 @@ bool Connector::makeConnector(EventLoopDispatcher *dispatcher,
 	} catch (error::SocketException &se) {
 		eventsPrototype->onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
-		eventsPrototype->onError(rle.getErrorCode());
+		eventsPrototype->onError(rle.getSocketErrorCode());
 	}
 	return false;
 }
@@ -110,7 +110,7 @@ void Connector::setupTimer()
 	m_retryTimer->setOnTimeout([=]{
 		auto oldSocket = std::move(m_socket);
 		m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
-		_fd = m_socket->fd();
+		m_epollEvent = make_unique<epoll::EpollEvent>(EventLoop::thisLoop()->getPoll(), shared_from_this(), m_socket->fd());
 		m_epollEvent->setEnableWrite(true);
 		connect();
 	});
@@ -119,7 +119,7 @@ void Connector::setupTimer()
 	m_retryTimer->start();
 }
 
-void Connector::reconnect() noexcept
+void Connector::reconnect()
 {
 	try {
 		m_epollEvent->disableEvents();
@@ -130,7 +130,7 @@ void Connector::reconnect() noexcept
 	} catch (error::SocketException &se) {
 		m_events->onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getErrorCode());
+		m_events->onError(rle.getSocketErrorCode());
 	}
 }
 }

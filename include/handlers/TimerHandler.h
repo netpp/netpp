@@ -16,13 +16,13 @@ class Timer;
 namespace netpp::handlers {
 class TimerHandler : public epoll::EventHandler {
 public:
-	explicit TimerHandler(time::Timer *timer) noexcept;
+	explicit TimerHandler(time::Timer *timer);
 	~TimerHandler() override = default;
 
-	void handleRead() noexcept override;
-	void handleWrite() noexcept override {}
-	void handleError() noexcept override {}
-	void handleClose() noexcept override {}
+	void handleRead() override;
+	void handleWrite() override {}
+	void handleError() override {}
+	void handleClose() override {}
 
 private:
 	time::Timer *_timer;

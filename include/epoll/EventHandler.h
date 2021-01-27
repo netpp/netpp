@@ -12,20 +12,15 @@
 namespace netpp::epoll {
 class EventHandler {
 public:
-	explicit EventHandler(int fd) noexcept
-		: _fd{fd}
-	{}
+	explicit EventHandler() = default;
 	virtual ~EventHandler() = default;
 
-	virtual void handleRead() noexcept = 0;
-	virtual void handleWrite() noexcept = 0;
-	virtual void handleError() noexcept = 0;
-	virtual void handleClose() noexcept = 0;
-
-	inline int fd() const noexcept { return _fd; }
+	virtual void handleRead() = 0;
+	virtual void handleWrite() = 0;
+	virtual void handleError() = 0;
+	virtual void handleClose() = 0;
 
 protected:
-	int _fd;
 	std::unique_ptr<EpollEvent> m_epollEvent;
 };
 

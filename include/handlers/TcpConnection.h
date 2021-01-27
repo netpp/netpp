@@ -20,20 +20,20 @@ class TimeWheelEntry;
 namespace netpp::handlers {
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
 public:
-	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop) noexcept;
+	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop);
 	~TcpConnection() override = default;
 
-	void handleRead() noexcept override;
-	void handleWrite() noexcept override;
-	void handleError() noexcept override;
-	void handleClose() noexcept override;
+	void handleRead() override;
+	void handleWrite() override;
+	void handleError() override;
+	void handleClose() override;
 
-	inline EventLoop *getConnectionLoop() noexcept { return _loop; }
-	void sendInLoop() noexcept;
-	void closeAfterWriteCompleted() noexcept;
+	inline EventLoop *getConnectionLoop() { return _loop; }
+	void sendInLoop();
+	void closeAfterWriteCompleted();
 
 	static std::shared_ptr<Channel> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-									  std::unique_ptr<support::EventInterface> &&eventsPrototype) noexcept;
+									  std::unique_ptr<support::EventInterface> &&eventsPrototype);
 
 private:
 	void renewWheel();
