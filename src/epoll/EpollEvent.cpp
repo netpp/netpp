@@ -15,11 +15,6 @@ EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
 	m_watchingEvents.data.ptr = this;
 }
 
-EpollEvent::~EpollEvent()
-{
-	disableEvents();
-}
-
 void EpollEvent::handleEvents()
 {
 	auto handler = _eventHandler.lock();
@@ -27,7 +22,7 @@ void EpollEvent::handleEvents()
 	{
 		if (activeEvents & EPOLLERR)
 			handler->handleError();
-		if (activeEvents & EPOLLRDHUP)	// BUG: epoll did not trigger this event
+		if (activeEvents & EPOLLRDHUP)
 			handler->handleClose();
 		if (activeEvents & EPOLLIN)
 			handler->handleRead();
@@ -38,7 +33,7 @@ void EpollEvent::handleEvents()
 
 void EpollEvent::setEnableWrite(bool enable)
 {
-	SPDLOG_LOGGER_TRACE(logger, "Set enable write {}", enable);
+	SPDLOG_LOGGER_TRACE(logger, "Set {} enable write {}", _watchingFd, enable);
 	if (enable)
 		m_watchingEvents.events |= EPOLLOUT;
 	else
@@ -48,7 +43,7 @@ void EpollEvent::setEnableWrite(bool enable)
 
 void EpollEvent::setEnableRead(bool enable)
 {
-	SPDLOG_LOGGER_TRACE(logger, "Set enable read {}", enable);
+	SPDLOG_LOGGER_TRACE(logger, "Set {} enable read {}", _watchingFd, enable);
 	if (enable)
 		m_watchingEvents.events |= EPOLLIN;
 	else

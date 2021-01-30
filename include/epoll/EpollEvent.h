@@ -19,7 +19,7 @@ class EventHandler;
 class EpollEvent {
 public:
 	EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd);
-	~EpollEvent();
+	~EpollEvent() = default;
 
 	int fd() const { return _watchingFd; }
 	

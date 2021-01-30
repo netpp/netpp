@@ -6,7 +6,8 @@
 
 class WheelEntry : public netpp::time::TimeWheelEntry {
 public:
-	~WheelEntry() override
+	~WheelEntry() override = default;
+	void onTimeout() override
 	{ std::cout << "wheel entry timeout" << std::endl; }
 };
 

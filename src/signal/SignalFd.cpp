@@ -9,7 +9,9 @@ extern "C" {
 namespace netpp::signal {
 SignalFd SignalFd::instance;
 int SignalFd::signalFd = -1;
-volatile uint64_t SignalFd::m_watchingSignals = 0;
+volatile std::atomic_uint64_t SignalFd::m_watchingSignals = 0;
+
+static constexpr uint64_t uint64One = 1;
 
 SignalFd::SignalFd() noexcept
 {
@@ -22,16 +24,16 @@ SignalFd::SignalFd() noexcept
 
 void SignalFd::add(int sig)
 {
-	m_watchingSignals |= (1u << sig);
+	m_watchingSignals.fetch_or((uint64One << sig), std::memory_order_relaxed);
 }
 
 void SignalFd::del(int sig)
 {
-	m_watchingSignals &= ~(1u << sig);
+	m_watchingSignals.fetch_and(~(uint64One << sig), std::memory_order_relaxed);
 }
 
 bool SignalFd::watching(int sig)
 {
-	return (m_watchingSignals & (1u << sig));
+	return (m_watchingSignals.load(std::memory_order_relaxed) & (uint64One << sig));
 }
 }

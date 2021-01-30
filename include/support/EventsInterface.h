@@ -25,7 +25,7 @@ class Channel;
 namespace support {
 /**
  * @brief The Events interface for internal use
- * do NOT inherts this!!
+ * @note do NOT inherts this!!
  */
 class EventInterface {
 public:
@@ -46,7 +46,6 @@ ASSERT_HAS_EVENT_METHOD(WriteCompleted)
 ASSERT_HAS_EVENT_METHOD(Disconnect)
 ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
 ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
-
 }
 }
 #endif

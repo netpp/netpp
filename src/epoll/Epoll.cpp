@@ -36,7 +36,6 @@ std::vector<EpollEvent *> Epoll::poll()
 	for (int i = 0; i < nums; ++i)
 	{
 		uint32_t event = m_activeEvents[i].events;
-		SPDLOG_LOGGER_TRACE(logger, "handle event {}", event);
 		auto epollEvent = static_cast<EpollEvent *>(m_activeEvents[i].data.ptr);
 		epollEvent->setActiveEvents(event);
 		activeChannels.emplace_back(epollEvent);
@@ -48,25 +47,26 @@ void Epoll::updateEvent(EpollEvent *channelEvent)
 {
 	int channelFd = channelEvent->fd();
 	::epoll_event event = channelEvent->watchingEvent();
+	int op;
 	auto evIt = _events.find(channelFd);
 	if (evIt == _events.end())		// add channel
 	{
 		SPDLOG_LOGGER_TRACE(logger, "add channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
 		_events.insert({channelFd, channelEvent});
-		if (::epoll_ctl(m_epfd, EPOLL_CTL_ADD, channelFd, &event) != 0/* && errno == EEXIST*/)
-			SPDLOG_LOGGER_ERROR(logger, "Failed to add channel {}", std::strerror(errno));
+		op = EPOLL_CTL_ADD;
 	}
 	else	// update channel
 	{
 		if (evIt->second != channelEvent)
 		{
-			SPDLOG_LOGGER_WARN(logger, "Channel for socket {} is changed", channelFd);
+			SPDLOG_LOGGER_WARN(logger, "Channel for fd {} is changed", channelFd);
 			_events.insert_or_assign(channelFd, channelEvent);
 		}
 		SPDLOG_LOGGER_TRACE(logger, "update channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
-		if (::epoll_ctl(m_epfd, EPOLL_CTL_MOD, channelFd, &event) != 0/* && errno == ENOENT*/)
-			SPDLOG_LOGGER_ERROR(logger, "Failed to update channel: {} id:{} event{}", std::strerror(errno), channelFd);
+		op = EPOLL_CTL_MOD;
 	}
+	if (::epoll_ctl(m_epfd, op, channelFd, &event) == -1)
+		SPDLOG_LOGGER_ERROR(logger, "Failed to update channel {}", std::strerror(errno));
 }
 
 void Epoll::removeEvent(EpollEvent *channelEvent)

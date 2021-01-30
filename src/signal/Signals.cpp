@@ -75,4 +75,28 @@ std::string signalAsString(Signals signal)
 	}
 	return sig;
 }
+
+bool ignoreByDefault(int signal)
+{
+	switch (signal)
+	{
+		case SIGCHLD:
+		case SIGURG:
+		case SIGWINCH:
+			return true;
+	}
+	return false;
+}
+
+bool ignoreByDefault(Signals signal)
+{
+	switch (signal)
+	{
+		case Signals::E_CHLD:
+		case Signals::E_URG:
+		case Signals::E_WINCH:
+			return true;
+	}
+	return false;
+}
 }

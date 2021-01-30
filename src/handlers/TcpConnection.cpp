@@ -18,8 +18,9 @@ public:
 	explicit IdelConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
 		: _connection{connection}
 	{}
+	~IdelConnectionWheelEntry() override = default;
 
-	~IdelConnectionWheelEntry() override
+	void onTimeout() override
 	{
 		SPDLOG_LOGGER_INFO(logger, "idle connection timeout, close write");
 		auto conn = _connection.lock();
@@ -36,8 +37,9 @@ public:
 	explicit HalfCloseConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
 		: _connection{connection}
 	{}
+	~HalfCloseConnectionWheelEntry() override = default;
 
-	~HalfCloseConnectionWheelEntry() override
+	void onTimeout() override
 	{
 		SPDLOG_LOGGER_INFO(logger, "half closed connection timeout, close write");
 		auto conn = _connection.lock();
@@ -103,6 +105,9 @@ void TcpConnection::handleError()
 void TcpConnection::handleClose()
 {
 	SPDLOG_LOGGER_TRACE(logger, "Socket {} disconnected", m_socket->fd());
+	auto wheel = EventLoop::thisLoop()->getTimeWheel();
+	if (wheel)
+		wheel->removeFromWheel(_halfCloseWheel);
 	m_events->onDisconnect();
 	m_epollEvent->disableEvents();
 	// extern TcpConnection life after remove

@@ -6,8 +6,8 @@ netpp是一个基于事件的现代网络库，基于reactor和epoll。
 * 测试框架 [gtest](https://github.com/google/googletest)
 ## 如何编译
 ### 依赖
-cmake >= 3.18.0  
-clang >= 10.0.1
+* cmake >= 3.18.0
+* 支持C++17的编译器
 ### 使用cmake
 ```
 git clone https://github.com/netpp/netpp.git

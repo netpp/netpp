@@ -18,6 +18,8 @@ public:
 		std::string data = channel->retrieveString(size);
 		SPDLOG_LOGGER_TRACE(netpp::logger, "Received size {} data {}", size, data);
 		std::string str;
+		// long-term operation is not allowed in event handler
+		// it will cause event loop block!!
 		std::cin >> str;
 		channel->writeString(str);
 		channel->send();

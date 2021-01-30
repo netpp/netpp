@@ -8,8 +8,8 @@ netpp is an event based, modern c++ network library, based on reactor pattern an
 * Testing [gtest](https://github.com/google/googletest)
 ## How to compile
 ### Requires
-cmake >= 3.16.0  
-clang >= 10.0.1
+* cmake >= 3.16.0
+* c++17 supports
 ### Build with cmake
 ```
 git clone https://github.com/netpp/netpp.git

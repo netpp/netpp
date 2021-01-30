@@ -11,8 +11,9 @@ class TimeWheelEntry {
 	friend class TimeWheel;
 public:
 	TimeWheelEntry() : m_indexInWheel{0} {}
-	// do clean job in destructor
-	virtual ~TimeWheelEntry() = 0;
+	virtual ~TimeWheelEntry() = default;
+
+	virtual void onTimeout() = 0;
 
 private:
 	unsigned m_indexInWheel;
@@ -31,6 +32,7 @@ public:
 	 */
 	TimeWheel(EventLoop *loop, unsigned tickInterval, unsigned bucketCount);
 	void addToWheel(std::shared_ptr<TimeWheelEntry> entry);
+	void removeFromWheel(std::weak_ptr<TimeWheelEntry> entry);
 	void renew(std::weak_ptr<TimeWheelEntry> entry);
 
 private:

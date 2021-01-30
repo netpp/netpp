@@ -2,6 +2,7 @@
 #define NETPP_SIGNALFD_H
 
 #include <mutex>
+#include <atomic>
 
 namespace netpp::handlers {
 class SignalHandler;
@@ -24,7 +25,7 @@ private:
 	static int signalFd;
 
 	// 64 signals at max
-	static volatile uint64_t m_watchingSignals;
+	static volatile std::atomic_uint64_t m_watchingSignals;
 };
 }
 

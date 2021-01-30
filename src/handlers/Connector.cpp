@@ -17,9 +17,9 @@ Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::So
 void Connector::connect()
 {
 	try {
-		m_socket->connect();
-		// connect may success immediately, the writeable event may not triggered
+		// connect may success immediately, manually enable read
 		m_epollEvent->setEnableWrite(true);
+		m_socket->connect();
 	} catch (error::SocketException &se) {
 		error::SocketError code = se.getErrorCode();
 		if (code != error::SocketError::E_INPROGRESS)
@@ -92,7 +92,6 @@ bool Connector::makeConnector(EventLoopDispatcher *dispatcher,
 		connector->m_events = std::move(eventsPrototype);
 		connector->m_epollEvent = std::move(event);
 
-		eventPtr->setEnableWrite(true);
 		loop->addEventHandlerToLoop(connector);
 		connector->connect();
 
