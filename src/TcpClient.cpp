@@ -5,22 +5,20 @@
 #include "TcpClient.h"
 #include "handlers/Connector.h"
 #include "EventLoopDispatcher.h"
-#include "handlers/SignalHandler.h"
 
 using std::make_unique;
 
 namespace netpp {
-TcpClient::TcpClient(EventLoopDispatcher *dispatcher, std::unique_ptr<support::EventInterface> &&eventsPrototype)
-	: _dispatcher{dispatcher}, m_eventsPrototype{std::move(eventsPrototype)}
+TcpClient::TcpClient(EventLoopDispatcher *dispatcher, Address addr, std::unique_ptr<support::EventInterface> &&eventsPrototype)
+	: _dispatcher{dispatcher}, m_addr{addr}, m_eventsPrototype{std::move(eventsPrototype)}
 {}
 
-void TcpClient::connect(Address serverAddr)
+void TcpClient::connect()
 {
-	handlers::Connector::makeConnector(_dispatcher, serverAddr, m_eventsPrototype->clone());
-	handlers::SignalHandler::makeSignalHandler(_dispatcher->dispatchEventLoop(), m_eventsPrototype->clone());
+	handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype->clone());
 }
 
-void TcpClient::disconnect(Address serverAddr)
+void TcpClient::disconnect()
 {
 	// TODO: impl disconnect for client
 }

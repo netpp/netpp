@@ -1,11 +1,11 @@
-#ifndef NETPP_STUB_SOCKET_H
-#define NETPP_STUB_SOCKET_H
+#ifndef NETPP_SYS_SOCKET_H
+#define NETPP_SYS_SOCKET_H
 
 extern "C" {
 #include <arpa/inet.h>
 }
 
-namespace netpp::stub {
+namespace netpp::sys {
 /**
  * @brief create a socket
  * 

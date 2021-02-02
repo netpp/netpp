@@ -11,6 +11,7 @@ namespace netpp {
 template<typename Impl>
 class Events final : public support::EventInterface {
 public:
+	Events() : m_impl() {}
 	explicit Events(Impl impl) : m_impl{impl} {}
 
 	void onConnected(std::shared_ptr<netpp::Channel> channel) override

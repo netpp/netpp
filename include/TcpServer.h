@@ -10,16 +10,17 @@
 
 namespace netpp {
 class EventLoopDispatcher;
-class Channel;
 
 class TcpServer {
 public:
-	explicit TcpServer(EventLoopDispatcher *dispatcher, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	explicit TcpServer(EventLoopDispatcher *dispatcher, Address addr, 
+		std::unique_ptr<support::EventInterface> &&eventsPrototype);
 
-	void listen(Address listenAddr);
+	void listen();
 
 private:
-	Channel *_acceptorChannel;
+	Address m_addr;
+	
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<support::EventInterface> _eventPrototype;
 };

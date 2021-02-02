@@ -7,7 +7,7 @@
 #include "epoll/Epoll.h"
 #include "Log.h"
 #include "epoll/EpollEvent.h"
-#include "stub/IO.h"
+#include "sys/IO.h"
 
 namespace netpp::epoll {
 Epoll::Epoll()
@@ -19,7 +19,7 @@ Epoll::Epoll()
 
 Epoll::~Epoll()
 {
-	stub::close(m_epfd);
+	sys::close(m_epfd);
 }
 
 std::vector<EpollEvent *> Epoll::poll()

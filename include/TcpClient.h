@@ -12,12 +12,14 @@ namespace netpp {
 class EventLoopDispatcher;
 class TcpClient {
 public:
-	explicit TcpClient(EventLoopDispatcher *dispatcher, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	explicit TcpClient(EventLoopDispatcher *dispatcher, Address addr, std::unique_ptr<support::EventInterface> &&eventsPrototype);
 
-	void connect(Address serverAddr);
-	void disconnect(Address serverAddr);
+	void connect();
+	void disconnect();
 
 private:
+	Address m_addr;
+
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<support::EventInterface> m_eventsPrototype;
 };

@@ -2,8 +2,8 @@
 #include "EventLoop.h"
 #include "epoll/EpollEvent.h"
 #include "signal/Signals.h"
-#include "stub/IO.h"
-#include "signal/SignalFd.h"
+#include "sys/IO.h"
+#include "signal/SignalWatcher.h"
 #include "error/Exception.h"
 #include "Log.h"
 extern "C" {
@@ -16,8 +16,8 @@ void SignalHandler::handleRead()
 	static constexpr int maxSignalRead = 20;
 	::signalfd_siginfo signals[maxSignalRead];
 	int readBytes = 0;
-	readBytes = stub::read(
-		signal::SignalFd::instance.signalFd,
+	readBytes = sys::read(
+		signal::SignalWatcher::signalFd,
 		signals,
 		sizeof(::signalfd_siginfo) * maxSignalRead
 	);
@@ -26,7 +26,7 @@ void SignalHandler::handleRead()
 	{
 		SPDLOG_LOGGER_TRACE(logger, "signal {} occurred", signal::signalAsString(signals[i].ssi_signo));
 		// watching this signal
-		if (signal::SignalFd::instance.watching(signals[i].ssi_signo))
+		if (signal::SignalWatcher::isWatching(signals[i].ssi_signo))
 			m_events->onSignal(signal::toNetppSignal(signals[i].ssi_signo));// TODO: can pass more signal info to user
 		else if (!signal::ignoreByDefault(signals[i].ssi_signo))
 			throw error::UnhandledSignal(signals[i]);
@@ -38,7 +38,7 @@ void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::
 	auto signalHandler = std::make_shared<SignalHandler>();
 	auto event = std::make_unique<epoll::EpollEvent>(
 		loop->getPoll(), signalHandler,
-		signal::SignalFd::instance.signalFd
+		signal::SignalWatcher::signalFd
 	);
 	epoll::EpollEvent *eventPtr = event.get();
 
@@ -47,6 +47,6 @@ void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::
 
 	eventPtr->setEnableRead(true);
 	loop->addEventHandlerToLoop(signalHandler);
-	SPDLOG_LOGGER_TRACE(logger, "signal handler ready, fd {}", signal::SignalFd::instance.signalFd);
+	SPDLOG_LOGGER_TRACE(logger, "signal handler ready, fd {}", signal::SignalWatcher::signalFd);
 }
 }

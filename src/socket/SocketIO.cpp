@@ -2,7 +2,7 @@
 #include "socket/Socket.h"
 #include "ByteArray.h"
 #include <cstring>
-#include "stub/IO.h"
+#include "sys/IO.h"
 extern "C" {
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -136,7 +136,7 @@ void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 	std::memset(&msg, 0, sizeof(::msghdr));
 	msg.msg_iov = vec.vec();
 	msg.msg_iovlen = vec.count();
-	::ssize_t num = stub::recvmsg(socket->fd(), &msg, 0);
+	::ssize_t num = sys::recvmsg(socket->fd(), &msg, 0);
 	if (num != -1)
 		vec.adjustByteArray(num);
 }
@@ -149,7 +149,7 @@ bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 	std::memset(&msg, 0, sizeof(::msghdr));
 	msg.msg_iov = vec.vec();
 	msg.msg_iovlen = vec.count();
-	::ssize_t actualSend = stub::sendmsg(socket->fd(), &msg, MSG_NOSIGNAL);
+	::ssize_t actualSend = sys::sendmsg(socket->fd(), &msg, MSG_NOSIGNAL);
 	if (actualSend != -1)
 		vec.adjustByteArray(actualSend);
 	return (actualSend <= expectSize);

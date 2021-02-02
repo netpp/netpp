@@ -20,8 +20,8 @@ int main()
 {
 	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher(1, 1000, 8);
-	std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
-	netpp::TcpServer server(&dispatcher, std::move(events));
-	server.listen((netpp::Address("0.0.0.0", 12345)));
+	std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>();
+	netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(events));
+	server.listen();
 	dispatcher.startLoop();
 }

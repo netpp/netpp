@@ -1,4 +1,4 @@
-#include "stub/IO.h"
+#include "sys/IO.h"
 #include "Log.h"
 #include "error/Exception.h"
 extern "C" {
@@ -9,7 +9,7 @@ extern "C" {
 #include <errno.h>
 }
 
-namespace netpp::stub {
+namespace netpp::sys {
 int close(int fd) noexcept
 {
 	int ret = ::close(fd);
@@ -98,6 +98,7 @@ int pipe2(int pipefd[2], int flags) noexcept
 
 ::ssize_t sendmsg(int sockfd, const struct ::msghdr *msg, int flags)
 {
+retrySendMsg:
 	::ssize_t ret = ::sendmsg(sockfd, msg, flags);
 	if (ret == -1)
 	{
@@ -121,10 +122,8 @@ int pipe2(int pipefd[2], int flags) noexcept
 				throw error::SocketException(errno);
 				break;
 			case EINTR:
-				// document says: A signal occurred before any data was transmitted
-				// FIXME: will sendmsg interrupted by signal while sending?
-				SPDLOG_LOGGER_INFO(logger, "sendmsg interrupted by signal, restart");
-				netpp::stub::sendmsg(sockfd, msg, flags);
+				SPDLOG_LOGGER_INFO(logger, "restart sendmsg");
+				goto retrySendMsg;
 				break;
 			case EINVAL:
 			case ENOBUFS:
@@ -139,6 +138,7 @@ int pipe2(int pipefd[2], int flags) noexcept
 
 ::ssize_t recvmsg(int sockfd, struct ::msghdr *msg, int flags)
 {
+retryRecvMsg:
 	::ssize_t ret = ::recvmsg(sockfd, msg, flags);
 	if (ret == -1)
 	{
@@ -154,9 +154,8 @@ int pipe2(int pipefd[2], int flags) noexcept
 				throw error::ResourceLimitException(errno);
 				break;
 			case EINTR:
-				// FIXME: will recvmsg interrupted by signal while recving?
-				SPDLOG_LOGGER_INFO(logger, "recvmsg interrupted by signal, restart");
-				netpp::stub::recvmsg(sockfd, msg, flags);
+				SPDLOG_LOGGER_INFO(logger, "restart recvmsg");
+				goto retryRecvMsg;
 				break;
 			case ECONNREFUSED:
 			case ENOTCONN:
