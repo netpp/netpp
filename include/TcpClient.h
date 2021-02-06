@@ -9,16 +9,21 @@
 #include "Events.h"
 
 namespace netpp {
+namespace handlers {
+class Connector;
+}
 class EventLoopDispatcher;
 class TcpClient {
 public:
-	explicit TcpClient(EventLoopDispatcher *dispatcher, Address addr, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	TcpClient(EventLoopDispatcher *dispatcher, Address addr, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	~TcpClient();
 
 	void connect();
 	void disconnect();
 
 private:
 	Address m_addr;
+	std::shared_ptr<handlers::Connector> m_connector;
 
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<support::EventInterface> m_eventsPrototype;

@@ -96,7 +96,8 @@ bool ignoreByDefault(Signals signal)
 		case Signals::E_URG:
 		case Signals::E_WINCH:
 			return true;
+		default:
+			return false;
 	}
-	return false;
 }
 }

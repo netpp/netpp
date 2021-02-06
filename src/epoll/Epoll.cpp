@@ -2,12 +2,14 @@
 // Created by gaojian on 2020/7/5.
 //
 
-#include <sys/epoll.h>
 #include <cstring>
 #include "epoll/Epoll.h"
 #include "Log.h"
 #include "epoll/EpollEvent.h"
-#include "sys/IO.h"
+#include "stub/IO.h"
+extern "C" {
+#include <sys/epoll.h>
+}
 
 namespace netpp::epoll {
 Epoll::Epoll()
@@ -19,7 +21,7 @@ Epoll::Epoll()
 
 Epoll::~Epoll()
 {
-	sys::close(m_epfd);
+	stub::close(m_epfd);
 }
 
 std::vector<EpollEvent *> Epoll::poll()

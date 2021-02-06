@@ -130,6 +130,11 @@ void TcpConnection::closeAfterWriteCompleted()
 	m_state = socket::TcpState::Disconnecting;
 }
 
+std::shared_ptr<Channel> TcpConnection::getIOChannel()
+{
+	return make_shared<Channel>(shared_from_this(), m_writeBuffer, m_receiveBuffer);
+}
+
 void TcpConnection::renewWheel()
 {
 	auto wheel = EventLoop::thisLoop()->getTimeWheel();
@@ -155,7 +160,7 @@ void TcpConnection::closeWrite()
 	}
 }
 
-std::shared_ptr<Channel> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
+std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
 												 std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
 	auto connection = std::make_shared<TcpConnection>(std::move(socket), loop);
@@ -175,6 +180,6 @@ std::shared_ptr<Channel> TcpConnection::makeTcpConnection(EventLoop *loop, std::
 		connection->_idleConnectionWheel = idleWheel;
 		wheel->addToWheel(idleWheel);
 	}
-	return make_shared<Channel>(connection, connection->m_writeBuffer, connection->m_receiveBuffer);
+	return connection;
 }
 }

@@ -4,6 +4,7 @@
 
 #include "TcpClient.h"
 #include "handlers/Connector.h"
+#include "handlers/TcpConnection.h"
 #include "EventLoopDispatcher.h"
 
 using std::make_unique;
@@ -13,13 +14,30 @@ TcpClient::TcpClient(EventLoopDispatcher *dispatcher, Address addr, std::unique_
 	: _dispatcher{dispatcher}, m_addr{addr}, m_eventsPrototype{std::move(eventsPrototype)}
 {}
 
+TcpClient::~TcpClient()
+{
+	disconnect();
+}
+
 void TcpClient::connect()
 {
-	handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype->clone());
+	auto m_connector = handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype->clone()).lock();
+	m_connector->connect();
 }
 
 void TcpClient::disconnect()
 {
-	// TODO: impl disconnect for client
+	if (m_connector)
+	{
+		if (m_connector->connected())
+		{
+			auto connection = m_connector->getConnection().lock();
+			if (connection)
+				connection->closeAfterWriteCompleted();
+		}
+		else
+			m_connector->stopConnect();
+		m_connector = nullptr;
+	}
 }
 }

@@ -1,4 +1,4 @@
-#ifndef NETPP_SINGAL_HANDLER_H
+#ifndef NETPP_SIGNAL_HANDLER_H
 #define NETPP_SIGNAL_HANDLER_H
 
 #include "../epoll/EventHandler.h"

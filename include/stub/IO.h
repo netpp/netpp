@@ -1,5 +1,5 @@
-#ifndef NETPP_SYS_IO_H
-#define NETPP_SYS_IO_H
+#ifndef NETPP_STUB_IO_H
+#define NETPP_STUB_IO_H
 
 extern "C" {
 #include <unistd.h>
@@ -8,7 +8,7 @@ extern "C" {
 struct iovec;
 struct msghdr;
 
-namespace netpp::sys {
+namespace netpp::stub {
 int close(int fd) noexcept;
 ::ssize_t write(int fd, const void *buf, ::size_t count) noexcept;
 ::ssize_t read(int fd, void *buf, ::size_t count) noexcept;

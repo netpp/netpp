@@ -12,9 +12,24 @@ TcpServer::TcpServer(EventLoopDispatcher *dispatcher, Address addr, std::unique_
 	: _dispatcher(dispatcher), m_addr{addr}, _eventPrototype{std::move(eventsPrototype)}
 {}
 
+TcpServer::~TcpServer()
+{
+	// TODO: disconnect all clients
+	stopListen();
+}
+
 void TcpServer::listen()
 {
-	handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, _eventPrototype->clone());
+	auto acceptor = handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, _eventPrototype->clone()).lock();
+	_acceptor = acceptor;
+	acceptor->listen();
 	_eventPrototype = nullptr;
+}
+
+void TcpServer::stopListen()
+{
+	auto acceptor = _acceptor.lock();
+	if (acceptor)
+		acceptor->stop();
 }
 }

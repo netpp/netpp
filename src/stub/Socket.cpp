@@ -1,4 +1,4 @@
-#include "sys/Socket.h"
+#include "stub/Socket.h"
 #include "Log.h"
 #include "error/Exception.h"
 #include <cstring>
@@ -7,7 +7,7 @@ extern "C" {
 #include <errno.h>
 }
 
-namespace netpp::sys {
+namespace netpp::stub {
 int socket(int domain, int type, int protocol)
 {
 	int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);

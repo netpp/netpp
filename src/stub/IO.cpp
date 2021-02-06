@@ -1,4 +1,4 @@
-#include "sys/IO.h"
+#include "stub/IO.h"
 #include "Log.h"
 #include "error/Exception.h"
 extern "C" {
@@ -9,7 +9,7 @@ extern "C" {
 #include <errno.h>
 }
 
-namespace netpp::sys {
+namespace netpp::stub {
 int close(int fd) noexcept
 {
 	int ret = ::close(fd);

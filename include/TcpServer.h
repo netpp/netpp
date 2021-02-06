@@ -9,17 +9,23 @@
 #include "Address.h"
 
 namespace netpp {
+namespace handlers {
+class Acceptor;
+}
 class EventLoopDispatcher;
 
 class TcpServer {
 public:
-	explicit TcpServer(EventLoopDispatcher *dispatcher, Address addr, 
+	TcpServer(EventLoopDispatcher *dispatcher, Address addr, 
 		std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	~TcpServer();
 
 	void listen();
+	void stopListen();
 
 private:
 	Address m_addr;
+	std::weak_ptr<handlers::Acceptor> _acceptor;
 	
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<support::EventInterface> _eventPrototype;

@@ -31,8 +31,9 @@ public:
 	inline EventLoop *getConnectionLoop() { return _loop; }
 	void sendInLoop();
 	void closeAfterWriteCompleted();
+	std::shared_ptr<Channel> getIOChannel();
 
-	static std::shared_ptr<Channel> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
+	static std::weak_ptr<TcpConnection> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
 									  std::unique_ptr<support::EventInterface> &&eventsPrototype);
 
 private:

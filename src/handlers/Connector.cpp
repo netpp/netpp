@@ -11,7 +11,7 @@ using std::make_shared;
 
 namespace netpp::handlers {
 Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
-		: _dispatcher(dispatcher), m_socket{std::move(socket)}
+		: m_isConnected{false}, _dispatcher(dispatcher), m_socket{std::move(socket)}
 {}
 
 void Connector::connect()
@@ -25,6 +25,30 @@ void Connector::connect()
 		if (code != error::SocketError::E_INPROGRESS)
 			m_events->onError(code);
 	}
+}
+
+void Connector::stopConnect()
+{
+	// if connected, Connector was already cleaned, no need to remove again
+	if (!m_isConnected)
+	{
+		if (m_retryTimer)	// stop timer
+		{
+			m_retryTimer->stop();
+			m_retryTimer = nullptr;
+		}
+		m_epollEvent->disableEvents();
+		// extern life after remove
+		volatile auto externLife = shared_from_this();
+		EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+	}
+}
+
+bool Connector::connected() const
+{
+	if (!m_isConnected)
+		return false;
+	return !_connection.expired();
 }
 
 void Connector::handleRead()
@@ -51,24 +75,32 @@ void Connector::handleWrite()
 	}
 	else if (err == error::SocketError::E_NOERROR)
 	{
-		if (m_retryTimer)
+		if (m_retryTimer)	// stop timer
 		{
 			m_retryTimer->stop();
 			m_retryTimer = nullptr;
 		}
-		std::shared_ptr<Channel> channel = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
+		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
 																   std::move(m_socket),
 																   m_events->clone()
-		);
+		).lock();
+		m_isConnected = true;
+		_connection = connection;
 		SPDLOG_LOGGER_TRACE(logger, "Connected to server");
+		std::shared_ptr<Channel> channel = connection->getIOChannel();
 		m_events->onConnected(channel);
+
+		// extern life after remove
+		volatile auto externLife = shared_from_this();
+		// remove Connector from loop after connect success
+		m_epollEvent->disableEvents();
+		EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
 	}
 	else
 	{
 		SPDLOG_LOGGER_WARN(logger, "other connect error", error::errorAsString(err));
 		m_events->onError(err);
 	}
-	
 }
 
 void Connector::handleError()
@@ -80,7 +112,7 @@ void Connector::handleError()
 void Connector::handleClose()
 {}
 
-bool Connector::makeConnector(EventLoopDispatcher *dispatcher,
+std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatcher,
 											 Address serverAddr,
 											 std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
@@ -93,15 +125,14 @@ bool Connector::makeConnector(EventLoopDispatcher *dispatcher,
 		connector->m_epollEvent = std::move(event);
 
 		loop->addEventHandlerToLoop(connector);
-		connector->connect();
 
-		return true;
+		return connector;
 	} catch (error::SocketException &se) {
 		eventsPrototype->onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
 		eventsPrototype->onError(rle.getSocketErrorCode());
 	}
-	return false;
+	return std::weak_ptr<Connector>();
 }
 
 void Connector::setupTimer()
@@ -120,16 +151,10 @@ void Connector::setupTimer()
 
 void Connector::reconnect()
 {
-	try {
-		m_epollEvent->disableEvents();
-		unsigned currentInterval = m_retryTimer->interval();
-		if (currentInterval < 4000)
-			m_retryTimer->setInterval(currentInterval * 2);
-		SPDLOG_LOGGER_INFO(logger, "Connector error on fd {}, retry in {} mseconds", m_socket->fd(), currentInterval);
-	} catch (error::SocketException &se) {
-		m_events->onError(se.getErrorCode());
-	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getSocketErrorCode());
-	}
+	m_epollEvent->disableEvents();
+	unsigned currentInterval = m_retryTimer->interval();
+	if (currentInterval < 4000)
+		m_retryTimer->setInterval(currentInterval * 2);
+	SPDLOG_LOGGER_INFO(logger, "Connector error on fd {}, retry in {} mseconds", m_socket->fd(), currentInterval);
 }
 }

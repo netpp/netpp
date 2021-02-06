@@ -16,19 +16,29 @@ Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Sock
 void Acceptor::listen()
 {
 	try {
+		m_epollEvent->setEnableRead(true);
 		m_socket->listen();
 	} catch (error::SocketException &se) {
 		m_events->onError(se.getErrorCode());
 	}
 }
 
+void Acceptor::stop()
+{
+	m_epollEvent->disableEvents();
+	// extern life after remove
+	volatile auto externLife = shared_from_this();
+	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+}
+
 void Acceptor::handleRead()
 {
 	try {
 		std::unique_ptr<socket::Socket> commingConnection = m_socket->accept();
-		std::shared_ptr<Channel> channel = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
+		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
 																	std::move(commingConnection),
-																	m_events->clone());
+																	m_events->clone()).lock();
+		std::shared_ptr<Channel> channel = connection->getIOChannel();	// connection ptr will not expire here
 		SPDLOG_LOGGER_TRACE(logger, "New connection on Socket {}", m_socket->fd());
 		m_events->onConnected(channel);
 	} catch (error::SocketException &se) {
@@ -50,7 +60,7 @@ void Acceptor::handleError()
 void Acceptor::handleClose()
 {}
 
-bool Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
+std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 											Address listenAddr,
 											std::unique_ptr<support::EventInterface> &&eventsPrototype)
 {
@@ -58,20 +68,19 @@ bool Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<socket::Socket>(listenAddr));
 		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor, acceptor->m_socket->fd());
-		epoll::EpollEvent *eventPtr = event.get();
+		// epoll::EpollEvent *eventPtr = event.get();
 		acceptor->m_events = std::move(eventsPrototype);
 		acceptor->m_epollEvent = std::move(event);
+		acceptor->m_addr = listenAddr;
 
-		eventPtr->setEnableRead(true);
 		loop->addEventHandlerToLoop(acceptor);
-		acceptor->listen();
 
-		return true;
+		return acceptor;
 	} catch (error::SocketException &se) {
 		eventsPrototype->onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
 		eventsPrototype->onError(rle.getSocketErrorCode());
 	}
-	return false;
+	return std::weak_ptr<Acceptor>();
 }
 }

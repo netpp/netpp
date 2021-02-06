@@ -2,7 +2,7 @@
 #include "EventLoop.h"
 #include "epoll/EpollEvent.h"
 #include "signal/Signals.h"
-#include "sys/IO.h"
+#include "stub/IO.h"
 #include "signal/SignalWatcher.h"
 #include "error/Exception.h"
 #include "Log.h"
@@ -16,7 +16,7 @@ void SignalHandler::handleRead()
 	static constexpr int maxSignalRead = 20;
 	::signalfd_siginfo signals[maxSignalRead];
 	int readBytes = 0;
-	readBytes = sys::read(
+	readBytes = stub::read(
 		signal::SignalWatcher::signalFd,
 		signals,
 		sizeof(::signalfd_siginfo) * maxSignalRead
