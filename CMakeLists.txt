@@ -14,7 +14,7 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdParty/spdlog/include)
 add_library(netpp SHARED
 include/epoll/Epoll.h include/epoll/EpollEvent.h include/epoll/EventHandler.h
 include/handlers/Acceptor.h include/handlers/Connector.h include/handlers/TcpConnection.h include/handlers/TimerHandler.h include/handlers/SignalHandler.h
-include/support/ThreadBase.hpp include/support/ThreadPool.hpp include/support/EventsInterface.h
+include/support/ThreadBase.hpp include/support/ThreadPool.hpp
 include/signal/Signals.h include/signal/SignalWatcher.h
 include/socket/Socket.h include/socket/SocketIO.h
 include/stub/IO.h include/stub/Socket.h

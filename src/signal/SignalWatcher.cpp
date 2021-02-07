@@ -42,10 +42,10 @@ bool SignalWatcher::isWatching(uint32_t signal)
 		return false;
 }
 
-void SignalWatcher::enableWatchSignal(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype)
+void SignalWatcher::enableWatchSignal(EventLoop *loop, Events eventsPrototype)
 {
 	static std::once_flag setupWatchSignalFlag;
-	std::call_once(setupWatchSignalFlag, [](EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype){
+	std::call_once(setupWatchSignalFlag, [](EventLoop *loop, Events eventsPrototype){
 		// block all signals at very beginning, all thread will inherits this mask
 		::sigset_t blockThreadSignals;
 		::sigfillset(&blockThreadSignals);

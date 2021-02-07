@@ -17,7 +17,7 @@ class EventLoopDispatcher;
 class TcpServer {
 public:
 	TcpServer(EventLoopDispatcher *dispatcher, Address addr, 
-		std::unique_ptr<support::EventInterface> &&eventsPrototype);
+		Events eventsPrototype);
 	~TcpServer();
 
 	void listen();
@@ -28,7 +28,7 @@ private:
 	std::weak_ptr<handlers::Acceptor> _acceptor;
 	
 	EventLoopDispatcher *_dispatcher;
-	std::unique_ptr<support::EventInterface> _eventPrototype;
+	Events m_eventPrototype;
 };
 }
 

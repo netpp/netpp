@@ -34,7 +34,7 @@ public:
 	std::shared_ptr<Channel> getIOChannel();
 
 	static std::weak_ptr<TcpConnection> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-									  std::unique_ptr<support::EventInterface> &&eventsPrototype);
+									  Events eventsPrototype);
 
 private:
 	void renewWheel();
@@ -46,7 +46,7 @@ private:
 	std::unique_ptr<socket::Socket> m_socket;
 	std::shared_ptr<ByteArray> m_writeBuffer;
 	std::shared_ptr<ByteArray> m_receiveBuffer;
-	std::unique_ptr<support::EventInterface> m_events;
+	Events m_events;
 
 	std::weak_ptr<time::TimeWheelEntry> _idleConnectionWheel;
 	std::weak_ptr<time::TimeWheelEntry> _halfCloseWheel;

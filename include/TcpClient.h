@@ -15,7 +15,7 @@ class Connector;
 class EventLoopDispatcher;
 class TcpClient {
 public:
-	TcpClient(EventLoopDispatcher *dispatcher, Address addr, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	TcpClient(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype);
 	~TcpClient();
 
 	void connect();
@@ -26,7 +26,7 @@ private:
 	std::shared_ptr<handlers::Connector> m_connector;
 
 	EventLoopDispatcher *_dispatcher;
-	std::unique_ptr<support::EventInterface> m_eventsPrototype;
+	Events m_eventsPrototype;
 };
 }
 

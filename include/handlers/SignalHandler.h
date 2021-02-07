@@ -19,9 +19,9 @@ public:
 	void handleError() override {};
 	void handleClose() override {};
 
-	static void makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	static void makeSignalHandler(EventLoop *loop, Events eventsPrototype);
 private:
-	std::unique_ptr<support::EventInterface> m_events;
+	Events m_events;
 };
 }
 

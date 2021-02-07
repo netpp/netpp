@@ -64,13 +64,13 @@ void TcpConnection::handleRead()
 		socket::SocketIO::read(m_socket.get(), m_receiveBuffer);
 		SPDLOG_LOGGER_TRACE(logger, "Available size {}", m_receiveBuffer->readableBytes());
 		auto channel = make_shared<Channel>(shared_from_this(), m_writeBuffer, m_receiveBuffer);
-		m_events->onMessageReceived(channel);
+		m_events.onMessageReceived(channel);
 	} catch (error::SocketException &se) {
 		// connection refused or not connected
-		m_events->onError(se.getErrorCode());
+		m_events.onError(se.getErrorCode());
 		closeAfterWriteCompleted();
 	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getSocketErrorCode());
+		m_events.onError(rle.getSocketErrorCode());
 	}
 }
 
@@ -81,25 +81,25 @@ void TcpConnection::handleWrite()
 		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))	// if write all
 		{
 			m_epollEvent->setEnableWrite(false);
-			m_events->onWriteCompleted();
+			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
 			if (m_state == socket::TcpState::Disconnecting)
 				closeWrite();
 		}
 	} catch (error::SocketException &se) {
 		// connection reset or not connect or connect shutdown
-		m_events->onError(se.getErrorCode());
+		m_events.onError(se.getErrorCode());
 		m_isWaitWriting = false;
 		closeAfterWriteCompleted();
 	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getSocketErrorCode());
+		m_events.onError(rle.getSocketErrorCode());
 	}
 }
 
 void TcpConnection::handleError()
 {
 	SPDLOG_LOGGER_ERROR(logger, "Socket {} error", m_socket->fd());
-	m_events->onError(error::SocketError::E_EPOLLERR);
+	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
 void TcpConnection::handleClose()
@@ -108,7 +108,7 @@ void TcpConnection::handleClose()
 	auto wheel = EventLoop::thisLoop()->getTimeWheel();
 	if (wheel)
 		wheel->removeFromWheel(_halfCloseWheel);
-	m_events->onDisconnect();
+	m_events.onDisconnect();
 	m_epollEvent->disableEvents();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
@@ -161,13 +161,13 @@ void TcpConnection::closeWrite()
 }
 
 std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-												 std::unique_ptr<support::EventInterface> &&eventsPrototype)
+												 Events eventsPrototype)
 {
 	auto connection = std::make_shared<TcpConnection>(std::move(socket), loop);
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
-	connection->m_events = std::move(eventsPrototype);
+	connection->m_events = eventsPrototype;
 	// set up events
 	eventPtr->setEnableWrite(false);
 	eventPtr->setEnableRead(true);

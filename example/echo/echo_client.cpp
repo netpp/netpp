@@ -41,7 +41,7 @@ int main()
 {
 	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher;
-	std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>();
+	netpp::Events events(std::make_shared<Echo>());
 	netpp::TcpClient client(&dispatcher, netpp::Address("127.0.0.1", 12345), std::move(events));
 	client.connect();
 	dispatcher.startLoop();

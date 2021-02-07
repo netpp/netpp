@@ -47,7 +47,7 @@ public:
 
 	static std::weak_ptr<Connector> makeConnector(EventLoopDispatcher *dispatcher,
 								  Address serverAddr,
-								  std::unique_ptr<support::EventInterface> &&eventsPrototype);
+								  Events eventsPrototype);
 
 private:
 	void setupTimer();
@@ -59,7 +59,7 @@ private:
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;
 	std::unique_ptr<time::Timer> m_retryTimer;
-	std::unique_ptr<support::EventInterface> m_events;
+	Events m_events;
 };
 }
 

@@ -23,7 +23,7 @@ void Connector::connect()
 	} catch (error::SocketException &se) {
 		error::SocketError code = se.getErrorCode();
 		if (code != error::SocketError::E_INPROGRESS)
-			m_events->onError(code);
+			m_events.onError(code);
 	}
 }
 
@@ -82,13 +82,12 @@ void Connector::handleWrite()
 		}
 		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
 																   std::move(m_socket),
-																   m_events->clone()
-		).lock();
+																   m_events).lock();
 		m_isConnected = true;
 		_connection = connection;
 		SPDLOG_LOGGER_TRACE(logger, "Connected to server");
 		std::shared_ptr<Channel> channel = connection->getIOChannel();
-		m_events->onConnected(channel);
+		m_events.onConnected(channel);
 
 		// extern life after remove
 		volatile auto externLife = shared_from_this();
@@ -99,14 +98,14 @@ void Connector::handleWrite()
 	else
 	{
 		SPDLOG_LOGGER_WARN(logger, "other connect error", error::errorAsString(err));
-		m_events->onError(err);
+		m_events.onError(err);
 	}
 }
 
 void Connector::handleError()
 {
 	// TODO: will EPOLLERR happend in connector?
-	m_events->onError(error::SocketError::E_EPOLLERR);
+	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
 void Connector::handleClose()
@@ -114,23 +113,23 @@ void Connector::handleClose()
 
 std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatcher,
 											 Address serverAddr,
-											 std::unique_ptr<support::EventInterface> &&eventsPrototype)
+											 Events eventsPrototype)
 {
 	try {
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto connector = make_shared<Connector>(dispatcher, make_unique<socket::Socket>(serverAddr));
 		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
 		auto eventPtr = event.get();
-		connector->m_events = std::move(eventsPrototype);
+		connector->m_events = eventsPrototype;
 		connector->m_epollEvent = std::move(event);
 
 		loop->addEventHandlerToLoop(connector);
 
 		return connector;
 	} catch (error::SocketException &se) {
-		eventsPrototype->onError(se.getErrorCode());
+		eventsPrototype.onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
-		eventsPrototype->onError(rle.getSocketErrorCode());
+		eventsPrototype.onError(rle.getSocketErrorCode());
 	}
 	return std::weak_ptr<Connector>();
 }

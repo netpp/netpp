@@ -32,7 +32,7 @@ int main()
 {
 	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher;
-	std::unique_ptr<netpp::Events<DayTime>> dayTime = std::make_unique<netpp::Events<DayTime>>();
+	netpp::Events dayTime(std::make_shared<DayTime>());
 	netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(dayTime));
 	server.listen();
 	dispatcher.startLoop();

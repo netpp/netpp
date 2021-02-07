@@ -8,8 +8,8 @@
 #include "EventLoopDispatcher.h"
 
 namespace netpp {
-TcpServer::TcpServer(EventLoopDispatcher *dispatcher, Address addr, std::unique_ptr<support::EventInterface> &&eventsPrototype)
-	: _dispatcher(dispatcher), m_addr{addr}, _eventPrototype{std::move(eventsPrototype)}
+TcpServer::TcpServer(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype)
+	: _dispatcher(dispatcher), m_addr{addr}, m_eventPrototype{eventsPrototype}
 {}
 
 TcpServer::~TcpServer()
@@ -20,10 +20,9 @@ TcpServer::~TcpServer()
 
 void TcpServer::listen()
 {
-	auto acceptor = handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, _eventPrototype->clone()).lock();
+	auto acceptor = handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, m_eventPrototype).lock();
 	_acceptor = acceptor;
 	acceptor->listen();
-	_eventPrototype = nullptr;
 }
 
 void TcpServer::stopListen()

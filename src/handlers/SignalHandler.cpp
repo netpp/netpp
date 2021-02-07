@@ -27,13 +27,13 @@ void SignalHandler::handleRead()
 		SPDLOG_LOGGER_TRACE(logger, "signal {} occurred", signal::signalAsString(signals[i].ssi_signo));
 		// watching this signal
 		if (signal::SignalWatcher::isWatching(signals[i].ssi_signo))
-			m_events->onSignal(signal::toNetppSignal(signals[i].ssi_signo));// TODO: can pass more signal info to user
+			m_events.onSignal(signal::toNetppSignal(signals[i].ssi_signo));// TODO: can pass more signal info to user
 		else if (!signal::ignoreByDefault(signals[i].ssi_signo))
 			throw error::UnhandledSignal(signals[i]);
 	}
 }
 
-void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype)
+void SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
 {
 	auto signalHandler = std::make_shared<SignalHandler>();
 	auto event = std::make_unique<epoll::EpollEvent>(
@@ -42,7 +42,7 @@ void SignalHandler::makeSignalHandler(EventLoop *loop, std::unique_ptr<support::
 	);
 	epoll::EpollEvent *eventPtr = event.get();
 
-	signalHandler->m_events = std::move(eventsPrototype);
+	signalHandler->m_events = eventsPrototype;
 	signalHandler->m_epollEvent = std::move(event);
 
 	eventPtr->setEnableRead(true);

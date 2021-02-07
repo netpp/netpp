@@ -29,14 +29,14 @@ public:
 	void handleClose() override;
 	static std::weak_ptr<Acceptor> makeAcceptor(EventLoopDispatcher *dispatcher,
 								 Address listenAddr,
-								 std::unique_ptr<support::EventInterface> &&eventsPrototype);
+								 Events eventsPrototype);
 
 private:
 	Address m_addr;
 
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;
-	std::unique_ptr<support::EventInterface> m_events;
+	Events m_events;
 };
 }
 

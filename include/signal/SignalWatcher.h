@@ -3,7 +3,7 @@
 
 #include "./Signals.h"
 #include <atomic>
-#include "support/EventsInterface.h"
+#include "Events.h"
 
 namespace netpp {
 namespace handlers {
@@ -29,7 +29,7 @@ public:
 	 * @note must call before any threads started
 	 * 
 	 */
-	static void enableWatchSignal(EventLoop *loop, std::unique_ptr<support::EventInterface> &&eventsPrototype);
+	static void enableWatchSignal(EventLoop *loop, Events eventsPrototype);
 
 private:
 	static int signalFd;

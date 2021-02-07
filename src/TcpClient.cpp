@@ -10,8 +10,8 @@
 using std::make_unique;
 
 namespace netpp {
-TcpClient::TcpClient(EventLoopDispatcher *dispatcher, Address addr, std::unique_ptr<support::EventInterface> &&eventsPrototype)
-	: _dispatcher{dispatcher}, m_addr{addr}, m_eventsPrototype{std::move(eventsPrototype)}
+TcpClient::TcpClient(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype)
+	: _dispatcher{dispatcher}, m_addr{addr}, m_eventsPrototype{eventsPrototype}
 {}
 
 TcpClient::~TcpClient()
@@ -21,7 +21,7 @@ TcpClient::~TcpClient()
 
 void TcpClient::connect()
 {
-	auto m_connector = handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype->clone()).lock();
+	auto m_connector = handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype).lock();
 	m_connector->connect();
 }
 

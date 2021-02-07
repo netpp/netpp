@@ -19,7 +19,7 @@ void Acceptor::listen()
 		m_epollEvent->setEnableRead(true);
 		m_socket->listen();
 	} catch (error::SocketException &se) {
-		m_events->onError(se.getErrorCode());
+		m_events.onError(se.getErrorCode());
 	}
 }
 
@@ -37,14 +37,14 @@ void Acceptor::handleRead()
 		std::unique_ptr<socket::Socket> commingConnection = m_socket->accept();
 		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
 																	std::move(commingConnection),
-																	m_events->clone()).lock();
+																	m_events).lock();
 		std::shared_ptr<Channel> channel = connection->getIOChannel();	// connection ptr will not expire here
 		SPDLOG_LOGGER_TRACE(logger, "New connection on Socket {}", m_socket->fd());
-		m_events->onConnected(channel);
+		m_events.onConnected(channel);
 	} catch (error::SocketException &se) {
-		m_events->onError(se.getErrorCode());
+		m_events.onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
-		m_events->onError(rle.getSocketErrorCode());
+		m_events.onError(rle.getSocketErrorCode());
 	}
 }
 
@@ -54,7 +54,7 @@ void Acceptor::handleWrite()
 void Acceptor::handleError()
 {
 	// TODO: will EPOLLERR happend in acceptor?
-	m_events->onError(error::SocketError::E_EPOLLERR);
+	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
 void Acceptor::handleClose()
@@ -62,14 +62,14 @@ void Acceptor::handleClose()
 
 std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 											Address listenAddr,
-											std::unique_ptr<support::EventInterface> &&eventsPrototype)
+											Events eventsPrototype)
 {
 	try {
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<socket::Socket>(listenAddr));
 		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor, acceptor->m_socket->fd());
 		// epoll::EpollEvent *eventPtr = event.get();
-		acceptor->m_events = std::move(eventsPrototype);
+		acceptor->m_events = eventsPrototype;
 		acceptor->m_epollEvent = std::move(event);
 		acceptor->m_addr = listenAddr;
 
@@ -77,9 +77,9 @@ std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 
 		return acceptor;
 	} catch (error::SocketException &se) {
-		eventsPrototype->onError(se.getErrorCode());
+		eventsPrototype.onError(se.getErrorCode());
 	} catch (error::ResourceLimitException &rle) {
-		eventsPrototype->onError(rle.getSocketErrorCode());
+		eventsPrototype.onError(rle.getSocketErrorCode());
 	}
 	return std::weak_ptr<Acceptor>();
 }
