@@ -13,8 +13,13 @@
 
 namespace netpp {
 
+/**
+ * @brief test if class has method, only for Events
+ * @param METHOD method name
+ * @param ARG... method argument
+ */
 #define ASSERT_HAS_EVENT_METHOD(METHOD, ARG...)		\
-template<typename T>	\
+template<typename T>				\
 class has##METHOD {					\
 public:								\
 	template<typename U, void(U::*)(ARG) = &U::on##METHOD>			\
@@ -29,9 +34,20 @@ ASSERT_HAS_EVENT_METHOD(Disconnect)
 ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
 ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
 
-class Events {
+/**
+ * @brief netpp events, callbacks
+ * 
+ */
+class Events final {
 public:
 	Events() : m_impl{nullptr} {}
+
+	/**
+	 * @brief Construct a new Events object
+	 * 
+	 * @tparam Impl		The user event handler
+	 * @param impl		shared_ptr to event handler, all event loop will shared the same instance, make sure it's thread safe
+	 */
 	template<typename Impl>
 	explicit Events(std::shared_ptr<Impl> impl)
 	: m_impl{impl}

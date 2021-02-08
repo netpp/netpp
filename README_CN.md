@@ -37,22 +37,21 @@ netpp提供了以下事件：
 * onError
 * onSignal
 
-应该首先初始化日志和创建事件循环分派器
+创建事件循环分派器
 ```c++
-netpp::initLogger();
 netpp::core::EventLoopDispatcher dispatcher;
 ```
 在此基础上，开启一个服务器，并指派事件处理器
 ```c++
-std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
-netpp::TcpServer server(&dispatcher, std::move(events));
-server.listen((netpp::Address("0.0.0.0", 12345)));
+netpp::Events<Echo> events(std::make_shared<Echo>());
+netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(events));
+server.listen(;
 ```
 或者客户端
 ```c++
-std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
-netpp::TcpClient client(&dispatcher, std::move(events));
-client.connect(netpp::Address("127.0.0.1", 12345));
+netpp::Events<Echo> events(std::make_shared<Echo>());
+netpp::TcpClient client(&dispatcher, netpp::Address("127.0.0.1", 12345), std::move(events));
+client.connect();
 ```
 进行事件循环
 ```c++

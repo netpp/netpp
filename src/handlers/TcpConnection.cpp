@@ -1,5 +1,5 @@
 #include "handlers/TcpConnection.h"
-#include "Log.h"
+#include "support/Log.h"
 #include "EventLoop.h"
 #include "Channel.h"
 #include "socket/SocketIO.h"
@@ -22,7 +22,7 @@ public:
 
 	void onTimeout() override
 	{
-		SPDLOG_LOGGER_INFO(logger, "idle connection timeout, close write");
+		LOG_INFO("idle connection timeout, close write");
 		auto conn = _connection.lock();
 		if (conn)
 			conn->closeAfterWriteCompleted();
@@ -41,7 +41,7 @@ public:
 
 	void onTimeout() override
 	{
-		SPDLOG_LOGGER_INFO(logger, "half closed connection timeout, close write");
+		LOG_INFO("half closed connection timeout, close write");
 		auto conn = _connection.lock();
 		if (conn)
 			conn->handleClose();
@@ -62,7 +62,7 @@ void TcpConnection::handleRead()
 	try {
 		renewWheel();
 		socket::SocketIO::read(m_socket.get(), m_receiveBuffer);
-		SPDLOG_LOGGER_TRACE(logger, "Available size {}", m_receiveBuffer->readableBytes());
+		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
 		auto channel = make_shared<Channel>(shared_from_this(), m_writeBuffer, m_receiveBuffer);
 		m_events.onMessageReceived(channel);
 	} catch (error::SocketException &se) {
@@ -98,13 +98,13 @@ void TcpConnection::handleWrite()
 
 void TcpConnection::handleError()
 {
-	SPDLOG_LOGGER_ERROR(logger, "Socket {} error", m_socket->fd());
+	LOG_ERROR("Socket {} error", m_socket->fd());
 	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
 void TcpConnection::handleClose()
 {
-	SPDLOG_LOGGER_TRACE(logger, "Socket {} disconnected", m_socket->fd());
+	LOG_TRACE("Socket {} disconnected", m_socket->fd());
 	auto wheel = EventLoop::thisLoop()->getTimeWheel();
 	if (wheel)
 		wheel->removeFromWheel(_halfCloseWheel);
@@ -169,9 +169,9 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	connection->m_epollEvent = std::move(event);
 	connection->m_events = eventsPrototype;
 	// set up events
+	loop->addEventHandlerToLoop(connection);
 	eventPtr->setEnableWrite(false);
 	eventPtr->setEnableRead(true);
-	loop->addEventHandlerToLoop(connection);
 	// set up kick idle connection here
 	auto wheel = loop->getTimeWheel();
 	if (wheel)

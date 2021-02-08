@@ -4,7 +4,7 @@
 
 #include <cstring>
 #include "epoll/Epoll.h"
-#include "Log.h"
+#include "support/Log.h"
 #include "epoll/EpollEvent.h"
 #include "stub/IO.h"
 extern "C" {
@@ -16,7 +16,7 @@ Epoll::Epoll()
 	: m_activeEvents(4)
 {
 	if ((m_epfd = ::epoll_create1(EPOLL_CLOEXEC)) == -1)
-		SPDLOG_LOGGER_CRITICAL(logger, "Failed to create epoll {}", std::strerror(errno));
+		LOG_CRITICAL("Failed to create epoll {}", std::strerror(errno));
 }
 
 Epoll::~Epoll()
@@ -30,7 +30,7 @@ std::vector<EpollEvent *> Epoll::poll()
 
 	if (nums == m_activeEvents.size())
 	{
-		SPDLOG_LOGGER_INFO(logger, "active events array resize to {}", m_activeEvents.size() * 2);
+		LOG_INFO("active events array resize to {}", m_activeEvents.size() * 2);
 		m_activeEvents.resize(m_activeEvents.size() * 2);
 	}
 
@@ -53,7 +53,7 @@ void Epoll::updateEvent(EpollEvent *channelEvent)
 	auto evIt = _events.find(channelFd);
 	if (evIt == _events.end())		// add channel
 	{
-		SPDLOG_LOGGER_TRACE(logger, "add channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
+		LOG_TRACE("add channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
 		_events.insert({channelFd, channelEvent});
 		op = EPOLL_CTL_ADD;
 	}
@@ -61,14 +61,14 @@ void Epoll::updateEvent(EpollEvent *channelEvent)
 	{
 		if (evIt->second != channelEvent)
 		{
-			SPDLOG_LOGGER_WARN(logger, "Channel for fd {} is changed", channelFd);
+			LOG_WARN("Channel for fd {} is changed", channelFd);
 			_events.insert_or_assign(channelFd, channelEvent);
 		}
-		SPDLOG_LOGGER_TRACE(logger, "update channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
+		LOG_TRACE("update channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
 		op = EPOLL_CTL_MOD;
 	}
 	if (::epoll_ctl(m_epfd, op, channelFd, &event) == -1)
-		SPDLOG_LOGGER_ERROR(logger, "Failed to update channel {}", std::strerror(errno));
+		LOG_ERROR("Failed to update channel {}", std::strerror(errno));
 }
 
 void Epoll::removeEvent(EpollEvent *channelEvent)
@@ -77,14 +77,14 @@ void Epoll::removeEvent(EpollEvent *channelEvent)
 	auto evIt = _events.find(channelFd);
 	if (evIt != _events.end())		// add channel
 	{
-		SPDLOG_LOGGER_TRACE(logger, "remove channel id:{}", channelFd);
+		LOG_TRACE("remove channel id:{}", channelFd);
 		_events.erase(evIt);
 		if (::epoll_ctl(m_epfd, EPOLL_CTL_DEL, channelFd, nullptr) != 0)
-			SPDLOG_LOGGER_ERROR(logger, "Failed to remove channel: {} id:{}", std::strerror(errno), channelFd);
+			LOG_ERROR("Failed to remove channel: {} id:{}", std::strerror(errno), channelFd);
 	}
 	else
 	{
-		SPDLOG_LOGGER_INFO(logger, "No such a channel {}, failed to remove", channelFd);
+		LOG_INFO("No such a channel {}, failed to remove", channelFd);
 	}
 }
 }

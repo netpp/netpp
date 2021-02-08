@@ -39,22 +39,21 @@ netpp provides following events:
 * onError
 * onSignal
 
-Firstly initialize logger and create an event loop dispatcher.
+Create an event loop dispatcher.
 ```c++
-netpp::initLogger();
 netpp::core::EventLoopDispatcher dispatcher;
 ```
 Create a server, and assign event handler
 ```c++
-std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
-netpp::TcpServer server(&dispatcher, std::move(events));
-server.listen((netpp::Address("0.0.0.0", 12345)));
+netpp::Events<Echo> events(std::make_shared<Echo>());
+netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(events));
+server.listen();
 ```
 or a client using.
 ```c++
-std::unique_ptr<netpp::Events<Echo>> events = std::make_unique<netpp::Events<Echo>>(Echo());
-netpp::TcpClient client(&dispatcher, std::move(events));
-client.connect(netpp::Address("127.0.0.1", 12345));
+netpp::Events<Echo> events(std::make_shared<Echo>());
+netpp::TcpClient client(&dispatcher, netpp::Address("127.0.0.1", 12345), std::move(events));
+client.connect();
 ```
 Start an event loop.
 ```c++

@@ -1,5 +1,5 @@
 #include "handlers/Connector.h"
-#include "Log.h"
+#include "support/Log.h"
 #include "handlers/TcpConnection.h"
 #include "EventLoop.h"
 #include "EventLoopDispatcher.h"
@@ -56,12 +56,12 @@ void Connector::handleRead()
 
 void Connector::handleWrite()
 {
-	SPDLOG_LOGGER_TRACE(logger, "Connector write available");
+	LOG_TRACE("Connector write available");
 	error::SocketError err = m_socket->getError();
 	// TODO: maybe can retry in other situations
 	if (err == error::SocketError::E_TIMEDOUT || err == error::SocketError::E_CONNREFUSED)
 	{
-		SPDLOG_LOGGER_ERROR(logger, "Connector error {}", error::errorAsString(err));
+		LOG_ERROR("Connector error {}", error::errorAsString(err));
 		if (!m_retryTimer)
 		{
 			m_retryTimer = make_unique<time::Timer>(EventLoop::thisLoop());
@@ -71,7 +71,7 @@ void Connector::handleWrite()
 	}
 	else if (err == error::SocketError::E_INPROGRESS)
 	{
-		SPDLOG_LOGGER_TRACE(logger, "connecting, wait for connect done");
+		LOG_TRACE("connecting, wait for connect done");
 	}
 	else if (err == error::SocketError::E_NOERROR)
 	{
@@ -85,7 +85,7 @@ void Connector::handleWrite()
 																   m_events).lock();
 		m_isConnected = true;
 		_connection = connection;
-		SPDLOG_LOGGER_TRACE(logger, "Connected to server");
+		LOG_TRACE("Connected to server");
 		std::shared_ptr<Channel> channel = connection->getIOChannel();
 		m_events.onConnected(channel);
 
@@ -97,7 +97,7 @@ void Connector::handleWrite()
 	}
 	else
 	{
-		SPDLOG_LOGGER_WARN(logger, "other connect error", error::errorAsString(err));
+		LOG_WARN("other connect error", error::errorAsString(err));
 		m_events.onError(err);
 	}
 }
@@ -154,6 +154,6 @@ void Connector::reconnect()
 	unsigned currentInterval = m_retryTimer->interval();
 	if (currentInterval < 4000)
 		m_retryTimer->setInterval(currentInterval * 2);
-	SPDLOG_LOGGER_INFO(logger, "Connector error on fd {}, retry in {} mseconds", m_socket->fd(), currentInterval);
+	LOG_INFO("Connector error on fd {}, retry in {} mseconds", m_socket->fd(), currentInterval);
 }
 }

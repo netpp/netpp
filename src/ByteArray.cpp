@@ -1,6 +1,6 @@
 #include "ByteArray.h"
 #include <cstring>
-#include "Log.h"
+#include "support/Log.h"
 
 namespace netpp {
 ByteArray::ByteArray()
@@ -78,7 +78,7 @@ void ByteArray::writeString(std::string value)
 
 void ByteArray::writeRaw(const char *data, std::size_t length)
 {
-	SPDLOG_LOGGER_TRACE(netpp::logger, "need to write {} bytes", length);
+	LOG_TRACE("need to write {} bytes", length);
 
 	std::lock_guard lck(m_bufferMutex);
 	std::shared_ptr<BufferNode> node = _currentWriteBufferNode.lock();
@@ -207,7 +207,7 @@ std::string ByteArray::retrieveString(std::size_t length)
 
 std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 {
-	SPDLOG_LOGGER_TRACE(netpp::logger, "need to retrieve {} bytes", length);
+	LOG_TRACE("need to retrieve {} bytes", length);
 	char *bufferStartPtr = buffer;
 	
 	std::lock_guard lck(m_bufferMutex);

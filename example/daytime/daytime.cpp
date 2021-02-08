@@ -1,7 +1,6 @@
 #include "Events.h"
 #include "Channel.h"
 #include "TcpServer.h"
-#include "Log.h"
 #include "EventLoopDispatcher.h"
 #include <ctime>
 
@@ -19,18 +18,17 @@ public:
 
 	void onWriteCompleted()
 	{
-		SPDLOG_LOGGER_TRACE(netpp::logger, "Write completed");
+		std::cout << "Write completed";
 	}
 
 	void onDisconnect()
 	{
-		SPDLOG_LOGGER_TRACE(netpp::logger, "Disconnected");
+		std::cout << "Disconnected";
 	}
 };
 
 int main()
 {
-	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher;
 	netpp::Events dayTime(std::make_shared<DayTime>());
 	netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(dayTime));

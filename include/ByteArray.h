@@ -70,7 +70,7 @@ private:
 	/**
 	 * @brief The node of buffer
 	 */
-	// TODO: remove unused buffer node
+	// FIXME: remove unused buffer node
 	struct BufferNode {
 		BufferNode();
 		constexpr static std::size_t BufferSize = 1024;

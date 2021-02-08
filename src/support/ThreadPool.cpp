@@ -1,5 +1,5 @@
 #include "support/ThreadPool.hpp"
-#include "Log.h"
+#include "support/Log.h"
 
 namespace netpp::support {
 
@@ -71,7 +71,7 @@ void ThreadPool::runTask()
 	}
 	catch (...)
 	{
-		SPDLOG_LOGGER_CRITICAL(logger, "Thread pool task throws an exeception");
+		LOG_CRITICAL("Thread pool task throws an exeception");
 		--active;
 		throw;
 	}

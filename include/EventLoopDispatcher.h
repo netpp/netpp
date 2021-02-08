@@ -24,7 +24,7 @@ private:
 	using EventLoopVector = std::vector<std::unique_ptr<EventLoop>>;
 	EventLoopVector::size_type m_dispatchIndex;
 	EventLoopVector m_loops;
-	support::ThreadPool m_threadPool;
+	std::unique_ptr<support::ThreadPool> m_threadPool;
 };
 }
 

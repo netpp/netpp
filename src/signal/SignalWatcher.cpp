@@ -1,5 +1,5 @@
 #include "signal/SignalWatcher.h"
-#include "EventLoop.h"
+#include "EventLoopDispatcher.h"
 #include "handlers/SignalHandler.h"
 #include <mutex>
 extern "C" {
@@ -42,16 +42,16 @@ bool SignalWatcher::isWatching(uint32_t signal)
 		return false;
 }
 
-void SignalWatcher::enableWatchSignal(EventLoop *loop, Events eventsPrototype)
+void SignalWatcher::enableWatchSignal(EventLoopDispatcher *dispatcher, Events eventsPrototype)
 {
 	static std::once_flag setupWatchSignalFlag;
-	std::call_once(setupWatchSignalFlag, [](EventLoop *loop, Events eventsPrototype){
+	std::call_once(setupWatchSignalFlag, [dispatcher, &eventsPrototype]{
 		// block all signals at very beginning, all thread will inherits this mask
 		::sigset_t blockThreadSignals;
 		::sigfillset(&blockThreadSignals);
 		::pthread_sigmask(SIG_SETMASK, &blockThreadSignals, nullptr);
-		signalFd = ::signalfd(-1, &blockThreadSignals, SFD_NONBLOCK);
-		handlers::SignalHandler::makeSignalHandler(loop, std::move(eventsPrototype));
-	}, loop, std::move(eventsPrototype));
+		SignalWatcher::signalFd = ::signalfd(-1, &blockThreadSignals, SFD_NONBLOCK);
+		handlers::SignalHandler::makeSignalHandler(dispatcher->dispatchEventLoop(), eventsPrototype);
+	});
 }
 }

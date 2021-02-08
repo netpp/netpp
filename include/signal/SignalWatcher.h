@@ -9,7 +9,7 @@ namespace netpp {
 namespace handlers {
 class SignalHandler;
 }
-class EventLoop;
+class EventLoopDispatcher;
 }
 
 namespace netpp::signal {
@@ -26,10 +26,10 @@ public:
 
 	/**
 	 * @brief enable signal handlering
-	 * @note must call before any threads started
+	 * @note must call before any threads started, or signal may send to unexpected thread
 	 * 
 	 */
-	static void enableWatchSignal(EventLoop *loop, Events eventsPrototype);
+	static void enableWatchSignal(EventLoopDispatcher *dispatcher, Events eventsPrototype);
 
 private:
 	static int signalFd;

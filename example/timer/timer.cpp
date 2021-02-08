@@ -1,7 +1,6 @@
 #include "time/Timer.h"
 #include "time/TimeWheel.h"
 #include "EventLoop.h"
-#include "Log.h"
 #include <iostream>
 
 class WheelEntry : public netpp::time::TimeWheelEntry {
@@ -13,7 +12,6 @@ public:
 
 int main()
 {
-	netpp::initLogger("", spdlog::level::critical);
 	netpp::EventLoop loop;
 	std::shared_ptr<netpp::time::Timer> timer;
 	std::shared_ptr<netpp::time::TimeWheel> wheel;

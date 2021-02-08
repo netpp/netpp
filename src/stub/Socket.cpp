@@ -1,5 +1,5 @@
 #include "stub/Socket.h"
-#include "Log.h"
+#include "support/Log.h"
 #include "error/Exception.h"
 #include <cstring>
 extern "C" {
@@ -13,7 +13,7 @@ int socket(int domain, int type, int protocol)
 	int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (fd == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "create socket failed due to {}", std::strerror(errno));
+		LOG_WARN("create socket failed due to {}", std::strerror(errno));
 		switch (errno)
 		{
 			case EACCES:
@@ -39,7 +39,7 @@ int bind(int sockfd, const struct ::sockaddr *addr, ::socklen_t addrlen)
 	int ret = ::bind(sockfd, addr, addrlen);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "bind address failed due to {}", std::strerror(errno));
+		LOG_WARN("bind address failed due to {}", std::strerror(errno));
 		switch (errno)
 		{
 			case EACCES:
@@ -70,7 +70,7 @@ int listen(int sockfd, int backlog)
 	int ret = ::listen(sockfd, backlog);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "listen failed due to {}", std::strerror(errno));
+		LOG_WARN("listen failed due to {}", std::strerror(errno));
 		switch (errno)
 		{
 			case EADDRINUSE:
@@ -90,7 +90,7 @@ int accept4(int sockfd, struct ::sockaddr *addr, ::socklen_t *addrlen, int flags
 	int newSocket = ::accept4(sockfd, addr, addrlen, flags);
 	if (newSocket == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "accept failed due to {}", std::strerror(errno));
+		LOG_WARN("accept failed due to {}", std::strerror(errno));
 		switch(errno)
 		{
 			case EAGAIN:
@@ -122,7 +122,7 @@ int connect(int sockfd, const struct ::sockaddr *addr, ::socklen_t addrlen)
 	int ret = ::connect(sockfd, addr, addrlen);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "connect failed due to {}", std::strerror(errno));
+		LOG_WARN("connect failed due to {}", std::strerror(errno));
 		switch (errno)
 		{
 			case EACCES:
@@ -155,7 +155,7 @@ int shutdown(int sockfd, int how) noexcept
 	int ret = ::shutdown(sockfd, how);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "shutdown {} failed due to {}", sockfd, std::strerror(errno));
+		LOG_WARN("shutdown {} failed due to {}", sockfd, std::strerror(errno));
 		switch (errno)
 		{
 			case EBADF:
@@ -173,7 +173,7 @@ int getsockopt(int sockfd, int level, int optname, void *optval, ::socklen_t *op
 	int ret = ::getsockopt(sockfd, level, optname, optval, optlen);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "get socket {} options failed due to {}", sockfd, std::strerror(errno));
+		LOG_WARN("get socket {} options failed due to {}", sockfd, std::strerror(errno));
 		switch (errno)
 		{
 			case EBADF:

@@ -5,7 +5,7 @@
 #include "epoll/EpollEvent.h"
 #include "epoll/EventHandler.h"
 #include "epoll/Epoll.h"
-#include "Log.h"
+#include "support/Log.h"
 
 namespace netpp::epoll {
 EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
@@ -33,7 +33,7 @@ void EpollEvent::handleEvents()
 
 void EpollEvent::setEnableWrite(bool enable)
 {
-	SPDLOG_LOGGER_TRACE(logger, "Set {} enable write {}", _watchingFd, enable);
+	LOG_TRACE("Set {} enable write {}", _watchingFd, enable);
 	if (enable)
 		m_watchingEvents.events |= EPOLLOUT;
 	else
@@ -43,7 +43,7 @@ void EpollEvent::setEnableWrite(bool enable)
 
 void EpollEvent::setEnableRead(bool enable)
 {
-	SPDLOG_LOGGER_TRACE(logger, "Set {} enable read {}", _watchingFd, enable);
+	LOG_TRACE("Set {} enable read {}", _watchingFd, enable);
 	if (enable)
 		m_watchingEvents.events |= EPOLLIN;
 	else

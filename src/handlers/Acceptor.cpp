@@ -1,6 +1,6 @@
 #include "handlers/Acceptor.h"
 #include "handlers/TcpConnection.h"
-#include "Log.h"
+#include "support/Log.h"
 #include "EventLoopDispatcher.h"
 #include "error/Exception.h"
 #include "error/SocketError.h"
@@ -39,7 +39,7 @@ void Acceptor::handleRead()
 																	std::move(commingConnection),
 																	m_events).lock();
 		std::shared_ptr<Channel> channel = connection->getIOChannel();	// connection ptr will not expire here
-		SPDLOG_LOGGER_TRACE(logger, "New connection on Socket {}", m_socket->fd());
+		LOG_TRACE("New connection on Socket {}", m_socket->fd());
 		m_events.onConnected(channel);
 	} catch (error::SocketException &se) {
 		m_events.onError(se.getErrorCode());

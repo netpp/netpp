@@ -2,7 +2,6 @@
 #include "Events.h"
 #include "EventLoopDispatcher.h"
 #include <iostream>
-#include "Log.h"
 
 class SignalEvent {
 public:
@@ -14,10 +13,9 @@ public:
 
 int main()
 {
-	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher;
 	netpp::Events event(std::make_shared<SignalEvent>());
-	netpp::signal::SignalWatcher::enableWatchSignal(dispatcher.dispatchEventLoop(), std::move(event));
+	netpp::signal::SignalWatcher::enableWatchSignal(&dispatcher, std::move(event));
 	netpp::signal::SignalWatcher::watch(netpp::signal::Signals::E_QUIT);
 	dispatcher.startLoop();
 }

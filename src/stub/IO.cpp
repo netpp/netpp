@@ -1,5 +1,5 @@
 #include "stub/IO.h"
-#include "Log.h"
+#include "support/Log.h"
 #include "error/Exception.h"
 extern "C" {
 #include <unistd.h>
@@ -15,7 +15,7 @@ int close(int fd) noexcept
 	int ret = ::close(fd);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "close {} failed due to {}", fd, std::strerror(errno));
+		LOG_WARN("close {} failed due to {}", fd, std::strerror(errno));
 		// No need handle close failed, just log it
 		switch (errno)
 		{
@@ -35,7 +35,7 @@ int close(int fd) noexcept
 	::ssize_t size = ::write(fd, buf, count);
 	if (size == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "write to {} failed due to {}", fd, std::strerror(errno));
+		LOG_WARN("write to {} failed due to {}", fd, std::strerror(errno));
 		// No need handle write failed, just log it
 		switch (errno)
 		{
@@ -62,7 +62,7 @@ int close(int fd) noexcept
 	::ssize_t size = ::read(fd, buf, count);
 	if (size == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "write to {} failed due to {}", fd, std::strerror(errno));
+		LOG_WARN("write to {} failed due to {}", fd, std::strerror(errno));
 		switch (errno)
 		{
 			case EAGAIN:
@@ -83,7 +83,7 @@ int pipe2(int pipefd[2], int flags) noexcept
 	int ret = ::pipe2(pipefd, O_NONBLOCK);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "open pipe failed due to {}", std::strerror(errno));
+		LOG_WARN("open pipe failed due to {}", std::strerror(errno));
 		switch (errno)
 		{
 			case EFAULT:
@@ -102,7 +102,7 @@ retrySendMsg:
 	::ssize_t ret = ::sendmsg(sockfd, msg, flags);
 	if (ret == -1)
 	{
-		SPDLOG_LOGGER_WARN(logger, "sendmsg on {} failed due to {}", sockfd, std::strerror(errno));
+		LOG_WARN("sendmsg on {} failed due to {}", sockfd, std::strerror(errno));
 		switch (errno)
 		{
 			case EACCES:
@@ -122,7 +122,7 @@ retrySendMsg:
 				throw error::SocketException(errno);
 				break;
 			case EINTR:
-				SPDLOG_LOGGER_INFO(logger, "restart sendmsg");
+				LOG_INFO("restart sendmsg");
 				goto retrySendMsg;
 				break;
 			case EINVAL:
@@ -154,7 +154,7 @@ retryRecvMsg:
 				throw error::ResourceLimitException(errno);
 				break;
 			case EINTR:
-				SPDLOG_LOGGER_INFO(logger, "restart recvmsg");
+				LOG_INFO("restart recvmsg");
 				goto retryRecvMsg;
 				break;
 			case ECONNREFUSED:

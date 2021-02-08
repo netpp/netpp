@@ -4,7 +4,7 @@
 
 #include "time/Timer.h"
 #include "EventLoop.h"
-#include "Log.h"
+#include "support/Log.h"
 #include "stub/IO.h"
 extern "C" {
 #include <unistd.h>
@@ -19,7 +19,7 @@ Timer::Timer(EventLoop *loop)
 {
 	m_timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 	std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
-	SPDLOG_LOGGER_TRACE(logger, "Timer fd {}", m_timerFd);
+	LOG_TRACE("Timer fd {}", m_timerFd);
 
 	m_handler = make_shared<handlers::TimerHandler>(this);
 	m_event = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
@@ -28,7 +28,7 @@ Timer::Timer(EventLoop *loop)
 Timer::~Timer()
 {
 	if (stub::close(m_timerFd) == -1)
-		SPDLOG_LOGGER_WARN(logger, "failed to close timer");
+		LOG_WARN("failed to close timer");
 }
 
 void Timer::onTimeOut()
@@ -36,7 +36,7 @@ void Timer::onTimeOut()
 	try {
 		m_callback();
 	} catch (...) {
-		SPDLOG_LOGGER_CRITICAL(logger, "exception throwed while executing timeout method, stop");
+		LOG_CRITICAL("exception throwed while executing timeout method, stop");
 		throw;
 	}
 }
@@ -99,7 +99,7 @@ void Timer::setTime()
 		m_timerSpec.it_interval.tv_sec = m_interval / 1000;
 		m_timerSpec.it_interval.tv_nsec = (static_cast<long>(m_interval) % 1000) * 1000 * 1000;
 	}
-	SPDLOG_LOGGER_TRACE(logger, "Start timer {} in {}.{}", m_timerFd, now.tv_sec, now.tv_nsec);
+	LOG_TRACE("Start timer {} in {}.{}", m_timerFd, now.tv_sec, now.tv_nsec);
 	
 	// settime will always success
 	::timerfd_settime(m_timerFd, TFD_TIMER_ABSTIME, &m_timerSpec, nullptr);

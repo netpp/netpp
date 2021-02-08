@@ -3,7 +3,6 @@
 //
 
 #include "TcpClient.h"
-#include "Log.h"
 #include "Events.h"
 #include "EventLoopDispatcher.h"
 #include <iostream>
@@ -16,7 +15,7 @@ public:
 	{
 		std::size_t size = channel->availableRead();
 		std::string data = channel->retrieveString(size);
-		SPDLOG_LOGGER_TRACE(netpp::logger, "Received size {} data {}", size, data);
+		std::cout << "Received size "<< size << " data " << data;
 		std::string str;
 		// long-term operation is not allowed in event handler
 		// it will cause event loop block!!
@@ -33,13 +32,12 @@ public:
 
 	void onWriteCompleted()
 	{
-		SPDLOG_LOGGER_TRACE(netpp::logger, "Write completed");
+		std::cout << "Write completed";
 	}
 };
 
 int main()
 {
-	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher;
 	netpp::Events events(std::make_shared<Echo>());
 	netpp::TcpClient client(&dispatcher, netpp::Address("127.0.0.1", 12345), std::move(events));

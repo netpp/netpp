@@ -1,5 +1,4 @@
 #include "TcpServer.h"
-#include "Log.h"
 #include "Events.h"
 #include "Channel.h"
 #include "EventLoopDispatcher.h"
@@ -10,7 +9,7 @@ public:
 	{
 		std::size_t size = channel->availableRead();
 		std::string data = channel->retrieveString(size);
-		SPDLOG_LOGGER_TRACE(netpp::logger, "received {} on channel", data);
+		std::cout << "received " << data << " on channel" << std::endl;
 		channel->writeString(data);
 		channel->send();
 	}
@@ -18,7 +17,6 @@ public:
 
 int main()
 {
-	netpp::initLogger();
 	netpp::EventLoopDispatcher dispatcher(1, 1000, 8);
 	netpp::Events events(std::make_shared<Echo>());
 	netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(events));

@@ -4,7 +4,7 @@
 
 #include "EventLoop.h"
 #include "epoll/EpollEvent.h"
-#include "Log.h"
+#include "support/Log.h"
 
 namespace netpp {
 
@@ -45,7 +45,7 @@ EventLoop::~EventLoop()
 	}
 	catch (...)
 	{
-		SPDLOG_LOGGER_CRITICAL(logger, "Exeception from event loop");
+		LOG_CRITICAL("Exeception from event loop");
 		throw;
 	}
 }

@@ -3,7 +3,7 @@
 //
 
 #include "socket/Socket.h"
-#include "Log.h"
+#include "support/Log.h"
 #include <cstring>
 #include "stub/IO.h"
 #include "stub/Socket.h"
@@ -17,7 +17,7 @@ Socket::Socket(const Address &addr)
 {
 	m_socketFd = stub::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
 	m_addr = addr;
-	SPDLOG_LOGGER_DEBUG(logger, "Socket fd: {}", m_socketFd);
+	LOG_DEBUG("Socket fd: {}", m_socketFd);
 }
 
 Socket::Socket(int fd, const Address &addr)
@@ -29,7 +29,7 @@ Socket::Socket(int fd, const Address &addr)
 
 Socket::~Socket()
 {
-	SPDLOG_LOGGER_DEBUG(logger, "socket {} destructed", m_socketFd);
+	LOG_DEBUG("socket {} destructed", m_socketFd);
 	stub::close(m_socketFd);
 }
 
@@ -38,7 +38,7 @@ void Socket::listen()
 	const sockaddr_in *inetAddr = m_addr.sockAddrIn();
 	stub::bind(m_socketFd, reinterpret_cast<const sockaddr *>(inetAddr), sizeof(::sockaddr_in));
 	stub::listen(m_socketFd, 10);
-	SPDLOG_LOGGER_TRACE(logger, "Start listen");
+	LOG_TRACE("Start listen");
 }
 
 std::unique_ptr<Socket> Socket::accept() const
@@ -47,7 +47,7 @@ std::unique_ptr<Socket> Socket::accept() const
 	socklen_t addrSize = sizeof(::sockaddr_in);
 	std::memset(addr.get(), 0, addrSize);
 	int newSocket = stub::accept4(m_socketFd, reinterpret_cast<::sockaddr *>(addr.get()), &addrSize, SOCK_NONBLOCK);
-	SPDLOG_LOGGER_TRACE(logger, "Accepted new client with fd {}", newSocket);
+	LOG_TRACE("Accepted new client with fd {}", newSocket);
 	return make_unique<Socket>(newSocket, Address(addr));
 }
 
@@ -59,7 +59,7 @@ void Socket::connect()
 
 void Socket::shutdownWrite() noexcept
 {
-	SPDLOG_LOGGER_TRACE(logger, "Shut down write for socket {}", m_socketFd);
+	LOG_TRACE("Shut down write for socket {}", m_socketFd);
 	stub::shutdown(m_socketFd, SHUT_WR);
 }
 
