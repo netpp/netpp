@@ -55,11 +55,11 @@ TEST_F(TimerTest, TimeWheel)
 	std::shared_ptr<netpp::time::TimeWheel> wheel;
 	loop.runInLoop([&]{
 		timer = std::make_shared<netpp::time::Timer>(&loop);
-		timer->setInterval(430);
+		timer->setInterval(83);
 		timer->setSingleShot(true);
 		timer->setOnTimeout([]{ throw std::runtime_error(""); });
 		timer->start();
-		wheel = std::make_shared<netpp::time::TimeWheel>(&loop, 50, 2);
+		wheel = std::make_shared<netpp::time::TimeWheel>(&loop, 10, 2);
 		wheel->addToWheel(std::make_shared<TestWheelEntry>(wheel));
 	});
 	EXPECT_THROW(loop.run(), std::runtime_error);

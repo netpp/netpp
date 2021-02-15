@@ -28,9 +28,6 @@ public:
 	int writeTriggerCount;
 	int errorTriggerCount;
 	int disconnectTriggerCount;
-
-	void setEpollEvent(std::unique_ptr<netpp::epoll::EpollEvent> &&event) { m_epollEvent = std::move(event); }
-	netpp::epoll::EpollEvent *getEpollEvent() { return m_epollEvent.get(); }
 };
 
 class EpollEventTest : public testing::Test {
@@ -39,8 +36,9 @@ protected:
 	{
 		epoll = std::make_unique<netpp::epoll::Epoll>();
 		handler = std::make_shared<Handler>();
-		handler->setEpollEvent(std::make_unique<netpp::epoll::EpollEvent>(epoll.get(), handler, 0));
-		event = handler->getEpollEvent();
+		auto epollEvent = std::make_unique<netpp::epoll::EpollEvent>(epoll.get(), handler, 0);
+		event = epollEvent.get();
+		handler->m_epollEvent = std::move(epollEvent);
 	}
 	void TearDown() override {}
 	

@@ -7,7 +7,6 @@
 
 #include <vector>
 #include <map>
-
 extern "C" {
 #include <sys/epoll.h>
 }
@@ -18,6 +17,12 @@ class EpollEvent;
 
 class Epoll {
 public:
+	/**
+	 * @brief Construct a new Epoll object
+	 * @throw ResourceLimitException
+	 * 1.file descriptors limit
+	 * 2.insufficient memory to create the kernel object
+	 */
 	Epoll();
 	~Epoll();
 

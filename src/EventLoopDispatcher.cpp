@@ -10,10 +10,12 @@ namespace netpp {
 EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount)
 	: m_dispatchIndex{0}
 {
+	// one loop will run in main thread
 	if (loopsCount > 1)
-		m_threadPool = std::make_unique<support::ThreadPool>(loopsCount - 1);/*one loop will run in main thread*/
+		m_threadPool = std::make_unique<support::ThreadPool>(loopsCount - 1);
 	else
 		m_threadPool = nullptr;
+	
 	for (unsigned i = 0; i < loopsCount; ++i)
 		m_loops.emplace_back(std::make_unique<EventLoop>());
 }
@@ -21,16 +23,19 @@ EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount)
 EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount, unsigned timeWheelRotateInterval, unsigned timeWheelBucketCount)
 	: m_dispatchIndex{0}
 {
+	// one loop will run in main thread
 	if (loopsCount > 1)
-		m_threadPool = std::make_unique<support::ThreadPool>(loopsCount - 1);/*one loop will run in main thread*/
+		m_threadPool = std::make_unique<support::ThreadPool>(loopsCount - 1);
 	else
 		m_threadPool = nullptr;
+	
 	for (unsigned i = 0; i < loopsCount; ++i)
 		m_loops.emplace_back(std::make_unique<EventLoop>(timeWheelRotateInterval, timeWheelBucketCount));
 }
 
 EventLoop *EventLoopDispatcher::dispatchEventLoop()
 {
+	// TODO: load balance
 	if (m_loops.size() == 0)
 		return nullptr;
 	if (++m_dispatchIndex >= m_loops.size())
@@ -40,6 +45,7 @@ EventLoop *EventLoopDispatcher::dispatchEventLoop()
 
 void EventLoopDispatcher::startLoop()
 {
+	// FIXME: logger is optional, give user a way to disable it
 	initLogger();
 	if (m_threadPool)
 	{

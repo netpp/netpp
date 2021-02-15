@@ -20,7 +20,7 @@ int close(int fd) noexcept
 		switch (errno)
 		{
 			case EBADF:
-			case EINTR:
+			case EINTR:	// man page: close() must not be called again after an EINTR error
 			case EIO:
 			case ENOSPC:
 			case EDQUOT:
@@ -45,7 +45,7 @@ int close(int fd) noexcept
 			case EDQUOT:
 			case EFAULT:
 			case EFBIG:
-			case EINTR:
+			case EINTR:// will automatically restart
 			case EINVAL:
 			case EIO:
 			case ENOSPC:
@@ -68,7 +68,7 @@ int close(int fd) noexcept
 			case EAGAIN:
 			case EBADF:
 			case EFAULT:
-			case EINTR:
+			case EINTR:// will automatically restart
 			case EINVAL:
 			case EIO:
 			case EISDIR:

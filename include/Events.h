@@ -10,9 +10,9 @@
 #include <memory>
 #include "error/SocketError.h"
 #include "signal/Signals.h"
+#include "support/ThreadPool.hpp"
 
 namespace netpp {
-
 /**
  * @brief test if class has method, only for Events
  * @param METHOD method name
@@ -40,17 +40,18 @@ ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
  */
 class Events final {
 public:
-	Events() : m_impl{nullptr} {}
+	Events() : m_eventsPool{nullptr}, m_impl{nullptr} {}
 
 	/**
 	 * @brief Construct a new Events object
 	 * 
 	 * @tparam Impl		The user event handler
 	 * @param impl		shared_ptr to event handler, all event loop will shared the same instance, make sure it's thread safe
+	 * @param threads	threads event handler will use, <= 0 will let ThreadPool to find out
 	 */
 	template<typename Impl>
-	explicit Events(std::shared_ptr<Impl> impl)
-	: m_impl{impl}
+	explicit Events(std::shared_ptr<Impl> impl, int threads = 0)
+	: m_eventsPool{std::make_unique<support::ThreadPool>(threads)}, m_impl{impl}
 	{
 		Impl *implPtr = impl.get();
 		if constexpr (hasConnected<Impl>::value)
@@ -65,27 +66,31 @@ public:
 			m_errorCb = std::bind(&Impl::onError, implPtr, std::placeholders::_1);
 		if constexpr (hasSignal<Impl>::value)
 			m_signalCb = std::bind(&Impl::onSignal, implPtr, std::placeholders::_1);
+		m_eventsPool->start();
 	}
 
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
-	{ if (m_connectedCb) m_connectedCb(channel); }
+	{ if (m_connectedCb) m_eventsPool->run(m_connectedCb, channel); }
 
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
-	{ if (m_receiveMsgCb) m_receiveMsgCb(channel); }
+	{ if (m_receiveMsgCb) m_eventsPool->run(m_receiveMsgCb, channel); }
 
 	void onWriteCompleted()
-	{ if (m_writeCompletedCb) m_writeCompletedCb(); }
+	{ if (m_writeCompletedCb) m_eventsPool->run(m_writeCompletedCb); }
 
 	void onDisconnect()
-	{ if (m_disconnectCb) m_disconnectCb(); }
+	{ if (m_disconnectCb) m_eventsPool->run(m_disconnectCb); }
 
 	void onError(error::SocketError code)
-	{ if (m_errorCb) m_errorCb(code); }
+	{ if (m_errorCb) m_eventsPool->run(m_errorCb, code); }
 
 	void onSignal(signal::Signals signal)
-	{ if (m_signalCb) m_signalCb(signal); }
+	{ if (m_signalCb) m_eventsPool->run(m_signalCb, signal); }
 
 private:
+	// every event handler will shared same thread pool
+	std::shared_ptr<support::ThreadPool> m_eventsPool;
+
 	std::function<void(std::shared_ptr<netpp::Channel>)> m_connectedCb;
 	std::function<void(std::shared_ptr<netpp::Channel>)> m_receiveMsgCb;
 	std::function<void()> m_writeCompletedCb;

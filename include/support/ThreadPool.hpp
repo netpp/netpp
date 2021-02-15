@@ -6,6 +6,7 @@
 #include <vector>
 #include <future>
 #include <memory>
+#include <type_traits>
 #include "ThreadBase.hpp"
 
 namespace netpp::support {
@@ -28,17 +29,33 @@ public:
 	 */
 	bool start();
 
-	template<typename Runnable, typename ... Args>
+	template <typename Runnable, typename ... Args>
+	using ResultType = typename std::result_of<Runnable(Args...)>::type;
+
+	template<typename Runnable, typename ... Args,
+			typename RetType = ResultType<Runnable, Args...>,
+			typename = typename std::enable_if<!std::is_same<RetType, void>::value>::type>
 	std::future<typename std::result_of<Runnable(Args...)>::type> run(Runnable runnable, Args ... args)
 	{
-		using ResultType = typename std::result_of<Runnable(Args...)>::type;
-		std::packaged_task<ResultType(Args...)> task(runnable);
-		std::future<ResultType> res(task.get_future());
+		std::packaged_task<RetType(Args...)> task(runnable);
+		std::future<RetType> res(task.get_future());
 		RunnableWrapper wrapper(std::move(task), args...);
 		++taskCount;
 		workQueue.push(std::move(wrapper));
 		waitTask.notify_one();
 		return std::move(res);
+	}
+
+	template<typename Runnable, typename ... Args,
+			typename RetType = ResultType<Runnable, Args...>,
+			typename = typename std::enable_if<std::is_same<RetType, void>::value>::type>
+	void run(Runnable runnable, Args ... args)
+	{
+		std::packaged_task<RetType(Args...)> task(runnable);
+		RunnableWrapper wrapper(std::move(task), args...);
+		++taskCount;
+		workQueue.push(std::move(wrapper));
+		waitTask.notify_one();
 	}
 
 	inline unsigned maxThreadCount() const { return threadNumber; }

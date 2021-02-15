@@ -5,6 +5,7 @@
 #include "handlers/TimerHandler.h"
 #include "time/Timer.h"
 #include "support/Log.h"
+#include "EventLoop.h"
 
 namespace netpp::handlers {
 TimerHandler::TimerHandler(time::Timer *timer)
@@ -16,5 +17,14 @@ void TimerHandler::handleRead()
 	uint64_t tirggeredCount;
 	if (::read(_timer->fd(), &tirggeredCount, sizeof(uint64_t)) != -1)
 		_timer->onTimeOut();
+}
+
+void TimerHandler::handleClose()
+{
+	// this will not triggered by epoll, used to close timer
+	m_epollEvent->disableEvents();
+	// extern TcpConnection life after remove
+	volatile auto externLife = shared_from_this();
+	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
 }
 }

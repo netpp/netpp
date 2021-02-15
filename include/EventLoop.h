@@ -19,10 +19,13 @@ class EventHandler;
 class EventLoop {
 public:
 	/**
-	 * @brief Default constructed EventLoop won't create timewheel
-	 * 
+	 * @brief Default EventLoop, will not create timewheel
+	 * @throw ResourceLimitException
+	 * 1. file descriptors limit
+	 * 2. no more memory
 	 */
 	EventLoop() = default;
+
 	/**
 	 * @brief Construct an EventLoop with timewheel
 	 * 
@@ -44,15 +47,16 @@ public:
 	inline epoll::Epoll *getPoll() { return &m_poll; }
 	time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
 
+	/// @brief runs method in event loop
 	void runInLoop(std::function<void()> functor);
 
 private:
 	static thread_local EventLoop *_thisThreadLoop;
 	epoll::Epoll m_poll;
-	std::unordered_set<std::shared_ptr<epoll::EventHandler>> m_handlers;
+	std::unordered_set<std::shared_ptr<epoll::EventHandler>> m_handlers;	// epoll events handlers
 
-	std::mutex m_functorMutex;
-	std::vector<std::function<void()>> m_pendingFuns;
+	std::mutex m_functorMutex;							// guard m_pendingFuns
+	std::vector<std::function<void()>> m_pendingFuns;	// methods run in loop
 
 	std::unique_ptr<time::TimeWheel> m_kickIdleConnectionWheel;
 };

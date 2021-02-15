@@ -9,10 +9,6 @@ extern "C" {
 }
 
 class ByteArrayTest : public testing::Test {
-public:
-	/*static ssize_t expectReadVRet;
-	static ssize_t expectWriteVRet;*/
-
 protected:
 	void SetUp() override {}
 	void TearDown() override {}
@@ -24,34 +20,6 @@ protected:
 		std::memcpy(vec->iov_base, data, length);
 	}
 };
-
-/*ssize_t ByteArrayTest::expectReadVRet = 0;
-ssize_t ByteArrayTest::expectWriteVRet = 0;
-
-using readv_func_t = ssize_t(*)(int, const struct iovec *, int);
-using writev_func_t = ssize_t(*)(int, const struct iovec *, int);
-using socket_func_t = int(*)(int, int, int);
-using shutdown_func_t = int(*)(int, int);
-readv_func_t readv_func = reinterpret_cast<readv_func_t>(::dlsym(RTLD_NEXT, "readv"));
-writev_func_t writev_func = reinterpret_cast<writev_func_t>(::dlsym(RTLD_NEXT, "writev"));
-socket_func_t socket_func = reinterpret_cast<socket_func_t>(::dlsym(RTLD_NEXT, "socket"));
-shutdown_func_t shutdown_func = reinterpret_cast<shutdown_func_t>(::dlsym(RTLD_NEXT, "shutdown"));
-extern "C" ssize_t readv(int fildes, const struct iovec *iov, int iovcnt)
-{
-	return ByteArrayTest::expectReadVRet;
-}
-extern "C" ssize_t writev(int fildes, const struct iovec *iov, int iovcnt)
-{
-	return ByteArrayTest::expectWriteVRet;
-}
-extern "C" int socket(int domain, int type, int protocol)
-{
-	return 1;
-}
-extern "C" int shutdown(int sockfd, int how)
-{
-	return 1;
-}*/
 
 TEST_F(ByteArrayTest, ReadWriteWithinNode)
 {
@@ -181,7 +149,7 @@ TEST_F(ByteArrayTest, ReadWriteByteArrayContinuous)
 	EXPECT_EQ(byteArray.retrieveString(6), std::string("ijklmn"));
 }
 
-TEST_F(ByteArrayTest, ByteArrayASIOVecInNode)
+TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 {
 	// empty
 	{
@@ -425,6 +393,6 @@ TEST_F(ByteArrayTest, ByteArrayASIOVecInNode)
 	// writeVec.adjustByteArray(-1);
 }
 
-TEST_F(ByteArrayTest, ByteArrayASIOVecCrossNode)
+TEST_F(ByteArrayTest, ByteArrayAsIOVecCrossNode)
 {
 }

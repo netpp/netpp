@@ -96,7 +96,7 @@ int accept4(int sockfd, struct ::sockaddr *addr, ::socklen_t *addrlen, int flags
 			case EAGAIN:
 			case EBADF:
 			case EFAULT:
-			case EINTR:
+			case EINTR:// will automatically restart
 			case EINVAL:
 			case ENOTSOCK:
 			case EOPNOTSUPP:
@@ -132,7 +132,7 @@ int connect(int sockfd, const struct ::sockaddr *addr, ::socklen_t addrlen)
 			case EALREADY:
 			case EBADF:
 			case EFAULT:
-			case EINTR:
+			case EINTR:// can not restart connect immediately, reconnect in loop
 			case EISCONN:
 			case ENOTSOCK:
 			case EPROTOTYPE:

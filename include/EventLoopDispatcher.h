@@ -10,6 +10,10 @@
 #include "support/ThreadPool.hpp"
 
 namespace netpp {
+/**
+ * @brief The dispatcher for event loop,
+ * netpp contains multipile reactors, one reactor per loop
+ */
 class EventLoopDispatcher {
 public:
 	// TODO: maybe move params into config class

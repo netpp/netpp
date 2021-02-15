@@ -22,14 +22,16 @@ Timer::Timer(EventLoop *loop)
 	LOG_TRACE("Timer fd {}", m_timerFd);
 
 	m_handler = make_shared<handlers::TimerHandler>(this);
-	m_event = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
+	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
+	_event = event.get();
+	m_handler->m_epollEvent = std::move(event);
 }
 
 Timer::~Timer()
 {
-	// FIXME: EventLoop does not own Timer object, destruct Timer need to disable events
 	if (stub::close(m_timerFd) == -1)
 		LOG_WARN("failed to close timer");
+	m_handler->handleClose();
 }
 
 void Timer::onTimeOut()
@@ -60,7 +62,7 @@ void Timer::start()
 	{
 		m_running = true;
 		// start timer
-		m_event->setEnableRead(true);
+		_event->setEnableRead(true);
 		setTimeAndRun();
 	}
 }
@@ -71,7 +73,7 @@ void Timer::stop()
 	{
 		m_running = false;
 		std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
-		m_event->setEnableRead(false);
+		_event->setEnableRead(false);
 		// settime will always success
 		::timerfd_settime(m_timerFd, TFD_TIMER_ABSTIME, &m_timerSpec, nullptr);
 	}

@@ -12,21 +12,17 @@
 
 class Echo {
 public:
-	Echo() : pool{1} { pool.start(); }
-
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
 		// long-term operation is not allowed in event handler
 		// it will cause event loop block!!
-		pool.run([channel]{
-			std::size_t size = channel->availableRead();
-			std::string data = channel->retrieveString(size);
-			std::cout << "Received size "<< size << " data " << data;
-			std::string str;
-			std::cin >> str;
-			channel->writeString(str);
-			channel->send();
-		});
+		std::size_t size = channel->availableRead();
+		std::string data = channel->retrieveString(size);
+		std::cout << "Received size "<< size << " data " << data;
+		std::string str;
+		std::cin >> str;
+		channel->writeString(str);
+		channel->send();
 	}
 
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
@@ -39,9 +35,6 @@ public:
 	{
 		std::cout << "Write completed";
 	}
-
-private:
-	netpp::support::ThreadPool pool;
 };
 
 int main()
