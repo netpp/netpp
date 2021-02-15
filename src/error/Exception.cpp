@@ -1,5 +1,6 @@
 #include "error/Exception.h"
 #include "error/SocketError.h"
+#include "signal/Signals.h"
 #include <cstring>
 extern "C" {
 #include <errno.h>
@@ -31,5 +32,10 @@ const char* UnhandledSignal::what() const noexcept
 {
 	// TODO: list stacktrace
 	return sigdescr_np(m_sigInfo.ssi_signo);
+}
+
+signal::Signals UnhandledSignal::signal()
+{
+	return signal::toNetppSignal(m_sigInfo.ssi_signo);
 }
 }

@@ -24,7 +24,7 @@ int main()
 		timer->setSingleShot(false);
 		timer->setOnTimeout([wheel]{
 			static int timerTriggerCount = 0;
-			std::cout << "Timer triggered count" << timerTriggerCount << std::endl;
+			std::cout << "Timer triggered count " << timerTriggerCount << std::endl;
 			++timerTriggerCount;
 			if (timerTriggerCount % 3 == 0)
 				wheel->addToWheel(std::make_shared<WheelEntry>());

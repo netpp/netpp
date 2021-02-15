@@ -15,7 +15,7 @@ using std::make_shared;
 
 namespace netpp::time {
 Timer::Timer(EventLoop *loop)
-	: m_interval(0), m_singleShot{true}, m_running{false}, m_timeOutCount{0}
+	: m_interval(1000), m_singleShot{true}, m_running{false}, m_timeOutCount{0}
 {
 	m_timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
 	std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
@@ -27,15 +27,19 @@ Timer::Timer(EventLoop *loop)
 
 Timer::~Timer()
 {
+	// FIXME: EventLoop does not own Timer object, destruct Timer need to disable events
 	if (stub::close(m_timerFd) == -1)
 		LOG_WARN("failed to close timer");
 }
 
 void Timer::onTimeOut()
 {
-	try {
+	try
+	{
 		m_callback();
-	} catch (...) {
+	}
+	catch (...)
+	{
 		LOG_CRITICAL("exception throwed while executing timeout method, stop");
 		throw;
 	}
@@ -44,8 +48,8 @@ void Timer::onTimeOut()
 void Timer::setInterval(unsigned int msec)
 {
 	m_interval = msec;
-	if (m_running)	// if running affect immediately
-		setTime();
+	if (m_running)	// if running, affect immediately
+		setTimeAndRun();
 	/*m_timerSpec.it_interval.tv_sec = msec / 1000;
 	m_timerSpec.it_interval.tv_nsec = (static_cast<long>(msec) % 1000) * 1000 * 1000;*/
 }
@@ -57,7 +61,7 @@ void Timer::start()
 		m_running = true;
 		// start timer
 		m_event->setEnableRead(true);
-		setTime();
+		setTimeAndRun();
 	}
 }
 
@@ -73,7 +77,7 @@ void Timer::stop()
 	}
 }
 
-void Timer::setTime()
+void Timer::setTimeAndRun()
 {
 	// get first trigger time
 	timespec now{0};

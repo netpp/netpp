@@ -3,7 +3,6 @@
 #include "EventLoop.h"
 #include "support/ThreadPool.hpp"
 
-// TODO: can not trigger timerfd in gtest, why??
 class TimerTest : public testing::Test {
 public:
 	static int timerTriggerCount;
@@ -17,42 +16,52 @@ int TimerTest::wheelTriggerCount = 0;
 
 TEST_F(TimerTest, Timer)
 {
-	/*netpp::EventLoop loop;
+	netpp::EventLoop loop;
 	std::shared_ptr<netpp::time::Timer> timer;
 	loop.runInLoop([&]{
 		timer = std::make_shared<netpp::time::Timer>(&loop);
-		timer->setInterval(1000);
+		timer->setInterval(10);
 		timer->setSingleShot(false);
 		timer->setOnTimeout([]{
 			++timerTriggerCount;
-			if (timerTriggerCount == 5);
+			if (timerTriggerCount == 6)
 				throw std::runtime_error("");
 		});
 		timer->start();
 	});
-	loop.run();
 	EXPECT_THROW(loop.run(), std::runtime_error);
-	EXPECT_EQ(timerTriggerCount, 3);*/
+	EXPECT_EQ(timerTriggerCount, 6);
+}
+
+class TestWheelEntry : public netpp::time::TimeWheelEntry {
+public:
+	explicit TestWheelEntry(std::weak_ptr<netpp::time::TimeWheel> wheel) : _wheel{wheel} {}
+	~TestWheelEntry() override = default;
+	void onTimeout() override;
+private:
+	std::weak_ptr<netpp::time::TimeWheel> _wheel;
+};
+
+void TestWheelEntry::onTimeout()
+{
+	_wheel.lock()->addToWheel(std::make_shared<TestWheelEntry>(_wheel.lock()));
+	++TimerTest::wheelTriggerCount;
 }
 
 TEST_F(TimerTest, TimeWheel)
 {
-	/*class TestWheelEntry : public netpp::time::TimeWheelEntry {
-	public:
-		~TestWheelEntry() override { ++wheelTriggerCount; }
-	};
 	netpp::EventLoop loop;
 	std::shared_ptr<netpp::time::Timer> timer;
 	std::shared_ptr<netpp::time::TimeWheel> wheel;
 	loop.runInLoop([&]{
 		timer = std::make_shared<netpp::time::Timer>(&loop);
-		timer->setInterval(3500);
+		timer->setInterval(430);
 		timer->setSingleShot(true);
 		timer->setOnTimeout([]{ throw std::runtime_error(""); });
 		timer->start();
-		wheel = std::make_shared<netpp::time::TimeWheel>(&loop, 1, 2);
-		wheel->addToWheel(std::make_shared<TestWheelEntry>());
+		wheel = std::make_shared<netpp::time::TimeWheel>(&loop, 50, 2);
+		wheel->addToWheel(std::make_shared<TestWheelEntry>(wheel));
 	});
 	EXPECT_THROW(loop.run(), std::runtime_error);
-	EXPECT_EQ(wheelTriggerCount, 3);*/
+	EXPECT_EQ(wheelTriggerCount, 8);
 }

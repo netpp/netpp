@@ -19,6 +19,7 @@ public:
 	explicit TimerHandler(time::Timer *timer);
 	~TimerHandler() override = default;
 
+	/// @brief time out
 	void handleRead() override;
 	void handleWrite() override {}
 	void handleError() override {}

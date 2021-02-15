@@ -59,24 +59,30 @@ TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop
 
 void TcpConnection::handleRead()
 {
-	try {
+	try
+	{
 		renewWheel();
 		socket::SocketIO::read(m_socket.get(), m_receiveBuffer);
 		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
 		auto channel = make_shared<Channel>(shared_from_this(), m_writeBuffer, m_receiveBuffer);
 		m_events.onMessageReceived(channel);
-	} catch (error::SocketException &se) {
+	}
+	catch (error::SocketException &se)
+	{
 		// connection refused or not connected
 		m_events.onError(se.getErrorCode());
 		closeAfterWriteCompleted();
-	} catch (error::ResourceLimitException &rle) {
+	}
+	catch (error::ResourceLimitException &rle)
+	{
 		m_events.onError(rle.getSocketErrorCode());
 	}
 }
 
 void TcpConnection::handleWrite()
 {
-	try {
+	try
+	{
 		renewWheel();
 		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))	// if write all
 		{
@@ -86,12 +92,16 @@ void TcpConnection::handleWrite()
 			if (m_state == socket::TcpState::Disconnecting)
 				closeWrite();
 		}
-	} catch (error::SocketException &se) {
+	}
+	catch (error::SocketException &se)
+	{
 		// connection reset or not connect or connect shutdown
 		m_events.onError(se.getErrorCode());
 		m_isWaitWriting = false;
 		closeAfterWriteCompleted();
-	} catch (error::ResourceLimitException &rle) {
+	}
+	catch (error::ResourceLimitException &rle)
+	{
 		m_events.onError(rle.getSocketErrorCode());
 	}
 }

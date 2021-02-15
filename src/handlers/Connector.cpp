@@ -16,11 +16,14 @@ Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::So
 
 void Connector::connect()
 {
-	try {
+	try
+	{
 		// connect may success immediately, manually enable read
 		m_epollEvent->setEnableWrite(true);
 		m_socket->connect();
-	} catch (error::SocketException &se) {
+	}
+	catch (error::SocketException &se)
+	{
 		error::SocketError code = se.getErrorCode();
 		if (code != error::SocketError::E_INPROGRESS)
 			m_events.onError(code);
@@ -115,7 +118,8 @@ std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatche
 											 Address serverAddr,
 											 Events eventsPrototype)
 {
-	try {
+	try
+	{
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto connector = make_shared<Connector>(dispatcher, make_unique<socket::Socket>(serverAddr));
 		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
@@ -126,9 +130,13 @@ std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatche
 		loop->addEventHandlerToLoop(connector);
 
 		return connector;
-	} catch (error::SocketException &se) {
+	}
+	catch (error::SocketException &se)
+	{
 		eventsPrototype.onError(se.getErrorCode());
-	} catch (error::ResourceLimitException &rle) {
+	}
+	catch (error::ResourceLimitException &rle)
+	{
 		eventsPrototype.onError(rle.getSocketErrorCode());
 	}
 	return std::weak_ptr<Connector>();

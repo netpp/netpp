@@ -7,7 +7,7 @@ class ThreadPoolTest : public testing::Test {
 public:
 	inline void threadPoolSleepAdd(int i)
 	{
-		std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(100));
+		std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(10));
 		threadPoolSleepAddValue += i;
 	}
 protected:

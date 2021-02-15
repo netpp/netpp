@@ -8,20 +8,25 @@
 #include <iostream>
 #include "Channel.h"
 #include "EventLoopDispatcher.h"
+#include "support/ThreadPool.hpp"
 
 class Echo {
 public:
+	Echo() : pool{1} { pool.start(); }
+
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
-		std::size_t size = channel->availableRead();
-		std::string data = channel->retrieveString(size);
-		std::cout << "Received size "<< size << " data " << data;
-		std::string str;
 		// long-term operation is not allowed in event handler
 		// it will cause event loop block!!
-		std::cin >> str;
-		channel->writeString(str);
-		channel->send();
+		pool.run([channel]{
+			std::size_t size = channel->availableRead();
+			std::string data = channel->retrieveString(size);
+			std::cout << "Received size "<< size << " data " << data;
+			std::string str;
+			std::cin >> str;
+			channel->writeString(str);
+			channel->send();
+		});
 	}
 
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
@@ -34,6 +39,9 @@ public:
 	{
 		std::cout << "Write completed";
 	}
+
+private:
+	netpp::support::ThreadPool pool;
 };
 
 int main()

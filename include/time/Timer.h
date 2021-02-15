@@ -18,35 +18,53 @@ class EventLoop;
 
 namespace netpp::time {
 /**
- * @brief The timer lives in event loop
+ * @brief Timer runs in EventLoop, but the ownship does not belong to EventLoop,
+ * if user does not own it, the timer will never triggred
  * 
  */
 class Timer {
+	friend class handlers::TimerHandler;
 public:
+	// TODO: remove param loop or set default value, user do not have to specify which event loop
 	explicit Timer(EventLoop *loop);
 	~Timer();
 
+	/// @brief callback on timeout, the callback must NOT throw exception
 	inline void setOnTimeout(std::function<void()> callback) { m_callback = callback; }
-	void onTimeOut();
+	/// @brief set timer trigger interval, by default, interval is 1000ms
 	void setInterval(unsigned msec);
+	/// @brief set timer is single shot, by default, the value is true
 	void setSingleShot(bool singleShot) { m_singleShot = singleShot; }
 
-	inline int fd() const { return m_timerFd; }
+	/// @brief get timer interval
 	inline unsigned interval() const { return m_interval; }
+	/// @brief get is signle shot
 	inline bool singleShot() const { return m_singleShot; }
+	/// @brief get is timer running
 	inline bool running() const { return m_running; }
 
+	/// @brief run timer
 	void start();
+	/// @brief stop timer
 	void stop();
 
+	/// @brief how many times the timer tirggered
 	inline uint64_t triggeredCount() const { return m_timeOutCount; }
 
+// for TimerHandler
 private:
-	void setTime();
+	/// @brief called on timeout, for internal use
+	void onTimeOut();
+	/// @brief get timerfd
+	inline int fd() const { return m_timerFd; }
+
+private:
+	/// @brief set up timer, and start to run
+	void setTimeAndRun();
 	
 	unsigned m_interval;
 	bool m_singleShot;
-	bool m_running;
+	bool m_running;	
 	std::function<void()> m_callback;
 
 	// linux timer fd

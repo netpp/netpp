@@ -46,12 +46,13 @@ protected:
 	
 	static void SetUpTestCase()
 	{
-		::dlsym(RTLD_NEXT, "epoll_create");
+		// FIXME: restore to default
+		/*::dlsym(RTLD_NEXT, "epoll_create");
 		::dlsym(RTLD_NEXT, "epoll_create1");
 		::dlsym(RTLD_NEXT, "epoll_wait");
 		::dlsym(RTLD_NEXT, "epoll_pwait");
 		::dlsym(RTLD_NEXT, "epoll_ctl");
-		::dlsym(RTLD_NEXT, "close");
+		::dlsym(RTLD_NEXT, "close");*/
 	}
 
 	static void TearDownTestCase() {}
@@ -61,7 +62,7 @@ protected:
 	std::unique_ptr<netpp::epoll::Epoll> epoll;
 };
 
-extern "C" {
+/*extern "C" {
 int epoll_create(int size)
 {
 	(void)size;
@@ -107,7 +108,7 @@ int close(int fd)
 	(void)fd;
 	return 0;
 }
-}
+}*/
 
 TEST_F(EpollEventTest, AddEvent)
 {
