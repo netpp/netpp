@@ -19,8 +19,15 @@ class SignalWatcher {
 public:
 	SignalWatcher() = default;
 
-	static void watch(Signals signal);
-	static void restore(Signals signal);
+	/**
+	 * @brief init signal event handler
+	 * 
+	 * @param dispatcher		event loop dispatcher
+	 * @param eventsPrototype	how to handle signal event
+	 */
+	static SignalWatcher with(EventLoopDispatcher *dispatcher, Events eventsPrototype);
+	static SignalWatcher watch(Signals signal);
+	static SignalWatcher restore(Signals signal);
 	static bool isWatching(Signals signal);
 	static bool isWatching(uint32_t signal);
 
@@ -29,12 +36,13 @@ public:
 	 * @note must call before any threads started, or signal may send to unexpected thread
 	 * 
 	 */
-	static void enableWatchSignal(EventLoopDispatcher *dispatcher, Events eventsPrototype);
+	static void enableWatchSignal();
 
 private:
 	static int signalFd;
 	// 64 signals at max
 	static volatile std::atomic_uint64_t m_watchingSignals;
+	static std::shared_ptr<handlers::SignalHandler> m_signalHandler;
 };
 }
 

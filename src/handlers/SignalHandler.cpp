@@ -6,6 +6,7 @@
 #include "signal/SignalWatcher.h"
 #include "error/Exception.h"
 #include "support/Log.h"
+#include "EventLoop.h"
 extern "C" {
 #include <sys/signalfd.h>
 }
@@ -33,7 +34,15 @@ void SignalHandler::handleRead()
 	}
 }
 
-void SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
+void SignalHandler::handleClose()
+{
+	m_epollEvent->disableEvents();
+	volatile auto externLife = shared_from_this();
+	// FIXME: may called from other theads
+	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+}
+
+std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
 {
 	auto signalHandler = std::make_shared<SignalHandler>();
 	auto event = std::make_unique<epoll::EpollEvent>(
@@ -48,5 +57,6 @@ void SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
 	loop->addEventHandlerToLoop(signalHandler);
 	eventPtr->setEnableRead(true);
 	LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
+	return signalHandler;
 }
 }

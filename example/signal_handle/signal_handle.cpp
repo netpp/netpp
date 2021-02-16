@@ -13,9 +13,12 @@ public:
 
 int main()
 {
+	netpp::signal::SignalWatcher::enableWatchSignal();
+
 	netpp::EventLoopDispatcher dispatcher;
 	netpp::Events event(std::make_shared<SignalEvent>());
-	netpp::signal::SignalWatcher::enableWatchSignal(&dispatcher, std::move(event));
-	netpp::signal::SignalWatcher::watch(netpp::signal::Signals::E_QUIT);
+	netpp::signal::SignalWatcher::with(&dispatcher, std::move(event))
+								.watch(netpp::signal::Signals::E_QUIT)
+								.watch(netpp::signal::Signals::E_ALRM);
 	dispatcher.startLoop();
 }

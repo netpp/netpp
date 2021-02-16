@@ -128,16 +128,34 @@ void TcpConnection::handleClose()
 
 void TcpConnection::sendInLoop()
 {
-	m_isWaitWriting = true;
-	m_epollEvent->setEnableWrite(true);
+	// Move to event loop thread
+	// capture weak_ptr in case TcpConnection is destructed
+	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
+	_loop->runInLoop([connectionWeak]{
+		auto connection = connectionWeak.lock();
+		if (connection)
+		{
+			connection->m_isWaitWriting = true;
+			connection->m_epollEvent->setEnableWrite(true);
+		}
+	});
 }
 
 void TcpConnection::closeAfterWriteCompleted()
 {
-	// nothing to write, close direcly
-	if (!m_isWaitWriting)
-		closeWrite();
-	m_state = socket::TcpState::Disconnecting;
+	// Move to event loop thread
+	// capture weak_ptr in case TcpConnection is destructed
+	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
+	_loop->runInLoop([connectionWeak]{
+		// nothing to write, close direcly
+		auto connection = connectionWeak.lock();
+		if (connection)
+		{
+			if (!connection->m_isWaitWriting)
+				connection->closeWrite();
+			connection->m_state = socket::TcpState::Disconnecting;
+		}
+	});
 }
 
 std::shared_ptr<Channel> TcpConnection::getIOChannel()

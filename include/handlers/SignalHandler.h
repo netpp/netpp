@@ -9,7 +9,7 @@ class EventLoop;
 }
 
 namespace netpp::handlers {
-class SignalHandler : public epoll::EventHandler {
+class SignalHandler : public epoll::EventHandler, public std::enable_shared_from_this<SignalHandler> {
 public:
 	SignalHandler() = default;
 	~SignalHandler() override = default;
@@ -17,9 +17,9 @@ public:
 	void handleRead() override;
 	void handleWrite() override {};
 	void handleError() override {};
-	void handleClose() override {};
+	void handleClose() override;
 
-	static void makeSignalHandler(EventLoop *loop, Events eventsPrototype);
+	static std::shared_ptr<SignalHandler> makeSignalHandler(EventLoop *loop, Events eventsPrototype);
 private:
 	Events m_events;
 };

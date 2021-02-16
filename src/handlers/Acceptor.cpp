@@ -80,7 +80,6 @@ std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 		// epoll::EpollEvent *eventPtr = event.get();
 		acceptor->m_events = eventsPrototype;
 		acceptor->m_epollEvent = std::move(event);
-		acceptor->m_addr = listenAddr;
 
 		loop->addEventHandlerToLoop(acceptor);
 

@@ -74,7 +74,6 @@ private:
 
 	// event and hanlder
 	std::shared_ptr<handlers::TimerHandler> m_handler;
-	epoll::EpollEvent *_event;
 };
 }
 

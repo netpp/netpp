@@ -26,6 +26,7 @@ public:
 	void handleError() override {}
 	void handleClose() override;
 
+	void setEnabled(bool enable);
 private:
 	time::Timer *_timer;
 };

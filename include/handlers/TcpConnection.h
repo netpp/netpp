@@ -28,7 +28,6 @@ public:
 	void handleError() override;
 	void handleClose() override;
 
-	inline EventLoop *getConnectionLoop() { return _loop; }
 	void sendInLoop();
 	void closeAfterWriteCompleted();
 	std::shared_ptr<Channel> getIOChannel();

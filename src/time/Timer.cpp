@@ -22,9 +22,7 @@ Timer::Timer(EventLoop *loop)
 	LOG_TRACE("Timer fd {}", m_timerFd);
 
 	m_handler = make_shared<handlers::TimerHandler>(this);
-	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
-	_event = event.get();
-	m_handler->m_epollEvent = std::move(event);
+	m_handler->m_epollEvent = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
 }
 
 Timer::~Timer()
@@ -62,7 +60,7 @@ void Timer::start()
 	{
 		m_running = true;
 		// start timer
-		_event->setEnableRead(true);
+		m_handler->setEnabled(true);
 		setTimeAndRun();
 	}
 }
@@ -73,7 +71,7 @@ void Timer::stop()
 	{
 		m_running = false;
 		std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
-		_event->setEnableRead(false);
+		m_handler->setEnabled(false);
 		// settime will always success
 		::timerfd_settime(m_timerFd, TFD_TIMER_ABSTIME, &m_timerSpec, nullptr);
 	}

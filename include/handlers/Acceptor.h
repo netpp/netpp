@@ -32,8 +32,6 @@ public:
 								 Events eventsPrototype);
 
 private:
-	Address m_addr;
-
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;
 	Events m_events;

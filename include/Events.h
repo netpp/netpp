@@ -66,6 +66,7 @@ public:
 			m_errorCb = std::bind(&Impl::onError, implPtr, std::placeholders::_1);
 		if constexpr (hasSignal<Impl>::value)
 			m_signalCb = std::bind(&Impl::onSignal, implPtr, std::placeholders::_1);
+		// FIXME: start threads after runs loop, start too soon may cause block signal fail
 		m_eventsPool->start();
 	}
 
