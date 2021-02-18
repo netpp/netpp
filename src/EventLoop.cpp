@@ -27,7 +27,7 @@ EventLoop::~EventLoop()
 		_thisThreadLoop = this;
 		while (true)
 		{
-			std::vector<epoll::EpollEvent *> activeChannels = m_poll.poll();
+			std::vector<internal::epoll::EpollEvent *> activeChannels = m_poll.poll();
 			for (auto &c : activeChannels)
 				c->handleEvents();
 			std::vector<std::function<void()>> funs;
@@ -50,12 +50,12 @@ EventLoop::~EventLoop()
 	}
 }
 
-void EventLoop::addEventHandlerToLoop(std::shared_ptr<epoll::EventHandler> handler)
+void EventLoop::addEventHandlerToLoop(std::shared_ptr<internal::epoll::EventHandler> handler)
 {
 	m_handlers.insert(handler);
 }
 
-void EventLoop::removeEventHandlerFromLoop(std::shared_ptr<epoll::EventHandler> handler)
+void EventLoop::removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::EventHandler> handler)
 {
 	m_handlers.erase(handler);
 }

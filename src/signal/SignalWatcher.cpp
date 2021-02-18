@@ -11,7 +11,7 @@ namespace netpp::signal {
 // no lock required, signal fd will not change during runtime
 int SignalWatcher::signalFd = -1;
 volatile std::atomic_uint64_t SignalWatcher::m_watchingSignals = 0;
-std::shared_ptr<handlers::SignalHandler> SignalWatcher::m_signalHandler = nullptr;
+std::shared_ptr<internal::handlers::SignalHandler> SignalWatcher::m_signalHandler = nullptr;
 
 static constexpr uint64_t uint64One = 1;
 
@@ -19,7 +19,7 @@ SignalWatcher SignalWatcher::with(EventLoopDispatcher *dispatcher, Events events
 {
 	if (m_signalHandler)
 		m_signalHandler->handleClose();
-	m_signalHandler = handlers::SignalHandler::makeSignalHandler(dispatcher->dispatchEventLoop(), eventsPrototype);
+	m_signalHandler = internal::handlers::SignalHandler::makeSignalHandler(dispatcher->dispatchEventLoop(), eventsPrototype);
 	return SignalWatcher();
 }
 

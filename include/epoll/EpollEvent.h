@@ -11,7 +11,7 @@ extern "C" {
 #include <sys/epoll.h>
 }
 
-namespace netpp::epoll {
+namespace netpp::internal::epoll {
 
 class Epoll;
 class EventHandler;

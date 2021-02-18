@@ -23,7 +23,7 @@ namespace netpp::time {
  * 
  */
 class Timer {
-	friend class handlers::TimerHandler;
+	friend class internal::handlers::TimerHandler;
 public:
 	// TODO: remove param loop or set default value, user do not have to specify which event loop
 	explicit Timer(EventLoop *loop);
@@ -73,7 +73,7 @@ private:
 	uint64_t m_timeOutCount;
 
 	// event and hanlder
-	std::shared_ptr<handlers::TimerHandler> m_handler;
+	std::shared_ptr<internal::handlers::TimerHandler> m_handler;
 };
 }
 

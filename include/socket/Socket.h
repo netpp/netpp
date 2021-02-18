@@ -15,7 +15,7 @@ enum class SocketError;
 }
 }
 
-namespace netpp::socket {
+namespace netpp::internal::socket {
 
 class Socket {
 public:

@@ -20,7 +20,7 @@ TcpServer::~TcpServer()
 
 void TcpServer::listen()
 {
-	auto acceptor = handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, m_eventPrototype).lock();
+	auto acceptor = internal::handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, m_eventPrototype).lock();
 	_acceptor = acceptor;
 	acceptor->listen();
 }

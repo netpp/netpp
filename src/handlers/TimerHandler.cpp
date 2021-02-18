@@ -7,7 +7,7 @@
 #include "support/Log.h"
 #include "EventLoop.h"
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 TimerHandler::TimerHandler(time::Timer *timer)
 	: _timer{timer}
 {}

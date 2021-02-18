@@ -8,7 +8,7 @@
 #include "spdlog/async.h"
 #include <iostream>
 
-namespace netpp {
+namespace netpp::internal {
 std::shared_ptr<spdlog::logger> logger = nullptr;
 
 void initLogger(std::string logfile)

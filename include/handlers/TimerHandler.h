@@ -13,7 +13,7 @@ namespace netpp::time {
 class Timer;
 }
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 class TimerHandler : public epoll::EventHandler, public std::enable_shared_from_this<TimerHandler> {
 	friend class time::Timer;
 public:

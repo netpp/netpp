@@ -5,7 +5,7 @@ extern "C" {
 #include <arpa/inet.h>
 }
 
-namespace netpp::stub {
+namespace netpp::internal::stub {
 /**
  * @brief create a socket
  * 

@@ -13,7 +13,7 @@ namespace netpp {
 class EventLoopDispatcher;
 }
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 class TcpConnection;
 
 /**

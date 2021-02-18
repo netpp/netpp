@@ -4,7 +4,6 @@
 
 #include "Channel.h"
 #include "handlers/TcpConnection.h"
-#include "EventLoop.h"
 
 namespace netpp {
 void Channel::send()

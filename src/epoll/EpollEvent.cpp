@@ -7,7 +7,7 @@
 #include "epoll/Epoll.h"
 #include "support/Log.h"
 
-namespace netpp::epoll {
+namespace netpp::internal::epoll {
 EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
 	: activeEvents{0}, _eventHandler{handler}, _watchingFd{fd}, _poll{poll}
 {

@@ -6,12 +6,11 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(example)
 add_subdirectory(test)
 add_subdirectory(thirdParty/spdlog)
-add_subdirectory(thirdParty/googletest)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/thirdParty/spdlog/include)
 
-add_library(netpp SHARED
+set(netpp_source 
 include/epoll/Epoll.h include/epoll/EpollEvent.h include/epoll/EventHandler.h
 include/handlers/Acceptor.h include/handlers/Connector.h include/handlers/TcpConnection.h include/handlers/TimerHandler.h include/handlers/SignalHandler.h
 include/support/ThreadBase.hpp include/support/ThreadPool.hpp include/support/Log.h
@@ -30,3 +29,7 @@ src/stub/IO.cpp src/stub/Socket.cpp src/stub/Epoll.cpp
 src/error/Exception.cpp src/error/SocketError.cpp
 src/time/Timer.cpp src/time/TimeWheel.cpp
 src/Address.cpp src/ByteArray.cpp src/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp)
+
+add_library(netpp SHARED ${netpp_source})
+add_library(netpp_static STATIC ${netpp_source})
+SET_TARGET_PROPERTIES(netpp_static PROPERTIES OUTPUT_NAME "netpp")

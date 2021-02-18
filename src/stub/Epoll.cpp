@@ -7,7 +7,7 @@ extern "C" {
 #include <errno.h>
 }
 
-namespace netpp::stub {
+namespace netpp::internal::stub {
 /*int epoll_create(int size)
 {
 	int ret = ::epoll_create(size);

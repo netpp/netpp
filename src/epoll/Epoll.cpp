@@ -10,7 +10,7 @@
 #include "stub/Epoll.h"
 #include "error/Exception.h"
 
-namespace netpp::epoll {
+namespace netpp::internal::epoll {
 Epoll::Epoll()
 	: m_activeEvents(4)
 {

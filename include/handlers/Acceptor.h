@@ -10,7 +10,7 @@ namespace netpp {
 class EventLoopDispatcher;
 }
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 class Acceptor : public epoll::EventHandler, public std::enable_shared_from_this<Acceptor> {
 public:
 	Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);

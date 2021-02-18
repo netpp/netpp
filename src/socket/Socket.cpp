@@ -12,7 +12,7 @@
 
 using std::make_unique;
 
-namespace netpp::socket {
+namespace netpp::internal::socket {
 Socket::Socket(const Address &addr)
 {
 	m_socketFd = stub::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);

@@ -46,7 +46,7 @@ EventLoop *EventLoopDispatcher::dispatchEventLoop()
 void EventLoopDispatcher::startLoop()
 {
 	// FIXME: logger is optional, give user a way to disable it
-	initLogger();
+	internal::initLogger();
 	if (m_threadPool)
 	{
 		for (EventLoopVector::size_type i = 1; i < m_loops.size(); ++i)

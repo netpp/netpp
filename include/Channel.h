@@ -8,13 +8,13 @@
 #include "ByteArray.h"
 
 namespace netpp {
-namespace handlers {
+namespace internal::handlers {
 class TcpConnection;
 }
 
 class Channel {
 public:
-	Channel(std::weak_ptr<handlers::TcpConnection> connection, 
+	Channel(std::weak_ptr<internal::handlers::TcpConnection> connection, 
 			std::weak_ptr<ByteArray> writeByteArray, std::weak_ptr<ByteArray> readByteArray)
 		: _connection{connection}, _writeArray{writeByteArray}, _readArray{readByteArray}
 	{}
@@ -67,7 +67,7 @@ public:
 	inline std::size_t retrieveRaw(char *buffer, std::size_t length)	{ auto array = _readArray.lock(); if (array) return array->retrieveRaw(buffer, length); else return 0; }
 
 private:
-	std::weak_ptr<handlers::TcpConnection> _connection;
+	std::weak_ptr<internal::handlers::TcpConnection> _connection;
 	std::weak_ptr<ByteArray> _writeArray;
 	std::weak_ptr<ByteArray> _readArray;
 };

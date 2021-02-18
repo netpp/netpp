@@ -7,7 +7,7 @@ extern "C" {
 #include <dlfcn.h>
 }
 
-class Handler : public netpp::epoll::EventHandler {
+class Handler : public netpp::internal::epoll::EventHandler {
 	friend class EpollEventTest;
 public:
 	Handler()
@@ -34,9 +34,9 @@ class EpollEventTest : public testing::Test {
 protected:
 	void SetUp() override
 	{
-		epoll = std::make_unique<netpp::epoll::Epoll>();
+		epoll = std::make_unique<netpp::internal::epoll::Epoll>();
 		handler = std::make_shared<Handler>();
-		auto epollEvent = std::make_unique<netpp::epoll::EpollEvent>(epoll.get(), handler, 0);
+		auto epollEvent = std::make_unique<netpp::internal::epoll::EpollEvent>(epoll.get(), handler, 0);
 		event = epollEvent.get();
 		handler->m_epollEvent = std::move(epollEvent);
 	}
@@ -56,8 +56,8 @@ protected:
 	static void TearDownTestCase() {}
 
 	std::shared_ptr<Handler> handler;
-	netpp::epoll::EpollEvent *event;
-	std::unique_ptr<netpp::epoll::Epoll> epoll;
+	netpp::internal::epoll::EpollEvent *event;
+	std::unique_ptr<netpp::internal::epoll::Epoll> epoll;
 };
 
 /*extern "C" {

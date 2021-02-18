@@ -9,7 +9,7 @@
 
 namespace netpp {
 class EventLoop;
-namespace socket {
+namespace internal::socket {
 enum class TcpState;
 }
 namespace time {
@@ -17,7 +17,7 @@ class TimeWheelEntry;
 }
 }
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
 public:
 	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop);
@@ -40,7 +40,7 @@ private:
 	void closeWrite();
 
 	EventLoop *_loop;
-	socket::TcpState m_state;
+	internal::socket::TcpState m_state;
 	bool m_isWaitWriting;
 	std::unique_ptr<socket::Socket> m_socket;
 	std::shared_ptr<ByteArray> m_writeBuffer;

@@ -21,7 +21,7 @@ TcpClient::~TcpClient()
 
 void TcpClient::connect()
 {
-	auto m_connector = handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype).lock();
+	auto m_connector = internal::handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype).lock();
 	m_connector->connect();
 }
 

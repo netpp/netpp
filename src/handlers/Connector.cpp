@@ -9,7 +9,7 @@
 using std::make_unique;
 using std::make_shared;
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
 		: m_isConnected{false}, _dispatcher(dispatcher), m_socket{std::move(socket)}
 {}

@@ -9,7 +9,7 @@
 #include "Events.h"
 
 namespace netpp {
-namespace handlers {
+namespace internal::handlers {
 class Connector;
 }
 class EventLoopDispatcher;
@@ -23,7 +23,7 @@ public:
 
 private:
 	Address m_addr;
-	std::shared_ptr<handlers::Connector> m_connector;
+	std::shared_ptr<internal::handlers::Connector> m_connector;
 
 	EventLoopDispatcher *_dispatcher;
 	Events m_eventsPrototype;

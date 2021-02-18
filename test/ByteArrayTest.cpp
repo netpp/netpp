@@ -155,12 +155,12 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 	{
 		std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.count(), 0);
 		EXPECT_EQ(readVec.vec(), nullptr);
 		}
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
 		EXPECT_EQ(writeVec.count(), 1);
 		EXPECT_NE(writeVec.vec(), nullptr);
 		EXPECT_EQ(byteArray->readableBytes(), 0);
@@ -171,7 +171,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 		byteArray->writeInt8(1);
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.count(), 1);
 		EXPECT_NE(readVec.vec(), nullptr);
 		EXPECT_EQ(readVec.vec()[0].iov_len, sizeof(int8_t));
@@ -184,7 +184,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 		byteArray->writeInt64(2);
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.count(), 1);
 		EXPECT_NE(readVec.vec(), nullptr);
 		EXPECT_EQ(readVec.vec()[0].iov_len, sizeof(int64_t));
@@ -198,7 +198,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		std::string str = "test string";
 		byteArray->writeString(str);
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.count(), 1);
 		EXPECT_NE(readVec.vec(), nullptr);
 		EXPECT_EQ(readVec.vec()[0].iov_len, str.length() * sizeof(char));
@@ -212,7 +212,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		const char str[] = "test string";
 		byteArray->writeRaw(str, std::strlen(str) + 1);
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.count(), 1);
 		EXPECT_NE(readVec.vec(), nullptr);
 		EXPECT_EQ(readVec.vec()[0].iov_len, (std::strlen(str) + 1) * sizeof(char));
@@ -224,7 +224,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 	{
 		std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.vec();
 		EXPECT_EQ(writeVec.count(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -240,7 +240,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 	{
 		std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.vec();
 		EXPECT_EQ(writeVec.count(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -258,7 +258,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		std::string str = "test string";
 		std::size_t stringLength = (str.length()) * sizeof(char);
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.vec();
 		EXPECT_EQ(writeVec.count(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -275,7 +275,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		const char str[] = "test string";
 		std::size_t stringLength = (std::strlen(str) + 1) * sizeof(char);
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.vec();
 		EXPECT_EQ(writeVec.count(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -294,7 +294,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		std::string str = "test string";
 		std::size_t stringLength = str.length() * sizeof(char);
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVecFir(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVecFir(byteArray);
 		::iovec *vecFir = writeVecFir.vec();
 		EXPECT_EQ(writeVecFir.count(), 1);
 		EXPECT_NE(vecFir, nullptr);
@@ -307,7 +307,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 
 		str = "abcs string";
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVecSec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVecSec(byteArray);
 		::iovec *vecSec = writeVecSec.vec();
 		EXPECT_EQ(writeVecSec.count(), 1);
 		EXPECT_NE(vecSec, nullptr);
@@ -325,7 +325,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		std::size_t stringLength = str.length() * sizeof(char);
 		byteArray->writeString(str);
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVecFir(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVecFir(byteArray);
 		::iovec *vecFir = readVecFir.vec();
 		EXPECT_EQ(readVecFir.count(), 1);
 		EXPECT_NE(vecFir, nullptr);
@@ -337,7 +337,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		str = "abcs string";
 		byteArray->writeString(str);
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVecSec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVecSec(byteArray);
 		::iovec *vecSec = readVecSec.vec();
 		EXPECT_EQ(readVecSec.count(), 1);
 		EXPECT_NE(vecSec, nullptr);
@@ -354,7 +354,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		std::size_t strLength = str.length() * sizeof(char);
 		byteArray->retrieveString(strLength);
 		{
-		netpp::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.vec();
 		EXPECT_EQ(writeVec.count(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -378,7 +378,7 @@ TEST_F(ByteArrayTest, ByteArrayAsIOVecInNode)
 		str = "abcd";
 		byteArray->writeString(str);
 		{
-		netpp::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
+		netpp::internal::socket::ByteArrayIOVectorReaderWithLock readVec(byteArray);
 		::iovec *vec = readVec.vec();
 		EXPECT_EQ(readVec.count(), 1);
 		EXPECT_NE(vec, nullptr);

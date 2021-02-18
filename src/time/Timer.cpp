@@ -21,13 +21,13 @@ Timer::Timer(EventLoop *loop)
 	std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
 	LOG_TRACE("Timer fd {}", m_timerFd);
 
-	m_handler = make_shared<handlers::TimerHandler>(this);
-	m_handler->m_epollEvent = make_unique<epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
+	m_handler = make_shared<internal::handlers::TimerHandler>(this);
+	m_handler->m_epollEvent = make_unique<internal::epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
 }
 
 Timer::~Timer()
 {
-	if (stub::close(m_timerFd) == -1)
+	if (internal::stub::close(m_timerFd) == -1)
 		LOG_WARN("failed to close timer");
 	m_handler->handleClose();
 }

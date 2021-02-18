@@ -11,7 +11,7 @@ extern "C" {
 #include <sys/signalfd.h>
 }
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 void SignalHandler::handleRead()
 {
 	static constexpr int maxSignalRead = 20;

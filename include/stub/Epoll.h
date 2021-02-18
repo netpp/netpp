@@ -4,19 +4,13 @@
 struct epoll_event;
 // struct sigset_t;
 
-namespace netpp::stub {
+namespace netpp::internal::stub {
 /**
  * @brief create an epoll fd
  * 
  * @throw ResourceLimitException on @code EMFILE ENFILE ENOMEM
  */
 // int epoll_create(int size);
-
-/**
- * @brief create an epoll fd
- * 
- * @throw ResourceLimitException on @code EMFILE ENFILE ENOMEM
- */
 extern int epoll_create1(int flags);
 
 /**

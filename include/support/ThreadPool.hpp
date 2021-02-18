@@ -11,7 +11,7 @@
 
 namespace netpp::support {
 class ThreadPool {
-	using TaskType = RunnableWrapper;
+	using TaskType = internal::support::RunnableWrapper;
 public:
 	/**
 	 * @brief Construct a new Thread Pool object
@@ -39,7 +39,7 @@ public:
 	{
 		std::packaged_task<RetType(Args...)> task(runnable);
 		std::future<RetType> res(task.get_future());
-		RunnableWrapper wrapper(std::move(task), args...);
+		TaskType wrapper(std::move(task), args...);
 		++taskCount;
 		workQueue.push(std::move(wrapper));
 		waitTask.notify_one();
@@ -52,7 +52,7 @@ public:
 	void run(Runnable runnable, Args ... args)
 	{
 		std::packaged_task<RetType(Args...)> task(runnable);
-		RunnableWrapper wrapper(std::move(task), args...);
+		TaskType wrapper(std::move(task), args...);
 		++taskCount;
 		workQueue.push(std::move(wrapper));
 		waitTask.notify_one();
@@ -81,7 +81,7 @@ private:
 	std::mutex taskMutex;
 	std::condition_variable waitTask;
 
-	ThreadSafeQueue<TaskType> workQueue;
+	internal::support::ThreadSafeQueue<TaskType> workQueue;
 	std::vector<std::thread> threads;
 	static thread_local unsigned threadId;
 };

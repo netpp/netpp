@@ -9,7 +9,7 @@
 #include "Events.h"
 #include <type_traits>
 
-namespace netpp::epoll {
+namespace netpp::internal::epoll {
 class EventHandler {
 public:
 	explicit EventHandler() = default;

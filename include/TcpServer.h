@@ -9,7 +9,7 @@
 #include "Address.h"
 
 namespace netpp {
-namespace handlers {
+namespace internal::handlers {
 class Acceptor;
 }
 class EventLoopDispatcher;
@@ -25,7 +25,7 @@ public:
 
 private:
 	Address m_addr;
-	std::weak_ptr<handlers::Acceptor> _acceptor;
+	std::weak_ptr<internal::handlers::Acceptor> _acceptor;
 	
 	EventLoopDispatcher *_dispatcher;
 	Events m_eventPrototype;

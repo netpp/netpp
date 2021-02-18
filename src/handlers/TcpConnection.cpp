@@ -11,7 +11,7 @@
 using std::make_unique;
 using std::make_shared;
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 
 class IdelConnectionWheelEntry : public time::TimeWheelEntry {
 public:

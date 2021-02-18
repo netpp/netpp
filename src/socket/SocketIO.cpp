@@ -8,7 +8,7 @@ extern "C" {
 #include <sys/uio.h>
 }
 
-namespace netpp::socket {
+namespace netpp::internal::socket {
 ByteArray2IOVector::ByteArray2IOVector()
 	: m_vec{nullptr}, m_count{0}, _buffer{nullptr}
 {}

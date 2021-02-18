@@ -33,7 +33,7 @@ void killSelf()
 	dispatcher.startLoop();
 }
 
-int killSelfWithSignalWatcher()
+void killSelfWithSignalWatcher()
 {
 	try
 	{
@@ -66,7 +66,6 @@ int killSelfWithSignalWatcher()
 	{
 		::exit(netpp::signal::toLinuxSignal(us.signal()));
 	}
-	return 0;
 }
 
 class SignalTest : public testing::Test {

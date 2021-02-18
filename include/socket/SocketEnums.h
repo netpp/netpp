@@ -1,7 +1,7 @@
 #ifndef NETPP_SOCKET_ENUMS_H
 #define NETPP_SOCKET_ENUMS_H
 
-namespace netpp::socket {
+namespace netpp::internal::socket {
 
 enum class TcpState {
 	Connecting,

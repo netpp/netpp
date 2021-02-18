@@ -9,7 +9,7 @@ extern "C" {
 #include <errno.h>
 }
 
-namespace netpp::stub {
+namespace netpp::internal::stub {
 int close(int fd) noexcept
 {
 	int ret = ::close(fd);

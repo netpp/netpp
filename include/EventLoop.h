@@ -13,7 +13,7 @@
 #include <memory>
 
 namespace netpp {
-namespace epoll {
+namespace internal::epoll {
 class EventHandler;
 }
 class EventLoop {
@@ -36,15 +36,15 @@ public:
 	~EventLoop();
 
 	[[noreturn]] void run();
-	void addEventHandlerToLoop(std::shared_ptr<epoll::EventHandler> handler);
-	void removeEventHandlerFromLoop(std::shared_ptr<epoll::EventHandler> handler);
+	void addEventHandlerToLoop(std::shared_ptr<internal::epoll::EventHandler> handler);
+	void removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::EventHandler> handler);
 
 	/**
 	 * @brief return this thread's event loop
 	 * @note only avaiable AFTER loop start
 	 */
 	static inline EventLoop *thisLoop() { return _thisThreadLoop; }
-	inline epoll::Epoll *getPoll() { return &m_poll; }
+	inline internal::epoll::Epoll *getPoll() { return &m_poll; }
 	time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
 
 	/// @brief runs method in event loop
@@ -52,8 +52,8 @@ public:
 
 private:
 	static thread_local EventLoop *_thisThreadLoop;
-	epoll::Epoll m_poll;
-	std::unordered_set<std::shared_ptr<epoll::EventHandler>> m_handlers;	// epoll events handlers
+	internal::epoll::Epoll m_poll;
+	std::unordered_set<std::shared_ptr<internal::epoll::EventHandler>> m_handlers;	// epoll events handlers
 
 	std::mutex m_functorMutex;							// guard m_pendingFuns
 	std::vector<std::function<void()>> m_pendingFuns;	// methods run in loop

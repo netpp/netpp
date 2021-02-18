@@ -8,7 +8,7 @@
 using std::make_unique;
 using std::make_shared;
 
-namespace netpp::handlers {
+namespace netpp::internal::handlers {
 Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
 		: _dispatcher{dispatcher}, m_socket{std::move(socket)}
 {}

@@ -10,7 +10,7 @@
 #include <iostream>
 #include <future>
 
-namespace netpp::support {
+namespace netpp::internal::support {
 class RunnableWrapper {
 public:
 	template<typename Runnable, typename ... Args>

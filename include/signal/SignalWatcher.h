@@ -6,7 +6,7 @@
 #include "Events.h"
 
 namespace netpp {
-namespace handlers {
+namespace internal::handlers {
 class SignalHandler;
 }
 class EventLoopDispatcher;
@@ -15,7 +15,7 @@ class EventLoopDispatcher;
 namespace netpp::signal {
 class SignalWatcher {
 	// make sure only SignalHandler can access signal fd
-	friend class handlers::SignalHandler;
+	friend class internal::handlers::SignalHandler;
 public:
 	SignalWatcher() = default;
 
@@ -42,7 +42,7 @@ private:
 	static int signalFd;
 	// 64 signals at max
 	static volatile std::atomic_uint64_t m_watchingSignals;
-	static std::shared_ptr<handlers::SignalHandler> m_signalHandler;
+	static std::shared_ptr<internal::handlers::SignalHandler> m_signalHandler;
 };
 }
 

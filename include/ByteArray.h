@@ -8,7 +8,7 @@
 #include <atomic>
 
 namespace netpp {
-namespace socket {
+namespace internal::socket {
 class ByteArrayIOVectorReaderWithLock;
 class ByteArrayIOVectorWriterWithLock;
 }
@@ -17,8 +17,8 @@ class ByteArrayIOVectorWriterWithLock;
  */
 class ByteArray {
 	// access buffer directly
-	friend class socket::ByteArrayIOVectorReaderWithLock;
-	friend class socket::ByteArrayIOVectorWriterWithLock;
+	friend class internal::socket::ByteArrayIOVectorReaderWithLock;
+	friend class internal::socket::ByteArrayIOVectorWriterWithLock;
 public:
 	ByteArray();
 
