@@ -10,7 +10,7 @@ namespace netpp::internal::stub {
  * 
  * @throw ResourceLimitException on @code EMFILE ENFILE ENOMEM
  */
-// int epoll_create(int size);
+// extern int epoll_create(int size);
 extern int epoll_create1(int flags);
 
 /**

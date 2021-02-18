@@ -3,9 +3,6 @@
 #include "epoll/Epoll.h"
 #include "epoll/EpollEvent.h"
 #include <memory>
-extern "C" {
-#include <dlfcn.h>
-}
 
 class Handler : public netpp::internal::epoll::EventHandler {
 	friend class EpollEventTest;
@@ -43,15 +40,7 @@ protected:
 	void TearDown() override {}
 	
 	static void SetUpTestCase()
-	{
-		// FIXME: restore to default
-		/*::dlsym(RTLD_NEXT, "epoll_create");
-		::dlsym(RTLD_NEXT, "epoll_create1");
-		::dlsym(RTLD_NEXT, "epoll_wait");
-		::dlsym(RTLD_NEXT, "epoll_pwait");
-		::dlsym(RTLD_NEXT, "epoll_ctl");
-		::dlsym(RTLD_NEXT, "close");*/
-	}
+	{}
 
 	static void TearDownTestCase() {}
 
@@ -59,54 +48,6 @@ protected:
 	netpp::internal::epoll::EpollEvent *event;
 	std::unique_ptr<netpp::internal::epoll::Epoll> epoll;
 };
-
-/*extern "C" {
-int epoll_create(int size)
-{
-	(void)size;
-	return 1;
-}
-
-int epoll_create1(int flags)
-{
-	(void)flags;
-	return 1;
-}
-
-int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
-{
-	(void)epfd;
-	(void)events;
-	(void)maxevents;
-	(void)timeout;
-	return 0;
-}
-
-int epoll_pwait(int epfd, struct epoll_event *events, int maxevents, int timeout, const sigset_t *sigmask)
-{
-	(void)epfd;
-	(void)events;
-	(void)maxevents;
-	(void)timeout;
-	(void)sigmask;
-	return 0;
-}
-
-int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
-{
-	(void)epfd;
-	(void)op;
-	(void)fd;
-	(void)event;
-	return 0;
-}
-
-int close(int fd)
-{
-	(void)fd;
-	return 0;
-}
-}*/
 
 TEST_F(EpollEventTest, AddEvent)
 {
