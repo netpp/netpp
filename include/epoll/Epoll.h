@@ -15,6 +15,10 @@ namespace netpp::internal::epoll {
 
 class EpollEvent;
 
+/**
+ * @brief wrapper of epoll
+ * 
+ */
 class Epoll {
 public:
 	/**
@@ -26,8 +30,25 @@ public:
 	Epoll();
 	~Epoll();
 
+	/**
+	 * @brief wait for event once, if nothing ready, returned in 500ms
+	 * 
+	 * @return a vector of the ready events
+	 */
 	std::vector<EpollEvent *> poll();
+
+	/**
+	 * @brief add or update epoll watching events
+	 * 
+	 * @param channelEvent	pending update event
+	 */
 	void updateEvent(EpollEvent *channelEvent);
+
+	/**
+	 * @brief remove event from epoll
+	 * 
+	 * @param channelEvent 
+	 */
 	void removeEvent(EpollEvent *channelEvent);
 
 private:

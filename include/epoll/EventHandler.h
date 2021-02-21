@@ -10,6 +10,7 @@
 #include <type_traits>
 
 namespace netpp::internal::epoll {
+// TODO: set handler priority
 class EventHandler {
 public:
 	explicit EventHandler() = default;

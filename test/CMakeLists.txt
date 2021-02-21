@@ -5,8 +5,9 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/../thirdParty/googletest thirdParty/googl
 
 include_directories(${PROJECT_SOURCE_DIR}/../include)
 include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/googletest/googletest/include)
+include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/googletest/googlemock/include)
 
-link_libraries(gtest pthread netpp dl)
+link_libraries(gtest gmock pthread netpp dl)
 add_executable(test
 main.cpp
 MockSysCallEnvironment.h MockSysCallEnvironment.cpp

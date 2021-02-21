@@ -12,7 +12,7 @@
 
 namespace netpp::internal::epoll {
 Epoll::Epoll()
-	: m_activeEvents(4)
+	: m_activeEvents(32)
 {
 	m_epfd = stub::epoll_create1(EPOLL_CLOEXEC);
 }
@@ -26,12 +26,14 @@ std::vector<EpollEvent *> Epoll::poll()
 {
 	int nums = stub::epoll_wait(m_epfd, &m_activeEvents[0], m_activeEvents.size(), 500);
 
+	// if event vector is full, expand it
 	if (nums == m_activeEvents.size())
 	{
 		LOG_INFO("active events array resize to {}", m_activeEvents.size() * 2);
 		m_activeEvents.resize(m_activeEvents.size() * 2);
 	}
 
+	// TODO: try not to return this, avoid memory allocation
 	std::vector<EpollEvent *> activeChannels;
 	for (int i = 0; i < nums; ++i)
 	{

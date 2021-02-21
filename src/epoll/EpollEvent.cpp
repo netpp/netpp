@@ -51,7 +51,7 @@ void EpollEvent::setEnableRead(bool enable)
 	_poll->updateEvent(this);
 }
 
-void EpollEvent::disableEvents()
+void EpollEvent::deactiveEvents()
 {
 	_poll->removeEvent(this);
 }

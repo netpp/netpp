@@ -1,19 +1,26 @@
 #include "signal/SignalWatcher.h"
 #include "EventLoopDispatcher.h"
 #include "handlers/SignalHandler.h"
+#include "support/Log.h"
 #include <mutex>
+#include <cstring>
 extern "C" {
+#include <unistd.h>
 #include <signal.h>
 #include <sys/signalfd.h>
+#include <errno.h>
 }
 
 namespace netpp::signal {
 // no lock required, signal fd will not change during runtime
 int SignalWatcher::signalFd = -1;
-volatile std::atomic_uint64_t SignalWatcher::m_watchingSignals = 0;
+
+::sigset_t *SignalWatcher::m_watchingSignals;
 std::shared_ptr<internal::handlers::SignalHandler> SignalWatcher::m_signalHandler = nullptr;
 
-static constexpr uint64_t uint64One = 1;
+std::thread SignalWatcher::m_unHandledSignalThread;
+std::mutex SignalWatcher::m_watchSignalMutex;
+std::condition_variable SignalWatcher::m_waitWatchSignalChange;
 
 SignalWatcher SignalWatcher::with(EventLoopDispatcher *dispatcher, Events eventsPrototype)
 {
@@ -26,21 +33,34 @@ SignalWatcher SignalWatcher::with(EventLoopDispatcher *dispatcher, Events events
 SignalWatcher SignalWatcher::watch(Signals signal)
 {
 	if (signalFd != -1)
-		m_watchingSignals.fetch_or((uint64One << toLinuxSignal(signal)), std::memory_order_relaxed);
+	{
+		std::unique_lock lck(m_watchSignalMutex);
+		::sigaddset(m_watchingSignals, toLinuxSignal(signal));
+		::signalfd(signalFd, m_watchingSignals, SFD_NONBLOCK);
+		m_waitWatchSignalChange.notify_one();
+	}
 	return SignalWatcher();
 }
 
 SignalWatcher SignalWatcher::restore(Signals signal)
 {
 	if (signalFd != -1)
-		m_watchingSignals.fetch_and(~(uint64One << toLinuxSignal(signal)), std::memory_order_relaxed);
+	{
+		std::unique_lock lck(m_watchSignalMutex);
+		::sigaddset(m_watchingSignals, toLinuxSignal(signal));
+		::signalfd(signalFd, m_watchingSignals, SFD_NONBLOCK);
+		m_waitWatchSignalChange.notify_one();
+	}
 	return SignalWatcher();
 }
 
 bool SignalWatcher::isWatching(Signals signal)
 {
 	if (signalFd != -1)
-		return (m_watchingSignals.load(std::memory_order_relaxed) & (uint64One << toLinuxSignal(signal)));
+	{
+		std::unique_lock lck(m_watchSignalMutex);
+		return (::sigismember(m_watchingSignals, toLinuxSignal(signal)) == 1);
+	}
 	else
 		return false;
 }
@@ -48,7 +68,10 @@ bool SignalWatcher::isWatching(Signals signal)
 bool SignalWatcher::isWatching(uint32_t signal)
 {
 	if (signalFd != -1)
-		return (m_watchingSignals.load(std::memory_order_relaxed) & (uint64One << signal));
+	{
+		std::unique_lock lck(m_watchSignalMutex);
+		return (::sigismember(m_watchingSignals, signal) == 1);
+	}
 	else
 		return false;
 }
@@ -57,10 +80,32 @@ void SignalWatcher::enableWatchSignal()
 {
 	static std::once_flag setupWatchSignalFlag;
 	std::call_once(setupWatchSignalFlag, []{
+
+		// init watching signals
+		{
+			std::unique_lock lck(m_watchSignalMutex);
+			m_watchingSignals = new ::sigset_t;
+			::sigemptyset(m_watchingSignals);
+		}
+
+		// this thread will block watching signals only,
+		// other signals will be handled by default
+		m_unHandledSignalThread = std::thread([]{
+			while(true)
+			{
+				std::unique_lock lck(m_watchSignalMutex);
+				::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
+				m_waitWatchSignalChange.wait(lck);
+				LOG_DEBUG("signal set changed, reset block");
+			}
+		});
+		m_unHandledSignalThread.detach();
+
 		// block all signals at very beginning, all thread will inherits this mask
 		::sigset_t blockThreadSignals;
 		::sigfillset(&blockThreadSignals);
 		::pthread_sigmask(SIG_SETMASK, &blockThreadSignals, nullptr);
+		::sigemptyset(&blockThreadSignals);
 		SignalWatcher::signalFd = ::signalfd(-1, &blockThreadSignals, SFD_NONBLOCK);
 	});
 }

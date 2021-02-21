@@ -21,9 +21,9 @@ void TimerHandler::handleRead()
 
 void TimerHandler::handleClose()
 {
-	// this will not triggered by epoll, used to close timer
-	m_epollEvent->disableEvents();
-	// extern TcpConnection life after remove
+	// this will not triggered by epoll, Timer will use it for clean up
+	m_epollEvent->deactiveEvents();
+	// extern TimerHandler life after remove
 	volatile auto externLife = shared_from_this();
 	// FIXME: may called from other theads
 	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());

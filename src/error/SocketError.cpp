@@ -21,7 +21,7 @@ std::string errorAsString(SocketError code)
 #define SOCKET_ERROR_DEF(error) case SocketError::E_##error: err = E##error; break;
 #endif
 #ifndef SOCKET_ERROR_NONE_LINUX
-#define SOCKET_ERROR_NONE_LINUX(error) ;
+#define SOCKET_ERROR_NONE_LINUX(error) case SocketError::E_##error: break;
 #endif
 #ifndef LAST_SOCKET_ERROR_DEF
 #define LAST_SOCKET_ERROR_DEF(error) SOCKET_ERROR_DEF(error)

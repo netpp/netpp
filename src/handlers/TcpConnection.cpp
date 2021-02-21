@@ -119,7 +119,7 @@ void TcpConnection::handleClose()
 	if (wheel)
 		wheel->removeFromWheel(_halfCloseWheel);
 	m_events.onDisconnect();
-	m_epollEvent->disableEvents();
+	m_epollEvent->deactiveEvents();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
 	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());

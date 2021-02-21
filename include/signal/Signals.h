@@ -19,8 +19,6 @@ int toLinuxSignal(Signals signal);
 Signals toNetppSignal(int signal);
 std::string signalAsString(int signal);
 std::string signalAsString(Signals signal);
-bool ignoreByDefault(int signal);
-bool ignoreByDefault(Signals signal);
 }
 
 #endif

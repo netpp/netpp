@@ -40,7 +40,7 @@ void Connector::stopConnect()
 			m_retryTimer->stop();
 			m_retryTimer = nullptr;
 		}
-		m_epollEvent->disableEvents();
+		m_epollEvent->deactiveEvents();
 		// extern life after remove
 		volatile auto externLife = shared_from_this();
 		EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
@@ -95,7 +95,7 @@ void Connector::handleWrite()
 		// extern life after remove
 		volatile auto externLife = shared_from_this();
 		// remove Connector from loop after connect success
-		m_epollEvent->disableEvents();
+		m_epollEvent->deactiveEvents();
 		EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
 	}
 	else
@@ -158,7 +158,7 @@ void Connector::setupTimer()
 
 void Connector::reconnect()
 {
-	m_epollEvent->disableEvents();
+	m_epollEvent->deactiveEvents();
 	unsigned currentInterval = m_retryTimer->interval();
 	if (currentInterval < 4000)
 		m_retryTimer->setInterval(currentInterval * 2);

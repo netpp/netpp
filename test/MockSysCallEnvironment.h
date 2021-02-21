@@ -17,7 +17,7 @@ public:
 	void SetUp() override;
 	void TearDown() override {}
 
-	void restoreSysCall();
+	static void restoreSysCall();
 
 private:
 	static EpollCreate real_epoll_create;

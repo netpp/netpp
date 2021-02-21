@@ -2,8 +2,8 @@
 #define NETPP_SIGNAL_WATCHER_H
 
 #include "./Signals.h"
-#include <atomic>
 #include "Events.h"
+#include <thread>
 
 namespace netpp {
 namespace internal::handlers {
@@ -40,9 +40,13 @@ public:
 
 private:
 	static int signalFd;
-	// 64 signals at max
-	static volatile std::atomic_uint64_t m_watchingSignals;
+
+	static ::sigset_t *m_watchingSignals;
 	static std::shared_ptr<internal::handlers::SignalHandler> m_signalHandler;
+
+	static std::thread m_unHandledSignalThread;
+	static std::mutex m_watchSignalMutex;
+	static std::condition_variable m_waitWatchSignalChange;
 };
 }
 

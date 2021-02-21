@@ -35,40 +35,33 @@ void killSelf()
 
 void killSelfWithSignalWatcher()
 {
-	try
-	{
-		netpp::signal::SignalWatcher::enableWatchSignal();
-		
-		netpp::EventLoopDispatcher dispatcher;
-		netpp::Events event(std::make_shared<SignalHandler>());
-		netpp::signal::SignalWatcher::with(&dispatcher, std::move(event))
-									.watch(netpp::signal::Signals::E_ALRM);
+	netpp::signal::SignalWatcher::enableWatchSignal();
 
-		auto loop1 = dispatcher.dispatchEventLoop();
-		netpp::time::Timer timer1(loop1);
-		timer1.setOnTimeout([]{
-			::kill(::getpid(), SIGALRM);
-		});
-		timer1.setInterval(15);
-		timer1.start();
+	netpp::EventLoopDispatcher dispatcher;
+	netpp::Events event(std::make_shared<SignalHandler>());
+	netpp::signal::SignalWatcher::with(&dispatcher, std::move(event))
+								.watch(netpp::signal::Signals::E_ALRM);
 
-		auto loop2 = dispatcher.dispatchEventLoop();
-		netpp::time::Timer timer2(loop2);
-		timer2.setOnTimeout([]{
-			::kill(::getpid(), SIGQUIT);
-		});
-		timer2.setInterval(15);
-		timer2.start();
+	auto loop1 = dispatcher.dispatchEventLoop();
+	netpp::time::Timer timer1(loop1);
+	timer1.setOnTimeout([]{
+		::kill(::getpid(), SIGALRM);
+	});
+	timer1.setInterval(15);
+	timer1.start();
 
-		dispatcher.startLoop();
-	}
-	catch (netpp::error::UnhandledSignal &us)
-	{
-		::exit(netpp::signal::toLinuxSignal(us.signal()));
-	}
+	auto loop2 = dispatcher.dispatchEventLoop();
+	netpp::time::Timer timer2(loop2);
+	timer2.setOnTimeout([]{
+		::kill(::getpid(), SIGQUIT);
+	});
+	timer2.setInterval(30);
+	timer2.start();
+
+	dispatcher.startLoop();
 }
 
-class SignalTest : public testing::Test {
+class SignalDeathTest : public testing::Test {
 public:
 protected:
 	static void SetUpTestCase()
@@ -83,9 +76,12 @@ protected:
 	void TearDown() override {}
 };
 
-TEST_F(SignalTest, HandleSignalInOtherProccess)
+TEST_F(SignalDeathTest, NotHandleSignal)
 {
 	EXPECT_EXIT(killSelf(), testing::KilledBySignal(SIGALRM), "");
-	// EXPECT_DEBUG_DEATH(killSelfWithSignalWatcher(), "");
-	EXPECT_EXIT(killSelfWithSignalWatcher(), testing::ExitedWithCode(SIGQUIT), "");
+}
+
+TEST_F(SignalDeathTest, HandleSignal)
+{
+	EXPECT_EXIT(killSelfWithSignalWatcher(), testing::KilledBySignal(SIGQUIT), "");
 }

@@ -2,13 +2,6 @@
 #define NETPP_EXCEPTION_H
 
 #include <exception>
-extern "C" {
-#include <sys/signalfd.h>
-}
-
-namespace netpp::signal {
-enum class Signals;
-}
 
 namespace netpp::error {
 enum class SocketError;
@@ -34,15 +27,6 @@ public:
 	error::SocketError getErrorCode() noexcept;
 private:
 	int m_errnoCode;
-};
-
-class UnhandledSignal : public Exception {
-public:
-	explicit UnhandledSignal(::signalfd_siginfo sigInfo) noexcept : m_sigInfo{sigInfo} {}
-	const char* what() const noexcept override;
-	signal::Signals signal();
-private:
-	::signalfd_siginfo m_sigInfo;
 };
 }
 

@@ -19,7 +19,7 @@ include/socket/Socket.h include/socket/SocketIO.h
 include/stub/IO.h include/stub/Socket.h include/stub/Epoll.h
 include/error/Exception.h include/error/SocketError.h
 include/time/Timer.h include/time/TimeWheel.h
-include/Address.h include/ByteArray.h include/Channel.h include/EventLoop.h include/EventLoopDispatcher.h include/Events.h include/TcpClient.h include/TcpServer.h
+include/Address.h include/ByteArray.h include/Channel.h include/EventLoop.h include/EventLoopDispatcher.h include/Events.h include/TcpClient.h include/TcpServer.h include/Config.h
 src/epoll/Epoll.cpp src/epoll/EpollEvent.cpp
 src/handlers/Acceptor.cpp src/handlers/Connector.cpp src/handlers/TcpConnection.cpp src/handlers/TimerHandler.cpp src/handlers/SignalHandler.cpp
 src/support/ThreadPool.cpp src/support/Log.cpp

@@ -29,14 +29,14 @@ void SignalHandler::handleRead()
 		// watching this signal
 		if (signal::SignalWatcher::isWatching(signals[i].ssi_signo))
 			m_events.onSignal(signal::toNetppSignal(signals[i].ssi_signo));// TODO: can pass more signal info to user
-		else if (!signal::ignoreByDefault(signals[i].ssi_signo))
-			throw error::UnhandledSignal(signals[i]);
+		else
+			LOG_ERROR("not watching signal {}, but signal handler received it", signal::signalAsString(signals[i].ssi_signo));
 	}
 }
 
 void SignalHandler::handleClose()
 {
-	m_epollEvent->disableEvents();
+	m_epollEvent->deactiveEvents();
 	volatile auto externLife = shared_from_this();
 	// FIXME: may called from other theads
 	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());

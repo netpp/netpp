@@ -30,6 +30,7 @@ EventLoop::~EventLoop()
 			std::vector<internal::epoll::EpollEvent *> activeChannels = m_poll.poll();
 			for (auto &c : activeChannels)
 				c->handleEvents();
+			activeChannels.clear();
 			std::vector<std::function<void()>> funs;
 			{
 				std::lock_guard lck(m_functorMutex);

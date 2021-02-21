@@ -28,7 +28,7 @@ void Acceptor::listen()
 
 void Acceptor::stop()
 {
-	m_epollEvent->disableEvents();
+	m_epollEvent->deactiveEvents();
 	// extern life after remove
 	volatile auto externLife = shared_from_this();
 	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());

@@ -38,19 +38,21 @@ public:
 	void handleEvents();
 
 	/**
-	 * @brief Must call this to remove event from epoll before desctruction
+	 * @brief Remove epoll_event from epoll
+	 * @note Must call this to remove event from epoll before desctruction
 	 */
-	void disableEvents();
+	void deactiveEvents();
 
 	/**
 	 * @brief let epoll watch readable event
 	 */
-
 	void setEnableRead(bool enable);
+	
 	/**
 	 * @brief let epoll watch writeable event
 	 */
 	void setEnableWrite(bool enable);
+
 private:
 	Epoll *_poll;
 	std::weak_ptr<EventHandler> _eventHandler;
