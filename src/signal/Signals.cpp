@@ -50,6 +50,7 @@ std::string signalAsString(int signal)
 #endif
 #define SIGNAL_DEF(type)		case SIG##type: sig.append(#type); break;
 #define LAST_SIGNAL_DEF(type)	SIGNAL_DEF(type)
+	// TODO: use strsignal or sigdescr_np(__GLIBC_PREREQ(2, 32)) to get string
 	std::string sig;
 	switch (signal)
 	{

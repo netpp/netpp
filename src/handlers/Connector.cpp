@@ -43,7 +43,7 @@ void Connector::stopConnect()
 		m_epollEvent->deactiveEvents();
 		// extern life after remove
 		volatile auto externLife = shared_from_this();
-		EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+		_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 	}
 }
 
@@ -67,7 +67,7 @@ void Connector::handleWrite()
 		LOG_ERROR("Connector error {}", error::errorAsString(err));
 		if (!m_retryTimer)
 		{
-			m_retryTimer = make_unique<time::Timer>(EventLoop::thisLoop());
+			m_retryTimer = make_unique<time::Timer>(_loopThisHandlerLiveIn);
 			setupTimer();
 		}
 		reconnect();
@@ -96,7 +96,7 @@ void Connector::handleWrite()
 		volatile auto externLife = shared_from_this();
 		// remove Connector from loop after connect success
 		m_epollEvent->deactiveEvents();
-		EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+		_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 	}
 	else
 	{
@@ -126,6 +126,7 @@ std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatche
 		auto eventPtr = event.get();
 		connector->m_events = eventsPrototype;
 		connector->m_epollEvent = std::move(event);
+		connector->_loopThisHandlerLiveIn = loop;
 
 		loop->addEventHandlerToLoop(connector);
 
@@ -147,7 +148,7 @@ void Connector::setupTimer()
 	m_retryTimer->setOnTimeout([=]{
 		auto oldSocket = std::move(m_socket);
 		m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
-		m_epollEvent = make_unique<epoll::EpollEvent>(EventLoop::thisLoop()->getPoll(), shared_from_this(), m_socket->fd());
+		m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), shared_from_this(), m_socket->fd());
 		m_epollEvent->setEnableWrite(true);
 		connect();
 	});

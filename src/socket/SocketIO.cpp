@@ -103,8 +103,10 @@ ByteArrayIOVectorWriterWithLock::~ByteArrayIOVectorWriterWithLock()
 
 void ByteArrayIOVectorWriterWithLock::adjustByteArray(std::size_t size)
 {
+	// if need to alloc more
+	if (_buffer->m_availableSizeToWrite <= size)
+		_buffer->unlockedAllocIfNotEnough(size);
 	// move write node
-	std::size_t allocSize = size;
 	std::shared_ptr<ByteArray::BufferNode> node = _buffer->_currentWriteBufferNode.lock();
 	_buffer->m_availableSizeToWrite -= size;
 	_buffer->m_availableSizeToRead += size;
@@ -123,9 +125,6 @@ void ByteArrayIOVectorWriterWithLock::adjustByteArray(std::size_t size)
 		_buffer->_currentWriteBufferNode = node;
 		node = node->next;
 	}
-	// if need to alloc more
-	if (_buffer->m_availableSizeToWrite == 0)
-		_buffer->allocIfNotEnough(allocSize);
 }
 
 // SocketIO

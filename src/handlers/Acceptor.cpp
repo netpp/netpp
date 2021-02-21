@@ -31,7 +31,7 @@ void Acceptor::stop()
 	m_epollEvent->deactiveEvents();
 	// extern life after remove
 	volatile auto externLife = shared_from_this();
-	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 }
 
 void Acceptor::handleRead()
@@ -80,6 +80,7 @@ std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 		// epoll::EpollEvent *eventPtr = event.get();
 		acceptor->m_events = eventsPrototype;
 		acceptor->m_epollEvent = std::move(event);
+		acceptor->_loopThisHandlerLiveIn = loop;
 
 		loop->addEventHandlerToLoop(acceptor);
 

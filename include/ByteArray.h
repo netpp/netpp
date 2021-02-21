@@ -14,9 +14,42 @@ class ByteArrayIOVectorWriterWithLock;
 }
 /**
  * @brief Save bytes in network ending(big ending)
+ * 
+ * ByteArray has a list of buffer nodes.
+ * 
+ * The ReadNode point to node where data begins, while reading, the node's start 
+ * indicator moves, if reached the end indicator, all data in this node has read, 
+ * ReadNode will try to move to next node(if any), the movement of ReadNode makes
+ * nodes between head and ReadNode out of usage, these nodes will be moved later.
+ * ReadNode should never cross WriteNode.
+ * 
+ * The WriteNode point to node where data ends(also where to start write new data),
+ * writing to a ByteArray will move node's end indicator, if reached the max size
+ * of node's buffer, WriteNode will to move to next node.
+ * Before any data wrote, the writeable bytes will be checked, if the pending length
+ * is not satisfied, the head movement or memory allocation will applied.
+ * The 'head movement' target at move 'unused' nodes(as I said before, the movement 
+ * of ReadNode, lead nodes between head and ReadNode out of usage) to tail, avoid 
+ * memory allocation.
+ * If still not enough space for pending data after move, allocat nodes twice than 
+ * current every time utill data can be stored. 
+ * 
+ *               ReadNode   WriteNode
+ *                  |           |
+ * +-------+    +-------+    +-------+    +-------+
+ * | Node1 | -> | Node2 | -> | Node3 | -> | Node4 | -> nullptr
+ * +-------+    +-------+    +-------+    +-------+
+ *      | buffer    | buffer     | buffer    | buffer
+ * +------------------------------------------------+
+ * |          |            |            |           |
+ * +------------------------------------------------+
+ *                  |     | |     |
+ *     	          start/end start/end
+ * 
  */
 class ByteArray {
 	// access buffer directly
+	/// @note public methods are guarded by mutex, do NOT use with ByteArrayIOVector*WithLock, it will lead to dead lock
 	friend class internal::socket::ByteArrayIOVectorReaderWithLock;
 	friend class internal::socket::ByteArrayIOVectorWriterWithLock;
 public:
@@ -51,19 +84,22 @@ public:
 	/**
 	 * @brief The readable bytes in buffer
 	 */
-	inline std::size_t readableBytes() { return m_availableSizeToRead; }
+	inline std::uint64_t readableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
+	inline std::uint64_t unusedBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
 
 private:
 	/**
-	 * @brief Alloc buffer
+	 * @brief Alloc more buffer
 	 * 1. move unused buffer node from head to tail
 	 * 2. if available writeable buffer size is still less than size, alloc double node than current node count
 	 * @param size at lease n bytes available
+	 * @note this method will not acquire lock
 	 */
-	void allocIfNotEnough(std::size_t size);
+	void unlockedAllocIfNotEnough(std::size_t size);
 
 	/**
 	 * @brief Move unused buffer to tail, avoid memory alloc
+	 * @note this method will not acquire lock
 	 */
 	void moveBufferHead();
 
@@ -82,8 +118,8 @@ private:
 		std::shared_ptr<BufferNode> next;	// next buffer node
 	};
 	std::mutex m_bufferMutex;
-	std::atomic_uint64_t m_availableSizeToRead;
-	uint64_t m_availableSizeToWrite;
+	std::uint64_t m_availableSizeToRead;
+	std::uint64_t m_availableSizeToWrite;
 	unsigned m_nodeCount;						// node number
 	std::shared_ptr<BufferNode> m_bufferHead;	// the head of buffer node
 	std::weak_ptr<BufferNode> _bufferTail;		// the tail of buffer node

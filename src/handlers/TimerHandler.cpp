@@ -25,8 +25,7 @@ void TimerHandler::handleClose()
 	m_epollEvent->deactiveEvents();
 	// extern TimerHandler life after remove
 	volatile auto externLife = shared_from_this();
-	// FIXME: may called from other theads
-	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 }
 
 void TimerHandler::setEnabled(bool enable)

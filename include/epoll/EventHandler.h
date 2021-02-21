@@ -6,8 +6,10 @@
 #define NETPP_EVENTHANDLER_H
 
 #include "EpollEvent.h"
-#include "Events.h"
-#include <type_traits>
+
+namespace netpp {
+class EventLoop;
+}
 
 namespace netpp::internal::epoll {
 // TODO: set handler priority
@@ -22,6 +24,7 @@ public:
 	virtual void handleClose() = 0;
 
 protected:
+	EventLoop *_loopThisHandlerLiveIn;
 	std::unique_ptr<EpollEvent> m_epollEvent;
 };
 

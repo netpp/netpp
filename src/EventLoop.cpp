@@ -8,23 +8,15 @@
 
 namespace netpp {
 
-thread_local EventLoop *EventLoop::_thisThreadLoop = nullptr;
-
 EventLoop::EventLoop(unsigned tickInterval, unsigned bucketCount)
 {
 	m_kickIdleConnectionWheel = std::make_unique<time::TimeWheel>(this, tickInterval, bucketCount);
-}
-
-EventLoop::~EventLoop()
-{
-	_thisThreadLoop = nullptr;
 }
 
 [[noreturn]] void EventLoop::run()
 {
 	try
 	{
-		_thisThreadLoop = this;
 		while (true)
 		{
 			std::vector<internal::epoll::EpollEvent *> activeChannels = m_poll.poll();

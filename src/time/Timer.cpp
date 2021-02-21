@@ -23,6 +23,7 @@ Timer::Timer(EventLoop *loop)
 
 	m_handler = make_shared<internal::handlers::TimerHandler>(this);
 	m_handler->m_epollEvent = make_unique<internal::epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
+	m_handler->_loopThisHandlerLiveIn = loop;
 }
 
 Timer::~Timer()

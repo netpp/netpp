@@ -4,7 +4,7 @@
 #ifndef LAST_SIGNAL_DEF
 #define LAST_SIGNAL_DEF(x) (void)0
 #endif
-// SIGKILL and SIGSTOP not included
+// SIGKILL and SIGSTOP not included, these signals can not be handled
 SIGNAL_DEF(HUP)
 SIGNAL_DEF(INT)
 SIGNAL_DEF(QUIT)

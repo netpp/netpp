@@ -115,14 +115,14 @@ void TcpConnection::handleError()
 void TcpConnection::handleClose()
 {
 	LOG_TRACE("Socket {} disconnected", m_socket->fd());
-	auto wheel = EventLoop::thisLoop()->getTimeWheel();
+	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
 	if (wheel)
 		wheel->removeFromWheel(_halfCloseWheel);
 	m_events.onDisconnect();
 	m_epollEvent->deactiveEvents();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
-	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 	m_state = socket::TcpState::Disconnected;
 }
 
@@ -165,7 +165,7 @@ std::shared_ptr<Channel> TcpConnection::getIOChannel()
 
 void TcpConnection::renewWheel()
 {
-	auto wheel = EventLoop::thisLoop()->getTimeWheel();
+	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
 	if (wheel)
 	{
 		if (!_idleConnectionWheel.expired())
@@ -179,7 +179,7 @@ void TcpConnection::closeWrite()
 {
 	m_socket->shutdownWrite();
 	// force close connection in wheel
-	auto wheel = EventLoop::thisLoop()->getTimeWheel();
+	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
 	if (wheel)
 	{
 		auto halfCloseWheel = std::make_shared<HalfCloseConnectionWheelEntry>(shared_from_this());
@@ -196,6 +196,7 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
 	connection->m_events = eventsPrototype;
+	connection->_loopThisHandlerLiveIn = loop;
 	// set up events
 	loop->addEventHandlerToLoop(connection);
 	eventPtr->setEnableWrite(false);

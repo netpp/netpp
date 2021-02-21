@@ -33,17 +33,12 @@ public:
 	 * @param bucketCount	Contains n buckets
 	 */
 	EventLoop(unsigned tickInterval, unsigned bucketCount);
-	~EventLoop();
+	~EventLoop() = default;
 
 	[[noreturn]] void run();
 	void addEventHandlerToLoop(std::shared_ptr<internal::epoll::EventHandler> handler);
 	void removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::EventHandler> handler);
 
-	/**
-	 * @brief return this thread's event loop
-	 * @note only avaiable AFTER loop start
-	 */
-	static inline EventLoop *thisLoop() { return _thisThreadLoop; }
 	inline internal::epoll::Epoll *getPoll() { return &m_poll; }
 	time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
 
@@ -51,7 +46,6 @@ public:
 	void runInLoop(std::function<void()> functor);
 
 private:
-	static thread_local EventLoop *_thisThreadLoop;
 	internal::epoll::Epoll m_poll;
 	std::unordered_set<std::shared_ptr<internal::epoll::EventHandler>> m_handlers;	// epoll events handlers
 

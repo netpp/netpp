@@ -38,8 +38,7 @@ void SignalHandler::handleClose()
 {
 	m_epollEvent->deactiveEvents();
 	volatile auto externLife = shared_from_this();
-	// FIXME: may called from other theads
-	EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
+	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 }
 
 std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
@@ -53,6 +52,7 @@ std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop,
 
 	signalHandler->m_events = eventsPrototype;
 	signalHandler->m_epollEvent = std::move(event);
+	signalHandler->_loopThisHandlerLiveIn = loop;
 
 	loop->addEventHandlerToLoop(signalHandler);
 	eventPtr->setEnableRead(true);
