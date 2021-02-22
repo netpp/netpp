@@ -44,7 +44,9 @@ private:
 
 void TestWheelEntry::onTimeout()
 {
-	_wheel.lock()->addToWheel(std::make_shared<TestWheelEntry>(_wheel.lock()));
+	auto wheel = _wheel.lock();
+	wheel->addToWheel(std::make_shared<TestWheelEntry>(wheel));
+	auto removeWheel = std::make_shared<TestWheelEntry>(wheel);
 	++TimerTest::wheelTriggerCount;
 }
 

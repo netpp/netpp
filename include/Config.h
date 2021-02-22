@@ -9,8 +9,10 @@ class Config {
 // enable run user-defined handler in other thread than event loop
 // user-defined handler threads number
 // enable log
-// enable time wheel, bucket size, tick interval
+// enable time wheel to close idle connection, bucket size, tick interval
 // enable handle signal
+// enable retry connect, max retry count
+// buffer node size
 };
 }
 #endif

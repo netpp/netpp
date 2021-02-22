@@ -34,29 +34,30 @@ void SignalHandler::handleRead()
 	}
 }
 
-void SignalHandler::handleClose()
+void SignalHandler::stop()
 {
-	m_epollEvent->deactiveEvents();
-	volatile auto externLife = shared_from_this();
-	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
+	auto externLife = shared_from_this();
+	_loopThisHandlerLiveIn->runInLoop([externLife](){
+		externLife->m_epollEvent->deactiveEvents();
+		externLife->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(externLife);
+	});
 }
 
 std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
 {
 	auto signalHandler = std::make_shared<SignalHandler>();
-	auto event = std::make_unique<epoll::EpollEvent>(
+	signalHandler->m_events = eventsPrototype;
+	signalHandler->m_epollEvent = std::make_unique<epoll::EpollEvent>(
 		loop->getPoll(), signalHandler,
 		signal::SignalWatcher::signalFd
 	);
-	epoll::EpollEvent *eventPtr = event.get();
-
-	signalHandler->m_events = eventsPrototype;
-	signalHandler->m_epollEvent = std::move(event);
 	signalHandler->_loopThisHandlerLiveIn = loop;
 
-	loop->addEventHandlerToLoop(signalHandler);
-	eventPtr->setEnableRead(true);
-	LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
+	loop->runInLoop([signalHandler]{
+		signalHandler->_loopThisHandlerLiveIn->addEventHandlerToLoop(signalHandler);
+		signalHandler->m_epollEvent->setEnableRead(true);
+		LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
+	});
 	return signalHandler;
 }
 }

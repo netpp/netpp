@@ -4,6 +4,10 @@
 #include <string>
 
 namespace netpp::error {
+/**
+ * @brief enumerate socket errors
+ * 
+ */
 enum class SocketError {
 #ifndef SOCKET_ERROR_DEF
 #define SOCKET_ERROR_DEF(error) E_##error,
@@ -17,7 +21,9 @@ enum class SocketError {
 #include "SocketError.def"
 };
 
+/// @brief Convert enumerated error to string
 std::string errorAsString(SocketError code);
+/// @brief get enumerated error
 SocketError getError(int code);
 }
 

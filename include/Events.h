@@ -45,8 +45,8 @@ public:
 	/**
 	 * @brief Construct a new Events object
 	 * 
-	 * @tparam Impl		The user event handler
-	 * @param impl		shared_ptr to event handler, all event loop will shared the same instance, make sure it's thread safe
+	 * @tparam Impl		The user-defined event handler
+	 * @param impl		shared_ptr to event handler, all event loop will shared same instance, make sure it's thread safe
 	 * @param threads	threads event handler will use, <= 0 will let ThreadPool to find out
 	 */
 	template<typename Impl>

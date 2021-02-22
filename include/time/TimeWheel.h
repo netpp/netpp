@@ -4,25 +4,25 @@
 #include <unordered_set>
 #include <memory>
 #include "Timer.h"
+#include <string>
 
 namespace netpp::time {
 
 class TimeWheelEntry {
 	friend class TimeWheel;
 public:
-	TimeWheelEntry() : m_indexInWheel{0} {}
+	TimeWheelEntry(std::string name = "") : m_wheelName{name}, m_indexInWheel{0} {}
 	virtual ~TimeWheelEntry() = default;
 
 	virtual void onTimeout() = 0;
 
 private:
+	std::string m_wheelName;
 	unsigned m_indexInWheel;
 };
 
 class TimeWheel {
 public:
-	using Bucket = std::unordered_set<std::shared_ptr<TimeWheelEntry>>;
-
 	/**
 	 * @brief Construct a new Time Wheel object
 	 * 
@@ -32,7 +32,7 @@ public:
 	 */
 	TimeWheel(EventLoop *loop, unsigned tickInterval, unsigned bucketCount);
 	void addToWheel(std::shared_ptr<TimeWheelEntry> entry);
-	void removeFromWheel(std::weak_ptr<TimeWheelEntry> entry);
+	// void removeFromWheel(std::weak_ptr<TimeWheelEntry> entry);
 	void renew(std::weak_ptr<TimeWheelEntry> entry);
 
 private:
@@ -40,6 +40,8 @@ private:
 
 	Timer m_tickTimer;
 	unsigned m_timeOutBucketIndex;
+
+	using Bucket = std::unordered_set<std::shared_ptr<TimeWheelEntry>>;
 	std::vector<Bucket> m_buckets;
 };
 }

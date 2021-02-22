@@ -20,9 +20,10 @@ TcpServer::~TcpServer()
 
 void TcpServer::listen()
 {
-	auto acceptor = internal::handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, m_eventPrototype).lock();
+	auto acceptor = internal::handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, m_eventPrototype);
 	_acceptor = acceptor;
-	acceptor->listen();
+	if (acceptor)
+		acceptor->listen();
 }
 
 void TcpServer::stopListen()

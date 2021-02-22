@@ -8,7 +8,7 @@ namespace netpp::internal::stub {
 /**
  * @brief create an epoll fd
  * 
- * @throw ResourceLimitException on @code EMFILE ENFILE ENOMEM
+ * @throw ResourceLimitException on (EMFILE ENFILE ENOMEM)
  */
 // extern int epoll_create(int size);
 extern int epoll_create1(int flags);
@@ -16,7 +16,7 @@ extern int epoll_create1(int flags);
 /**
  * @brief control an epoll fd
  * 
- * @throw ResourceLimitException on @code ENOMEM ENOSPC
+ * @throw ResourceLimitException on (ENOMEM ENOSPC)
  */
 extern int epoll_ctl(int epfd, int op, int fd, struct ::epoll_event *event);
 

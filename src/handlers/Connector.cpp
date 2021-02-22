@@ -11,51 +11,51 @@ using std::make_shared;
 
 namespace netpp::internal::handlers {
 Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
-		: m_isConnected{false}, _dispatcher(dispatcher), m_socket{std::move(socket)}
+		: _dispatcher(dispatcher), m_socket{std::move(socket)}, m_connectionEstablished{false}
 {}
 
 void Connector::connect()
 {
-	try
-	{
-		// connect may success immediately, manually enable read
-		m_epollEvent->setEnableWrite(true);
-		m_socket->connect();
-	}
-	catch (error::SocketException &se)
-	{
-		error::SocketError code = se.getErrorCode();
-		if (code != error::SocketError::E_INPROGRESS)
-			m_events.onError(code);
-	}
+	auto connector = shared_from_this();
+	_loopThisHandlerLiveIn->runInLoop([connector]{
+		try
+		{
+			if (connector->m_state == socket::TcpState::Closed)
+			{
+				connector->_loopThisHandlerLiveIn->addEventHandlerToLoop(connector);
+				// connect may success immediately, manually enable read
+				connector->m_epollEvent->setEnableWrite(true);
+				connector->m_socket->connect();
+				connector->m_state = socket::TcpState::Connecting;
+			}
+		}
+		catch (error::SocketException &se)
+		{
+			error::SocketError code = se.getErrorCode();
+			if (code != error::SocketError::E_INPROGRESS)
+				connector->m_events.onError(code);
+		}
+	});
 }
 
 void Connector::stopConnect()
 {
-	// if connected, Connector was already cleaned, no need to remove again
-	if (!m_isConnected)
-	{
-		if (m_retryTimer)	// stop timer
+	auto connector = shared_from_this();
+	_loopThisHandlerLiveIn->runInLoop([connector]{
+		// if connected, Connector was already cleaned, no need to remove again
+		if (connector->m_state == socket::TcpState::Connecting)
 		{
-			m_retryTimer->stop();
-			m_retryTimer = nullptr;
+			if (connector->m_retryTimer)	// stop timer
+			{
+				connector->m_retryTimer->stop();
+				connector->m_retryTimer = nullptr;
+			}
+			connector->m_epollEvent->deactiveEvents();
+			connector->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(connector);
+			connector->m_state = socket::TcpState::Closed;
 		}
-		m_epollEvent->deactiveEvents();
-		// extern life after remove
-		volatile auto externLife = shared_from_this();
-		_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
-	}
+	});
 }
-
-bool Connector::connected() const
-{
-	if (!m_isConnected)
-		return false;
-	return !_connection.expired();
-}
-
-void Connector::handleRead()
-{}
 
 void Connector::handleWrite()
 {
@@ -83,10 +83,13 @@ void Connector::handleWrite()
 			m_retryTimer->stop();
 			m_retryTimer = nullptr;
 		}
+		// clean up this first
+		m_epollEvent->deactiveEvents();
+
 		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
 																   std::move(m_socket),
 																   m_events).lock();
-		m_isConnected = true;
+		m_connectionEstablished.store(true, std::memory_order_relaxed);
 		_connection = connection;
 		LOG_TRACE("Connected to server");
 		std::shared_ptr<Channel> channel = connection->getIOChannel();
@@ -95,7 +98,6 @@ void Connector::handleWrite()
 		// extern life after remove
 		volatile auto externLife = shared_from_this();
 		// remove Connector from loop after connect success
-		m_epollEvent->deactiveEvents();
 		_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 	}
 	else
@@ -111,10 +113,7 @@ void Connector::handleError()
 	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
-void Connector::handleClose()
-{}
-
-std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatcher,
+std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatcher,
 											 Address serverAddr,
 											 Events eventsPrototype)
 {
@@ -127,8 +126,7 @@ std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatche
 		connector->m_events = eventsPrototype;
 		connector->m_epollEvent = std::move(event);
 		connector->_loopThisHandlerLiveIn = loop;
-
-		loop->addEventHandlerToLoop(connector);
+		connector->m_state = socket::TcpState::Closed;
 
 		return connector;
 	}
@@ -140,7 +138,7 @@ std::weak_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatche
 	{
 		eventsPrototype.onError(rle.getSocketErrorCode());
 	}
-	return std::weak_ptr<Connector>();
+	return std::shared_ptr<Connector>();
 }
 
 void Connector::setupTimer()

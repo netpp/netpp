@@ -3,13 +3,22 @@
 
 namespace netpp::internal::socket {
 
+/**
+ * @brief a simplify tcp state
+ * 
+ */
 enum class TcpState {
-	Connecting,
-	Connected,
-	Disconnecting,
-	Disconnected
+	Closed,			// at init state
+	Listen,			// is listening
+	Connecting,		// is connecting
+	Established,	// connectiong established
+	Closing			// is closing
 };
 
+/**
+ * @brief Supported socket options, not used yet
+ * 
+ */
 enum class SocketOptions {
 #ifdef SOCKET_OPT_DEF
 #undef SOCKET_OPT_DEF
@@ -25,8 +34,8 @@ enum class SocketOptions {
 #endif
 #include "SocketOption.def"
 };
-bool setSocketOption(SocketOptions);
-bool getSocketOption(SocketOptions);
+// bool setSocketOption(SocketOptions);
+// bool getSocketOption(SocketOptions);
 }
 
 #endif

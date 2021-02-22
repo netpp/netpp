@@ -12,6 +12,10 @@ namespace internal::handlers {
 class TcpConnection;
 }
 
+/**
+ * @brief A Channel represent a brige to read/write TcpConnection's buffer.
+ * 
+ */
 class Channel {
 public:
 	Channel(std::weak_ptr<internal::handlers::TcpConnection> connection, 
@@ -42,7 +46,7 @@ public:
 	inline void writeUInt64(uint64_t value)	{ auto array = _writeArray.lock(); if (array) array->writeUInt64(value); }
 	inline void writeFloat(float value)		{ auto array = _writeArray.lock(); if (array) array->writeFloat(value); }
 	inline void writeDouble(double value)	{ auto array = _writeArray.lock(); if (array) array->writeDouble(value); }
-	inline void writeString(std::string value)				{ auto array = _writeArray.lock(); if (array) array->writeString(std::move(value)); }
+	inline void writeString(std::string value)					{ auto array = _writeArray.lock(); if (array) array->writeString(std::move(value)); }
 	inline void writeRaw(const char *data, std::size_t length)	{ auto array = _writeArray.lock(); if (array) array->writeRaw(data, length); }
 
 	/**

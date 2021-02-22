@@ -10,11 +10,15 @@
 #include "ThreadBase.hpp"
 
 namespace netpp::support {
+/**
+ * @brief The thread pool
+ * 
+ */
 class ThreadPool {
 	using TaskType = internal::support::RunnableWrapper;
 public:
 	/**
-	 * @brief Construct a new Thread Pool object
+	 * @brief Create a thread pool, threads will not start before start() is called
 	 * 
 	 * @param threadNum if <= 0, use hardware thread number, else create n threads
 	 */
@@ -29,13 +33,21 @@ public:
 	 */
 	bool start();
 
+	/// @brief get runnable return type
 	template <typename Runnable, typename ... Args>
 	using ResultType = typename std::result_of<Runnable(Args...)>::type;
 
+	/**
+	 * @brief add task to thread pool
+	 * 
+	 * @tparam Runnable		runnable objects
+	 * @tparam Args			params
+	 * @return std::future<RetType>		the future to get runnable return value
+	 */
 	template<typename Runnable, typename ... Args,
 			typename RetType = ResultType<Runnable, Args...>,
 			typename = typename std::enable_if<!std::is_same<RetType, void>::value>::type>
-	std::future<typename std::result_of<Runnable(Args...)>::type> run(Runnable runnable, Args ... args)
+	std::future<RetType> run(Runnable runnable, Args ... args)
 	{
 		std::packaged_task<RetType(Args...)> task(runnable);
 		std::future<RetType> res(task.get_future());
@@ -46,6 +58,7 @@ public:
 		return std::move(res);
 	}
 
+	/// @brief Explicit specialization for runnable void(...)
 	template<typename Runnable, typename ... Args,
 			typename RetType = ResultType<Runnable, Args...>,
 			typename = typename std::enable_if<std::is_same<RetType, void>::value>::type>
@@ -59,7 +72,7 @@ public:
 	}
 
 	inline unsigned maxThreadCount() const { return threadNumber; }
-	inline unsigned activeThreadCount() const { return active; }
+	inline unsigned activeThreadCount() const { return m_activeThreads; }
 	inline unsigned queuedTask() const { return taskCount; }
 
 	/**
@@ -73,12 +86,12 @@ private:
 	void workerThread(unsigned id);
 	void runTask();
 
-	std::atomic_bool done;
-	std::atomic_uint active;
+	std::atomic_bool m_quit;
+	std::atomic_uint m_activeThreads;
 	std::atomic_uint threadNumber;
 	std::atomic_uint taskCount;
 
-	std::mutex taskMutex;
+	std::mutex m_waitTaskMutex;
 	std::condition_variable waitTask;
 
 	internal::support::ThreadSafeQueue<TaskType> workQueue;

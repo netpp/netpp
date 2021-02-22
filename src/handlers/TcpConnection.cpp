@@ -13,10 +13,15 @@ using std::make_shared;
 
 namespace netpp::internal::handlers {
 
+/**
+ * @brief Time wheel for connection who have not transfer any data in few time,
+ * try to close it on timeout
+ * 
+ */
 class IdelConnectionWheelEntry : public time::TimeWheelEntry {
 public:
 	explicit IdelConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: _connection{connection}
+		: time::TimeWheelEntry("idle"), _connection{connection}
 	{}
 	~IdelConnectionWheelEntry() override = default;
 
@@ -32,10 +37,15 @@ private:
 	std::weak_ptr<TcpConnection> _connection;
 };
 
+/**
+ * @brief Time wheel for connection who's half closed(during Four-Way-Wavehand),
+ * have not transfer any data in few time, force close it on timeout
+ * 
+ */
 class HalfCloseConnectionWheelEntry : public time::TimeWheelEntry {
 public:
 	explicit HalfCloseConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: _connection{connection}
+		: time::TimeWheelEntry("hanlf close"), _connection{connection}
 	{}
 	~HalfCloseConnectionWheelEntry() override = default;
 
@@ -52,7 +62,7 @@ private:
 };
 
 TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop)
-		: _loop{loop}, m_state{socket::TcpState::Connected}, 
+		: m_state{socket::TcpState::Established}, 
 		m_isWaitWriting{false}, m_socket{std::move(socket)}, 
 		m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
 {}
@@ -89,7 +99,7 @@ void TcpConnection::handleWrite()
 			m_epollEvent->setEnableWrite(false);
 			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
-			if (m_state == socket::TcpState::Disconnecting)
+			if (m_state == socket::TcpState::Closing)
 				closeWrite();
 		}
 	}
@@ -115,15 +125,13 @@ void TcpConnection::handleError()
 void TcpConnection::handleClose()
 {
 	LOG_TRACE("Socket {} disconnected", m_socket->fd());
-	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
-	if (wheel)
-		wheel->removeFromWheel(_halfCloseWheel);
+	// no need to remove wheels, they will self destructed after timeout
 	m_events.onDisconnect();
 	m_epollEvent->deactiveEvents();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
-	m_state = socket::TcpState::Disconnected;
+	m_state = socket::TcpState::Closed;
 }
 
 void TcpConnection::sendInLoop()
@@ -131,7 +139,7 @@ void TcpConnection::sendInLoop()
 	// Move to event loop thread
 	// capture weak_ptr in case TcpConnection is destructed
 	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
-	_loop->runInLoop([connectionWeak]{
+	_loopThisHandlerLiveIn->runInLoop([connectionWeak]{
 		auto connection = connectionWeak.lock();
 		if (connection)
 		{
@@ -146,14 +154,14 @@ void TcpConnection::closeAfterWriteCompleted()
 	// Move to event loop thread
 	// capture weak_ptr in case TcpConnection is destructed
 	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
-	_loop->runInLoop([connectionWeak]{
+	_loopThisHandlerLiveIn->runInLoop([connectionWeak]{
 		// nothing to write, close direcly
 		auto connection = connectionWeak.lock();
 		if (connection)
 		{
 			if (!connection->m_isWaitWriting)
 				connection->closeWrite();
-			connection->m_state = socket::TcpState::Disconnecting;
+			connection->m_state = socket::TcpState::Closing;
 		}
 	});
 }

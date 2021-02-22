@@ -20,8 +20,8 @@ namespace SocketIO {
 	 * 
 	 * @param socket	a socket object
 	 * @param byteArray	the buffer
-	 * @throw ResourceLimitException on @code ENOMEM
-	 * @throw SocketException on @code ECONNREFUSED ENOTCONN
+	 * @throw ResourceLimitException on (ENOMEM)
+	 * @throw SocketException on (ECONNREFUSED ENOTCONN)
 	 */
 	void read(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
 
@@ -32,8 +32,8 @@ namespace SocketIO {
 	 * @param byteArray	the buffer
 	 * @return true		write all
 	 * @return false	not write all, more data in buffer to write
-	 * @throw SocketException on @code ECONNRESET EDESTADDRREQ EISCONN EMSGSIZE ENOTCONN EPIPE
-	 * @throw ResourceLimitException on @code ENOMEM
+	 * @throw SocketException on (ECONNRESET EDESTADDRREQ EISCONN EMSGSIZE ENOTCONN EPIPE)
+	 * @throw ResourceLimitException on (ENOMEM)
 	 */
 	bool write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
 };
@@ -53,6 +53,7 @@ public:
 	ByteArray2IOVector(ByteArray2IOVector &) = delete;
 	ByteArray2IOVector(ByteArray2IOVector &&) = delete;
 	ByteArray2IOVector &operator =(ByteArray2IOVector &) = delete;
+	ByteArray2IOVector &operator =(ByteArray2IOVector &&) = delete;
 
 protected:
 	::iovec *m_vec;		// iovec array
@@ -61,7 +62,8 @@ protected:
 };
 
 /**
- * @brief Read from ByteArray as iovec, will LOCK buffer until destruction
+ * @brief Read from ByteArray as iovec
+ * @note ByteArray's lock is acquired until destruction
  * 
  */
 class ByteArrayIOVectorReaderWithLock : public ByteArray2IOVector {
@@ -77,7 +79,8 @@ public:
 };
 
 /**
- * @brief Write to ByteArray as iovec, will LOCK buffer until destruction
+ * @brief Write to ByteArray as iovec
+ * @note ByteArray's lock is acquired until destruction
  * 
  */
 class ByteArrayIOVectorWriterWithLock : public ByteArray2IOVector {

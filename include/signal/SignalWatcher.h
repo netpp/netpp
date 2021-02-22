@@ -13,11 +13,23 @@ class EventLoopDispatcher;
 }
 
 namespace netpp::signal {
+/**
+ * @brief The signal handle system, use signalfd
+ * 
+ */
 class SignalWatcher {
 	// make sure only SignalHandler can access signal fd
 	friend class internal::handlers::SignalHandler;
 public:
 	SignalWatcher() = default;
+
+	/**
+	 * @brief enable signal handlering
+	 * @note must call before any threads started, or signal may send to unexpected thread,
+	 * recommanding use this at the beginning of main()
+	 * 
+	 */
+	static void enableWatchSignal();
 
 	/**
 	 * @brief init signal event handler
@@ -26,17 +38,16 @@ public:
 	 * @param eventsPrototype	how to handle signal event
 	 */
 	static SignalWatcher with(EventLoopDispatcher *dispatcher, Events eventsPrototype);
+
+	/// @brief start watch signal, take over default signal action
 	static SignalWatcher watch(Signals signal);
+
+	/// @brief stop watch signal, handle it by default
 	static SignalWatcher restore(Signals signal);
+
+	/// @brief is watching signal
 	static bool isWatching(Signals signal);
 	static bool isWatching(uint32_t signal);
-
-	/**
-	 * @brief enable signal handlering
-	 * @note must call before any threads started, or signal may send to unexpected thread
-	 * 
-	 */
-	static void enableWatchSignal();
 
 private:
 	static int signalFd;
@@ -46,6 +57,7 @@ private:
 
 	static std::thread m_unHandledSignalThread;
 	static std::mutex m_watchSignalMutex;
+	/// @brief notify signal watch set changed
 	static std::condition_variable m_waitWatchSignalChange;
 };
 }

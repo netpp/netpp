@@ -13,9 +13,8 @@ class ByteArrayIOVectorReaderWithLock;
 class ByteArrayIOVectorWriterWithLock;
 }
 /**
- * @brief Save bytes in network ending(big ending)
- * 
- * ByteArray has a list of buffer nodes.
+ * @brief ByteArray has a list of buffer nodes, saved in network ending(big ending), 
+ * it's thread safe.
  * 
  * The ReadNode point to node where data begins, while reading, the node's start 
  * indicator moves, if reached the end indicator, all data in this node has read, 
@@ -39,12 +38,12 @@ class ByteArrayIOVectorWriterWithLock;
  * +-------+    +-------+    +-------+    +-------+
  * | Node1 | -> | Node2 | -> | Node3 | -> | Node4 | -> nullptr
  * +-------+    +-------+    +-------+    +-------+
- *      | buffer    | buffer     | buffer    | buffer
- * +------------------------------------------------+
- * |          |            |            |           |
- * +------------------------------------------------+
- *                  |     | |     |
- *     	          start/end start/end
+ *      |           |            |            |
+ * +----------++----------++----------++----------+
+ * |  buffer  ||  buffer  ||  buffer  ||  buffer  |
+ * +----------++----------++----------++----------+
+ *                  |    |  |     |
+ *     	         start/end  start/end
  * 
  */
 class ByteArray {
@@ -79,20 +78,45 @@ public:
 	float retrieveFloat();
 	double retrieveDouble();
 	std::string retrieveString(std::size_t length);
+	/**
+	 * @brief retrive raw data from ByteArray to buffer
+	 * 
+	 * @param buffer		store data here
+	 * @param length		how many bytes to retrieve
+	 * @return std::size_t	the actual size retrieved from ByteArray
+	 */
 	std::size_t retrieveRaw(char *buffer, std::size_t length);
 
 	/**
-	 * @brief The readable bytes in buffer
+	 * @brief The readable bytes in buffer.
+	 * From ReadNode's start to WriteNode's endl.
 	 */
 	inline std::uint64_t readableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
+
+	/** 
+	 * @brief The unused bytes in buffer.
+	 * The 'unused' means the length from WriteNode's end to last node's end.
+	 * 
+	 * WriteNode
+	 *     |
+	 * +-------+    +-------+
+	 * | Node3 | -> | Node4 | -> nullptr
+	 * +-------+    +-------+
+	 *     |            |
+	 * +----------++----------+
+	 * |  buffer  ||  buffer  |
+	 * +----------++----------+
+	 *    end|                |
+	 *       |-----unused-----|
+	 */
 	inline std::uint64_t unusedBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
 
 private:
 	/**
 	 * @brief Alloc more buffer
 	 * 1. move unused buffer node from head to tail
-	 * 2. if available writeable buffer size is still less than size, alloc double node than current node count
-	 * @param size at lease n bytes available
+	 * 2. if available writeable buffer size is still less than size, alloc double size of nodes than current
+	 * @param size	at lease n bytes available
 	 * @note this method will not acquire lock
 	 */
 	void unlockedAllocIfNotEnough(std::size_t size);
@@ -101,7 +125,7 @@ private:
 	 * @brief Move unused buffer to tail, avoid memory alloc
 	 * @note this method will not acquire lock
 	 */
-	void moveBufferHead();
+	void unlockedMoveBufferHead();
 
 	/**
 	 * @brief The node of buffer

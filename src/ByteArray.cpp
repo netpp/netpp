@@ -86,26 +86,22 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 	if (availableSize <= length)
 		unlockedAllocIfNotEnough(length);
 	
-	// when (availableSize == length), current node is full,
-	// move _currentWriteBufferNode to next node
-	while (availableSize <= length)
+	std::size_t bytesToWrite = (availableSize < length) ? availableSize : length;
+	while (node && availableSize > 0 && length > 0)
 	{
-		std::memcpy(node->buffer + node->end, data, availableSize);
-		node->end = BufferNode::BufferSize;
-		data += availableSize;
-		length -= availableSize;
-		m_availableSizeToRead += availableSize;
-		m_availableSizeToWrite -= availableSize;
+		std::memcpy(node->buffer + node->end, data, bytesToWrite);
+		node->end += bytesToWrite;
+		data += bytesToWrite;
+		length -= bytesToWrite;
+		m_availableSizeToRead += bytesToWrite;
+		m_availableSizeToWrite -= bytesToWrite;
 		node = node->next;
-		_currentWriteBufferNode = node;
-		availableSize = BufferNode::BufferSize;
-	}
-	if (length > 0)
-	{
-		std::memcpy(node->buffer + node->end, data, length);
-		node->end += length;
-		m_availableSizeToRead += length;
-		m_availableSizeToWrite -= length;
+		if (node)
+		{
+			_currentWriteBufferNode = node;
+			availableSize = BufferNode::BufferSize;
+			bytesToWrite = (availableSize < length) ? availableSize : length;
+		}
 	}
 }
 
@@ -213,35 +209,24 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 	std::lock_guard lck(m_bufferMutex);
 	std::shared_ptr<BufferNode> node = _currentReadBufferNode.lock();
 	std::size_t usedBytesInNode = node->end - node->start;		// how many bytes used in this node
-	bool notEnoughtBytesInLastNode = false;
-	while (usedBytesInNode <= length)
+	std::size_t bytesToCopy = (usedBytesInNode < length) ? usedBytesInNode : length;
+	while (node && usedBytesInNode > 0 && length > 0)
 	{
-		std::memcpy(buffer, node->buffer + node->start, usedBytesInNode);
-		node->start = node->end;
-		buffer += usedBytesInNode;
-		length -= usedBytesInNode;
-		m_availableSizeToRead -= usedBytesInNode;
-		// read from buffuer do not change m_availableSizeToWrite
-		if (node->next)		// has next node
+		std::memcpy(buffer, node->buffer + node->start, bytesToCopy);
+		node->start += bytesToCopy;
+		buffer += bytesToCopy;
+		length -= bytesToCopy;
+		m_availableSizeToRead -= bytesToCopy;
+		// is current node empty
+		bool readOut = (node->start == BufferNode::BufferSize);
+		node = node->next;
+		// move ReadNode when 1.has next node 2.this node is empty
+		if (node && readOut)
 		{
 			_currentReadBufferNode = node;
-			node = node->next;
 			usedBytesInNode = node->end - node->start;
+			bytesToCopy = (usedBytesInNode < length) ? usedBytesInNode : length;
 		}
-		else
-		{
-			// do not have next node, and current node readable bytes is less than length,
-			// mark it as end
-			notEnoughtBytesInLastNode = true;
-			break;
-		}
-	}
-	if (!notEnoughtBytesInLastNode && length > 0)	// the last node
-	{
-		std::memcpy(buffer, node->buffer + node->start, length);
-		node->start += length;
-		m_availableSizeToRead -= length;
-		buffer += length;
 	}
 	return buffer - bufferStartPtr;
 }
@@ -250,7 +235,7 @@ void ByteArray::unlockedAllocIfNotEnough(std::size_t size)
 {
 	if (m_availableSizeToWrite <= size)
 	{
-		moveBufferHead();
+		unlockedMoveBufferHead();
 		// if still not enough
 		std::shared_ptr<BufferNode> tail = _bufferTail.lock();
 		while (m_availableSizeToWrite <= size)
@@ -264,7 +249,7 @@ void ByteArray::unlockedAllocIfNotEnough(std::size_t size)
 	}
 }
 
-void ByteArray::moveBufferHead()
+void ByteArray::unlockedMoveBufferHead()
 {
 	std::shared_ptr<BufferNode> tail = _bufferTail.lock();
 	std::shared_ptr<BufferNode> readNode = _currentReadBufferNode.lock();

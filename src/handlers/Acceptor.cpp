@@ -15,23 +15,35 @@ Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Sock
 
 void Acceptor::listen()
 {
-	try
-	{
-		m_epollEvent->setEnableRead(true);
-		m_socket->listen();
-	}
-	catch (error::SocketException &se)
-	{
-		m_events.onError(se.getErrorCode());
-	}
+	auto acceptor = shared_from_this();
+	_loopThisHandlerLiveIn->runInLoop([acceptor]{
+		try
+		{
+			// only listen at initial state
+			if (acceptor->m_state == socket::TcpState::Closed)
+			{
+				acceptor->_loopThisHandlerLiveIn->addEventHandlerToLoop(acceptor);
+				acceptor->m_epollEvent->setEnableRead(true);
+				acceptor->m_socket->listen();
+				acceptor->m_state = socket::TcpState::Established;
+			}
+		}
+		catch (error::SocketException &se)
+		{
+			acceptor->m_events.onError(se.getErrorCode());
+		}
+	});
 }
 
 void Acceptor::stop()
 {
-	m_epollEvent->deactiveEvents();
 	// extern life after remove
-	volatile auto externLife = shared_from_this();
-	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
+	auto externLife = shared_from_this();
+	_loopThisHandlerLiveIn->runInLoop([externLife]{
+		externLife->m_epollEvent->deactiveEvents();
+		externLife->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(externLife);
+		externLife->m_state = socket::TcpState::Closed;
+	});
 }
 
 void Acceptor::handleRead()
@@ -56,19 +68,13 @@ void Acceptor::handleRead()
 	}
 }
 
-void Acceptor::handleWrite()
-{}
-
 void Acceptor::handleError()
 {
 	// TODO: will EPOLLERR happend in acceptor?
 	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
-void Acceptor::handleClose()
-{}
-
-std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
+std::shared_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 											Address listenAddr,
 											Events eventsPrototype)
 {
@@ -81,8 +87,7 @@ std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 		acceptor->m_events = eventsPrototype;
 		acceptor->m_epollEvent = std::move(event);
 		acceptor->_loopThisHandlerLiveIn = loop;
-
-		loop->addEventHandlerToLoop(acceptor);
+		acceptor->m_state = socket::TcpState::Closed;
 
 		return acceptor;
 	}
@@ -94,6 +99,6 @@ std::weak_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
 	{
 		eventsPrototype.onError(rle.getSocketErrorCode());
 	}
-	return std::weak_ptr<Acceptor>();
+	return std::shared_ptr<Acceptor>();
 }
 }

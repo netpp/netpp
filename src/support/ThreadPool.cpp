@@ -8,7 +8,7 @@ thread_local unsigned ThreadPool::threadId = 0;
 ThreadPool::~ThreadPool()
 {
 	waitTask.notify_all();
-	done = true;
+	m_quit = true;
 	for (auto &t : threads)
 	{
 		if (t.joinable())
@@ -17,7 +17,7 @@ ThreadPool::~ThreadPool()
 }
 
 ThreadPool::ThreadPool(unsigned threadNum)
-	: done{false}, active{0}, taskCount{0}
+	: m_quit{false}, m_activeThreads{0}, taskCount{0}
 {
 	if (threadNum <= 0)
 		threadNumber = std::thread::hardware_concurrency();
@@ -36,7 +36,7 @@ bool ThreadPool::start()
 	catch (...)
 	{
 		waitTask.notify_all();
-		done = true;
+		m_quit = true;
 		return false;
 	}
 }
@@ -44,11 +44,11 @@ bool ThreadPool::start()
 void ThreadPool::workerThread(unsigned id)
 {
 	threadId = id;
-	while (!done)
+	while (!m_quit)
 	{
 		if (workQueue.empty())
 		{
-			std::unique_lock lck(taskMutex);
+			std::unique_lock lck(m_waitTaskMutex);
 			// maybe executing task will ThreadPool is desctruction, did not receive notify
 			waitTask.wait_for(lck, std::chrono::microseconds(500));
 		}
@@ -63,16 +63,16 @@ void ThreadPool::runTask()
 		TaskType task;
 		if (workQueue.tryPop(task))
 		{
-			++active;
+			++m_activeThreads;
 			--taskCount;
 			task();
-			--active;
+			--m_activeThreads;
 		}
 	}
 	catch (...)
 	{
 		LOG_CRITICAL("Thread pool task throws an exeception");
-		--active;
+		--m_activeThreads;
 		throw;
 	}
 }
@@ -83,7 +83,7 @@ void ThreadPool::waitForDone(unsigned msec) const
 		std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 	else
 	{
-		while (taskCount != 0 || active != 0)
+		while (taskCount != 0 || m_activeThreads != 0)
 			std::this_thread::yield();
 	}
 }

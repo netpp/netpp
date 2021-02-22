@@ -67,7 +67,7 @@ void ByteArrayIOVectorReaderWithLock::adjustByteArray(std::size_t size)
 		_buffer->_currentReadBufferNode = node;
 		node = node->next;
 	}
-	_buffer->moveBufferHead();
+	_buffer->unlockedMoveBufferHead();
 }
 
 ByteArrayIOVectorWriterWithLock::ByteArrayIOVectorWriterWithLock(std::shared_ptr<ByteArray> buffer)
@@ -142,8 +142,10 @@ void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 
 bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
-	ByteArrayIOVectorReaderWithLock vec(buffer);
+	// get size before Reader constructed, there comes dead lock 
+	// TODO: get readableBytes can move into ByteArrayIOVectorReaderWithLock
 	std::size_t expectSize = buffer->readableBytes();
+	ByteArrayIOVectorReaderWithLock vec(buffer);
 	::msghdr msg;
 	std::memset(&msg, 0, sizeof(::msghdr));
 	msg.msg_iov = vec.vec();

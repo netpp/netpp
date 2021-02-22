@@ -23,8 +23,8 @@ public:
 	 * @brief create a socket
 	 * 
 	 * @param addr	address
-	 * @throw SocketException on @code EACCES EAFNOSUPPORT
-	 * @throw ResourceLimitException on @code EMFILE ENFILE ENOBUFS ENOMEM
+	 * @throw SocketException on (EACCES EAFNOSUPPORT)
+	 * @throw ResourceLimitException on (EMFILE ENFILE ENOBUFS ENOMEM)
 	 */
 	explicit Socket(const Address &addr);
 
@@ -47,23 +47,23 @@ public:
 	/**
 	 * @brief Bind address and start listen
 	 * 
-	 * @throw SocketException on @code EADDRINUSE
-	 * @throw ResourceLimitException on @code ENOMEM
+	 * @throw SocketException on (EADDRINUSE)
+	 * @throw ResourceLimitException on (ENOMEM)
 	 */
 	void listen();
 
 	/**
 	 * @brief Accept a connect
 	 * 
-	 * @throw SocketException on @code ECONNABORTED
-	 * @throw ResourceLimitException on @code EMFILE ENFILE ENOBUFS ENOMEM EPERM
+	 * @throw SocketException on (ECONNABORTED)
+	 * @throw ResourceLimitException on (EMFILE ENFILE ENOBUFS ENOMEM EPERM)
 	 */
 	std::unique_ptr<Socket> accept() const;
 
 	/**
 	 * @brief Connect to server
 	 * 
-	 * @throw SocketException on @code EADDRINUSE EADDRNOTAVAIL ECONNREFUSED EINPROGRESS ENETUNREACH ETIMEDOUT
+	 * @throw SocketException on (EADDRINUSE EADDRNOTAVAIL ECONNREFUSED EINPROGRESS ENETUNREACH ETIMEDOUT)
 	 */
 	void connect();
 

@@ -19,17 +19,12 @@ void TimerHandler::handleRead()
 		_timer->onTimeOut();
 }
 
-void TimerHandler::handleClose()
+void TimerHandler::remove()
 {
-	// this will not triggered by epoll, Timer will use it for clean up
-	m_epollEvent->deactiveEvents();
-	// extern TimerHandler life after remove
-	volatile auto externLife = shared_from_this();
-	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
-}
-
-void TimerHandler::setEnabled(bool enable)
-{
-	m_epollEvent->setEnableRead(enable);
+	auto timer = shared_from_this();
+	_loopThisHandlerLiveIn->runInLoop([timer]{
+		timer->m_epollEvent->deactiveEvents();
+		timer->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(timer);
+	});
 }
 }

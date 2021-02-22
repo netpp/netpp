@@ -9,38 +9,38 @@ namespace netpp::internal::stub {
 /**
  * @brief create a socket
  * 
- * @throw SocketException on @code EACCES EAFNOSUPPORT
- * @throw ResourceLimitException on @code EMFILE ENFILE ENOBUFS ENOMEM
+ * @throw SocketException on (EACCES EAFNOSUPPORT)
+ * @throw ResourceLimitException on (EMFILE ENFILE ENOBUFS ENOMEM)
  */
 extern int socket(int domain, int type, int protocol);
 
 /**
  * @brief bind to address
  * 
- * @throw SocketException on @code EADDRINUSE
- * @throw ResourceLimitException on @code ENOMEM
+ * @throw SocketException on (EADDRINUSE)
+ * @throw ResourceLimitException on (ENOMEM)
  */
 extern int bind(int sockfd, const struct ::sockaddr *addr, ::socklen_t addrlen);
 
 /**
  * @brief listen on socket
  * 
- * @throw SocketException on @code EADDRINUSE
+ * @throw SocketException on (EADDRINUSE)
  */
 extern int listen(int sockfd, int backlog);
 
 /**
  * @brief accept connection on socket
  * 
- * @throw SocketException on @code ECONNABORTED
- * @throw ResourceLimitException on @code EMFILE ENFILE ENOBUFS ENOMEM EPERM
+ * @throw SocketException on (ECONNABORTED)
+ * @throw ResourceLimitException on (EMFILE ENFILE ENOBUFS ENOMEM EPERM)
  */
 extern int accept4(int sockfd, struct ::sockaddr *addr, ::socklen_t *addrlen, int flags);
 
 /**
  * @brief connect on a socket
  * 
- * @throw SocketException on @code EADDRINUSE EADDRNOTAVAIL ECONNREFUSED EINPROGRESS ENETUNREACH ETIMEDOUT
+ * @throw SocketException on (EADDRINUSE EADDRNOTAVAIL ECONNREFUSED EINPROGRESS ENETUNREACH ETIMEDOUT)
  */
 extern int connect(int sockfd, const struct ::sockaddr *addr, ::socklen_t addrlen);
 

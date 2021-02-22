@@ -23,6 +23,7 @@ Timer::Timer(EventLoop *loop)
 
 	m_handler = make_shared<internal::handlers::TimerHandler>(this);
 	m_handler->m_epollEvent = make_unique<internal::epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
+	m_handler->m_epollEvent->setEnableRead(true);
 	m_handler->_loopThisHandlerLiveIn = loop;
 }
 
@@ -30,7 +31,7 @@ Timer::~Timer()
 {
 	if (internal::stub::close(m_timerFd) == -1)
 		LOG_WARN("failed to close timer");
-	m_handler->handleClose();
+	m_handler->remove();
 }
 
 void Timer::onTimeOut()
@@ -61,7 +62,6 @@ void Timer::start()
 	{
 		m_running = true;
 		// start timer
-		m_handler->setEnabled(true);
 		setTimeAndRun();
 	}
 }
@@ -72,7 +72,6 @@ void Timer::stop()
 	{
 		m_running = false;
 		std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
-		m_handler->setEnabled(false);
 		// settime will always success
 		::timerfd_settime(m_timerFd, TFD_TIMER_ABSTIME, &m_timerSpec, nullptr);
 	}
