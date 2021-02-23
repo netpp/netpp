@@ -36,10 +36,10 @@ int toLinuxSignal(Signals signal);
  * @return Signals	enumerated signal
  */
 
-Signals toNetppSignal(int signal);
+Signals toNetppSignal(uint32_t signal);
 
 /// @brief Convert signal to string
-std::string signalAsString(int signal);
+std::string signalAsString(uint32_t signal);
 std::string signalAsString(Signals signal);
 }
 

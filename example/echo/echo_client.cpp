@@ -35,6 +35,12 @@ public:
 	{
 		std::cout << "Write completed";
 	}
+
+	void onDisconnect()
+	{
+		std::cout << "Disconnected from server, exit";
+		exit(0);
+	}
 };
 
 int main()

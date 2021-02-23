@@ -9,19 +9,21 @@
 
 namespace netpp {
 namespace internal::socket {
-class ByteArrayIOVectorReaderWithLock;
-class ByteArrayIOVectorWriterWithLock;
+class ByteArrayReaderWithLock;
+class ByteArrayWriterWithLock;
 }
 /**
  * @brief ByteArray has a list of buffer nodes, saved in network ending(big ending), 
  * it's thread safe.
  * 
+ * @section ReadNode
  * The ReadNode point to node where data begins, while reading, the node's start 
  * indicator moves, if reached the end indicator, all data in this node has read, 
  * ReadNode will try to move to next node(if any), the movement of ReadNode makes
  * nodes between head and ReadNode out of usage, these nodes will be moved later.
  * ReadNode should never cross WriteNode.
  * 
+ * @section WriteNode
  * The WriteNode point to node where data ends(also where to start write new data),
  * writing to a ByteArray will move node's end indicator, if reached the max size
  * of node's buffer, WriteNode will to move to next node.
@@ -33,6 +35,7 @@ class ByteArrayIOVectorWriterWithLock;
  * If still not enough space for pending data after move, allocat nodes twice than 
  * current every time utill data can be stored. 
  * 
+ * @section node graphic
  *               ReadNode   WriteNode
  *                  |           |
  * +-------+    +-------+    +-------+    +-------+
@@ -49,9 +52,11 @@ class ByteArrayIOVectorWriterWithLock;
 class ByteArray {
 	// access buffer directly
 	/// @note public methods are guarded by mutex, do NOT use with ByteArrayIOVector*WithLock, it will lead to dead lock
-	friend class internal::socket::ByteArrayIOVectorReaderWithLock;
-	friend class internal::socket::ByteArrayIOVectorWriterWithLock;
+	friend class internal::socket::ByteArrayReaderWithLock;
+	friend class internal::socket::ByteArrayWriterWithLock;
 public:
+
+	using LengthType = std::uint64_t;
 	ByteArray();
 
 	void writeInt8(int8_t value);
@@ -66,6 +71,8 @@ public:
 	void writeDouble(double value);
 	void writeString(std::string value);
 	void writeRaw(const char *data, std::size_t length);
+	// TODO: prepend data
+	// TODO: support read until meet certain value
 
 	int8_t retrieveInt8();
 	int16_t retrieveInt16();
@@ -91,7 +98,7 @@ public:
 	 * @brief The readable bytes in buffer.
 	 * From ReadNode's start to WriteNode's endl.
 	 */
-	inline std::uint64_t readableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
+	inline LengthType readableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
 
 	/** 
 	 * @brief The unused bytes in buffer.
@@ -109,7 +116,7 @@ public:
 	 *    end|                |
 	 *       |-----unused-----|
 	 */
-	inline std::uint64_t unusedBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
+	inline LengthType unusedBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
 
 private:
 	/**
@@ -133,17 +140,17 @@ private:
 	// FIXME: remove unused buffer node
 	struct BufferNode {
 		BufferNode();
-		constexpr static std::size_t BufferSize = 1024;
+		constexpr static LengthType BufferSize = 1024;
 		// constexpr static int maxTimeToLive = 10;
-		std::size_t start;	// the offset of buffer read
-		std::size_t end;	// the offset of buffer write
+		LengthType start;	// the offset of buffer read
+		LengthType end;	// the offset of buffer write
 		// int timeToLive;
 		char buffer[BufferSize];	// buffer
 		std::shared_ptr<BufferNode> next;	// next buffer node
 	};
 	std::mutex m_bufferMutex;
-	std::uint64_t m_availableSizeToRead;
-	std::uint64_t m_availableSizeToWrite;
+	LengthType m_availableSizeToRead;
+	LengthType m_availableSizeToWrite;
 	unsigned m_nodeCount;						// node number
 	std::shared_ptr<BufferNode> m_bufferHead;	// the head of buffer node
 	std::weak_ptr<BufferNode> _bufferTail;		// the tail of buffer node

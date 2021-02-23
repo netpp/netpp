@@ -10,7 +10,7 @@ namespace netpp {
 
 EventLoop::EventLoop(unsigned tickInterval, unsigned bucketCount)
 {
-	m_kickIdleConnectionWheel = std::make_unique<time::TimeWheel>(this, tickInterval, bucketCount);
+	m_kickIdleConnectionWheel = std::make_unique<internal::time::TimeWheel>(this, tickInterval, bucketCount);
 }
 
 [[noreturn]] void EventLoop::run()

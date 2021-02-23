@@ -49,6 +49,8 @@ public:
 	inline void writeString(std::string value)					{ auto array = _writeArray.lock(); if (array) array->writeString(std::move(value)); }
 	inline void writeRaw(const char *data, std::size_t length)	{ auto array = _writeArray.lock(); if (array) array->writeRaw(data, length); }
 
+	// TODO: support sendfile and mmap
+	
 	/**
 	 * @brief The readable bytes in byte array
 	 */

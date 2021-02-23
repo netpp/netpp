@@ -2,11 +2,9 @@
 #define NETPP_SOCKETIO_H
 
 #include <memory>
+#include "ByteArray.h"
 
-struct iovec;
-namespace netpp {
-class ByteArray;
-}
+struct msghdr;
 
 namespace netpp::internal::socket {
 class Socket;
@@ -39,25 +37,24 @@ namespace SocketIO {
 };
 
 /**
- * @brief Convert ByteArray to ::iovec, adapte to readv()/writev(), used by SocketIO
+ * @brief Convert ByteArray to ::msghdr, adapte to readv()/writev(), used by SocketIO
  */
-class ByteArray2IOVector {
+class ByteArray2Msghdr {
 public:
-	ByteArray2IOVector();
-	virtual ~ByteArray2IOVector();
+	ByteArray2Msghdr();
+	virtual ~ByteArray2Msghdr();
 
-	inline int count() { return m_count; }
-	inline ::iovec *vec() { return m_vec; }
-	virtual void adjustByteArray(std::size_t size) = 0;
+	::msghdr *msghdr() { return msg; }
+	virtual void adjustByteArray(ByteArray::LengthType size) = 0;
+	virtual ByteArray::LengthType availableBytes() = 0;
 
-	ByteArray2IOVector(ByteArray2IOVector &) = delete;
-	ByteArray2IOVector(ByteArray2IOVector &&) = delete;
-	ByteArray2IOVector &operator =(ByteArray2IOVector &) = delete;
-	ByteArray2IOVector &operator =(ByteArray2IOVector &&) = delete;
+	ByteArray2Msghdr(ByteArray2Msghdr &) = delete;
+	ByteArray2Msghdr(ByteArray2Msghdr &&) = delete;
+	ByteArray2Msghdr &operator =(ByteArray2Msghdr &) = delete;
+	ByteArray2Msghdr &operator =(ByteArray2Msghdr &&) = delete;
 
 protected:
-	::iovec *m_vec;		// iovec array
-	int m_count;		// iovec count
+	::msghdr *msg;
 	std::shared_ptr<ByteArray> _buffer;	// byte array
 };
 
@@ -66,16 +63,23 @@ protected:
  * @note ByteArray's lock is acquired until destruction
  * 
  */
-class ByteArrayIOVectorReaderWithLock : public ByteArray2IOVector {
+class ByteArrayReaderWithLock : public ByteArray2Msghdr {
 public:
-	explicit ByteArrayIOVectorReaderWithLock(std::shared_ptr<ByteArray> buffer);
-	virtual ~ByteArrayIOVectorReaderWithLock() override;
+	explicit ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buffer);
+	virtual ~ByteArrayReaderWithLock() override;
 
 	/**
 	 * @brief Write n bytes into ByteArray
 	 * @param size the return value of writev()
 	 */
-	virtual void adjustByteArray(std::size_t size) override;
+	void adjustByteArray(ByteArray::LengthType size) override;
+
+	/**
+	 * @brief Get readable bytes in ByteArray
+	 * 
+	 * @return ByteArray::LengthType	readable bytes
+	 */
+	ByteArray::LengthType availableBytes() override;
 };
 
 /**
@@ -83,16 +87,23 @@ public:
  * @note ByteArray's lock is acquired until destruction
  * 
  */
-class ByteArrayIOVectorWriterWithLock : public ByteArray2IOVector {
+class ByteArrayWriterWithLock : public ByteArray2Msghdr {
 public:
-	explicit ByteArrayIOVectorWriterWithLock(std::shared_ptr<ByteArray> buffer);
-	virtual ~ByteArrayIOVectorWriterWithLock() override;
+	explicit ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer);
+	virtual ~ByteArrayWriterWithLock() override;
 
 	/**
 	 * @brief Read n bytes from ByteArray
 	 * @param size the return value of readv()
 	 */
-	virtual void adjustByteArray(std::size_t size) override;
+	virtual void adjustByteArray(ByteArray::LengthType size) override;
+
+	/**
+	 * @brief Get writeable bytes in ByteArray
+	 * 
+	 * @return ByteArray::LengthType	writeable bytes
+	 */
+	ByteArray::LengthType availableBytes() override;
 };
 }
 

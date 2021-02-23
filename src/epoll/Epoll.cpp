@@ -26,8 +26,15 @@ std::vector<EpollEvent *> Epoll::poll()
 {
 	int nums = stub::epoll_wait(m_epfd, &m_activeEvents[0], m_activeEvents.size(), 500);
 
+	if (nums == -1)
+	{
+		LOG_INFO("epoll_wait failed, poll next time");
+		return std::vector<EpollEvent *>();
+	}
 	// if event vector is full, expand it
-	if (nums == m_activeEvents.size())
+	using SizeType = std::vector<::epoll_event>::size_type;
+	SizeType activeEventCount = static_cast<SizeType>(nums);
+	if (activeEventCount == m_activeEvents.size())
 	{
 		LOG_INFO("active events array resize to {}", m_activeEvents.size() * 2);
 		m_activeEvents.resize(m_activeEvents.size() * 2);
@@ -35,7 +42,7 @@ std::vector<EpollEvent *> Epoll::poll()
 
 	// TODO: try not to return this, avoid memory allocation
 	std::vector<EpollEvent *> activeChannels;
-	for (int i = 0; i < nums; ++i)
+	for (SizeType i = 0; i < activeEventCount; ++i)
 	{
 		uint32_t event = m_activeEvents[i].events;
 		auto epollEvent = static_cast<EpollEvent *>(m_activeEvents[i].data.ptr);

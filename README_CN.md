@@ -1,6 +1,11 @@
 # Netpp - 现代C++网络库
-netpp是一个基于事件的现代网络库，基于reactor和epoll。  
-中文 [English](https://github.com/netpp/netpp/blob/master/README.md)
+中文 [English](https://github.com/netpp/netpp/blob/master/README.md)  
+netpp是一个基于事件的现代网络库，基于reactor和epoll，提供特性：  
+* 链式的缓存节点
+* 非虚函数的用户接口
+* 每个循环属于不同线程
+* 信号处理
+* 踢掉空连接
 ## 依赖库
 * 日志库 [spdlog](https://github.com/gabime/spdlog)
 * 测试框架 [gtest](https://github.com/google/googletest)
@@ -45,7 +50,7 @@ netpp::core::EventLoopDispatcher dispatcher;
 ```c++
 netpp::Events<Echo> events(std::make_shared<Echo>());
 netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(events));
-server.listen(;
+server.listen();
 ```
 或者客户端
 ```c++
@@ -57,13 +62,4 @@ client.connect();
 ```c++
 dispatcher.startLoop();
 ```
-查看/example/*中的示例来获取更详细的信息。
-
-## 可能用到的一些类
-* TcpClient - 客户端
-* TcpServer - 服务端
-* Events - 提供事件处理器的接口
-* Timer - 计时器
-* Address - linux结构体sockaddr_in的封装
-* Channel - 对于一个tcp连接读写通道的描述
-* ByteArray - 一个以大端方式保存的字节缓冲区
+查看example/*中的示例来获取更详细的信息。

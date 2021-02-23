@@ -15,7 +15,7 @@ extern "C" {
 
 class SignalHandler {
 public:
-	void onSignal(netpp::signal::Signals signal)
+	void onSignal([[maybe_unused]] netpp::signal::Signals signal)
 	{}
 };
 

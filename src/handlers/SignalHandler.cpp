@@ -16,21 +16,28 @@ void SignalHandler::handleRead()
 {
 	static constexpr int maxSignalRead = 20;
 	::signalfd_siginfo signals[maxSignalRead];
-	int readBytes = 0;
-	readBytes = stub::read(
+	::ssize_t readBytes = stub::read(
 		signal::SignalWatcher::signalFd,
 		signals,
 		sizeof(::signalfd_siginfo) * maxSignalRead
 	);
-	int readNum = readBytes / sizeof(::signalfd_siginfo);
-	for (int i = 0; i < readNum; ++i)
+	if (readBytes != -1)
 	{
-		LOG_TRACE("signal {} occurred", signal::signalAsString(signals[i].ssi_signo));
-		// watching this signal
-		if (signal::SignalWatcher::isWatching(signals[i].ssi_signo))
-			m_events.onSignal(signal::toNetppSignal(signals[i].ssi_signo));// TODO: can pass more signal info to user
-		else
-			LOG_ERROR("not watching signal {}, but signal handler received it", signal::signalAsString(signals[i].ssi_signo));
+		unsigned bytes = static_cast<unsigned>(readBytes);
+		unsigned readNum = bytes / sizeof(::signalfd_siginfo);
+		for (unsigned i = 0; i < readNum; ++i)
+		{
+			LOG_TRACE("signal {} occurred", signal::signalAsString(signals[i].ssi_signo));
+			// watching this signal
+			if (signal::SignalWatcher::isWatching(signals[i].ssi_signo))
+				m_events.onSignal(signal::toNetppSignal(signals[i].ssi_signo));// TODO: can pass more signal info to user
+			else
+				LOG_ERROR("not watching signal {}, but signal handler received it", signal::signalAsString(signals[i].ssi_signo));
+		}
+	}
+	else
+	{
+		LOG_WARN("read from signal fd failed");
 	}
 }
 

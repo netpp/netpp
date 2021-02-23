@@ -22,7 +22,7 @@ int toLinuxSignal(Signals signal)
 	return sig;
 }
 
-Signals toNetppSignal(int signal)
+Signals toNetppSignal(uint32_t signal)
 {
 #ifdef SIGNAL_DEF
 #undef SIGNAL_DEF
@@ -40,7 +40,7 @@ Signals toNetppSignal(int signal)
 	return sig;
 }
 
-std::string signalAsString(int signal)
+std::string signalAsString(uint32_t signal)
 {
 #ifdef SIGNAL_DEF
 #undef SIGNAL_DEF

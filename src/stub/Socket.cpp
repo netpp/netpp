@@ -10,7 +10,7 @@ extern "C" {
 namespace netpp::internal::stub {
 int socket(int domain, int type, int protocol)
 {
-	int fd = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
+	int fd = ::socket(domain, type, protocol);
 	if (fd == -1)
 	{
 		LOG_WARN("create socket failed due to {}", std::strerror(errno));

@@ -1,6 +1,9 @@
 #include "ByteArray.h"
 #include <cstring>
 #include "support/Log.h"
+extern "C" {
+#include <assert.h>
+}
 
 namespace netpp {
 ByteArray::ByteArray()
@@ -18,6 +21,8 @@ void ByteArray::writeInt8(int8_t value)
 	writeRaw(reinterpret_cast<char *>(&value), sizeof(int8_t));
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 void ByteArray::writeInt16(int16_t value)
 {
 	int16_t v = htobe16(value);
@@ -35,6 +40,7 @@ void ByteArray::writeInt64(int64_t value)
 	int64_t v = htobe64(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(int64_t));
 }
+#pragma GCC diagnostic pop
 
 void ByteArray::writeUInt8(uint8_t value)
 {
@@ -113,6 +119,8 @@ int8_t ByteArray::retrieveInt8()
 	return v;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
 int16_t ByteArray::retrieveInt16()
 {
 	int16_t v;
@@ -139,6 +147,7 @@ int64_t ByteArray::retrieveInt64()
 	v = be64toh(v);
 	return v;
 }
+#pragma GCC diagnostic pop
 
 uint8_t ByteArray::retrieveUInt8()
 {
@@ -228,7 +237,7 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 			bytesToCopy = (usedBytesInNode < length) ? usedBytesInNode : length;
 		}
 	}
-	return buffer - bufferStartPtr;
+	return static_cast<std::size_t>(buffer - bufferStartPtr);
 }
 
 void ByteArray::unlockedAllocIfNotEnough(std::size_t size)

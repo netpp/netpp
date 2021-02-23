@@ -40,7 +40,7 @@ public:
 	void removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::EventHandler> handler);
 
 	inline internal::epoll::Epoll *getPoll() { return &m_poll; }
-	time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
+	internal::time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
 
 	/// @brief runs method in event loop
 	void runInLoop(std::function<void()> functor);
@@ -52,7 +52,7 @@ private:
 	std::mutex m_functorMutex;							// guard m_pendingFuns
 	std::vector<std::function<void()>> m_pendingFuns;	// methods run in loop
 
-	std::unique_ptr<time::TimeWheel> m_kickIdleConnectionWheel;
+	std::unique_ptr<internal::time::TimeWheel> m_kickIdleConnectionWheel;
 };
 }
 

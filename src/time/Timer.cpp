@@ -6,6 +6,8 @@
 #include "EventLoop.h"
 #include "support/Log.h"
 #include "stub/IO.h"
+#include "handlers/TimerHandler.h"
+#include "epoll/EpollEvent.h"
 extern "C" {
 #include <unistd.h>
 }
@@ -80,7 +82,7 @@ void Timer::stop()
 void Timer::setTimeAndRun()
 {
 	// get first trigger time
-	timespec now{0};
+	timespec now;
 	// can ignore gettime failed
 	::clock_gettime(CLOCK_MONOTONIC, &now);
 	unsigned sec = now.tv_sec + m_interval / 1000;

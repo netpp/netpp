@@ -8,7 +8,7 @@
 #include "EventLoop.h"
 
 namespace netpp::internal::handlers {
-TimerHandler::TimerHandler(time::Timer *timer)
+TimerHandler::TimerHandler(netpp::time::Timer *timer)
 	: _timer{timer}
 {}
 

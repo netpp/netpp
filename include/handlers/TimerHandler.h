@@ -19,9 +19,9 @@ namespace netpp::internal::handlers {
  * 
  */
 class TimerHandler : public epoll::EventHandler, public std::enable_shared_from_this<TimerHandler> {
-	friend class time::Timer;
+	friend class netpp::time::Timer;
 public:
-	explicit TimerHandler(time::Timer *timer);
+	explicit TimerHandler(netpp::time::Timer *timer);
 	~TimerHandler() override = default;
 
 	/**
@@ -41,7 +41,7 @@ public:
 	void remove();
 
 private:
-	time::Timer *_timer;
+	netpp::time::Timer *_timer;
 };
 }
 

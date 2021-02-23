@@ -98,7 +98,7 @@ private:
 
 	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;
-	std::unique_ptr<time::Timer> m_retryTimer;
+	std::unique_ptr<netpp::time::Timer> m_retryTimer;
 	Events m_events;
 
 	/**

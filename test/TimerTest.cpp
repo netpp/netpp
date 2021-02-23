@@ -33,13 +33,13 @@ TEST_F(TimerTest, Timer)
 	EXPECT_EQ(timerTriggerCount, 6);
 }
 
-class TestWheelEntry : public netpp::time::TimeWheelEntry {
+class TestWheelEntry : public netpp::internal::time::TimeWheelEntry {
 public:
-	explicit TestWheelEntry(std::weak_ptr<netpp::time::TimeWheel> wheel) : _wheel{wheel} {}
+	explicit TestWheelEntry(std::weak_ptr<netpp::internal::time::TimeWheel> wheel) : _wheel{wheel} {}
 	~TestWheelEntry() override = default;
 	void onTimeout() override;
 private:
-	std::weak_ptr<netpp::time::TimeWheel> _wheel;
+	std::weak_ptr<netpp::internal::time::TimeWheel> _wheel;
 };
 
 void TestWheelEntry::onTimeout()
@@ -54,14 +54,14 @@ TEST_F(TimerTest, TimeWheel)
 {
 	netpp::EventLoop loop;
 	std::shared_ptr<netpp::time::Timer> timer;
-	std::shared_ptr<netpp::time::TimeWheel> wheel;
+	std::shared_ptr<netpp::internal::time::TimeWheel> wheel;
 	loop.runInLoop([&]{
 		timer = std::make_shared<netpp::time::Timer>(&loop);
 		timer->setInterval(83);
 		timer->setSingleShot(true);
 		timer->setOnTimeout([]{ throw std::runtime_error(""); });
 		timer->start();
-		wheel = std::make_shared<netpp::time::TimeWheel>(&loop, 10, 2);
+		wheel = std::make_shared<netpp::internal::time::TimeWheel>(&loop, 10, 2);
 		wheel->addToWheel(std::make_shared<TestWheelEntry>(wheel));
 	});
 	EXPECT_THROW(loop.run(), std::runtime_error);

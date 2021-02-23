@@ -21,7 +21,7 @@ Socket::Socket(const Address &addr)
 }
 
 Socket::Socket(int fd, const Address &addr)
-	: m_socketFd{fd}, m_addr{addr}
+	: m_addr{addr}, m_socketFd{fd}
 {
 	if (m_socketFd == -1)
 		throw error::SocketException(EBADF);

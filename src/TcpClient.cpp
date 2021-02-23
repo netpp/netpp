@@ -11,7 +11,7 @@ using std::make_unique;
 
 namespace netpp {
 TcpClient::TcpClient(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype)
-	: _dispatcher{dispatcher}, m_addr{addr}, m_eventsPrototype{eventsPrototype}
+	: m_addr{addr}, _dispatcher{dispatcher}, m_eventsPrototype{eventsPrototype}
 {}
 
 TcpClient::~TcpClient()

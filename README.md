@@ -1,8 +1,13 @@
 # netpp
 An event based, modern c++ network library
 =======
-netpp is an event based, modern c++ network library, based on reactor pattern and epoll.  
-[中文](https://github.com/netpp/netpp/blob/master/README_CN.md) English
+[中文](https://github.com/netpp/netpp/blob/master/README_CN.md) English  
+netpp is an event based, modern c++ network library, based on reactor pattern and epoll, supporting features:  
+* linked buffer node
+* none virtual user interface
+* one loop per thread
+* handle signal
+* kick idle connection
 ## Dependent libs
 * Logging library [spdlog](https://github.com/gabime/spdlog)
 * Testing [gtest](https://github.com/google/googletest)
@@ -59,13 +64,4 @@ Start an event loop.
 ```c++
 dispatcher.startLoop();
 ```
-For more information, take a look at /example/*.
-
-## The classes you might needs
-* TcpClient - the client
-* TcpServer - the server
-* Events - the interface provide event handlers
-* Timer - the timer
-* Address - wrap of linux sockaddr_in
-* Channel - a socket read/write channel
-* ByteArray - a big ending byte buffer
+For more information, take a look at example/*.

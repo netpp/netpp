@@ -12,7 +12,7 @@ class EventLoop;
 namespace internal::socket {
 enum class TcpState;
 }
-namespace time {
+namespace internal::time {
 class TimeWheelEntry;
 }
 }
@@ -26,7 +26,7 @@ namespace netpp::internal::handlers {
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
 public:
 	/// @brief Use makeTcpConnection to create TcpConnection
-	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop);
+	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket);
 	~TcpConnection() override = default;
 
 	/**
@@ -116,9 +116,9 @@ private:
 	Events m_events;
 
 	/// @brief if connection is idle, closed by this time wheel
-	std::weak_ptr<time::TimeWheelEntry> _idleConnectionWheel;
+	std::weak_ptr<internal::time::TimeWheelEntry> _idleConnectionWheel;
 	/// @brief if connection is half close, and no data transfered, closed by this time wheel
-	std::weak_ptr<time::TimeWheelEntry> _halfCloseWheel;
+	std::weak_ptr<internal::time::TimeWheelEntry> _halfCloseWheel;
 };
 }
 

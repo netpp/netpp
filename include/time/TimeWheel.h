@@ -6,8 +6,8 @@
 #include "Timer.h"
 #include <string>
 
-namespace netpp::time {
-
+namespace netpp::internal::time {
+// TODO: maybe move TimeWheel to internal namespace
 class TimeWheelEntry {
 	friend class TimeWheel;
 public:
@@ -38,7 +38,7 @@ public:
 private:
 	void tick();
 
-	Timer m_tickTimer;
+	netpp::time::Timer m_tickTimer;
 	unsigned m_timeOutBucketIndex;
 
 	using Bucket = std::unordered_set<std::shared_ptr<TimeWheelEntry>>;

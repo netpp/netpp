@@ -52,7 +52,7 @@ public:
 		Runnable _runnable;
 
 		explicit ImplType(Runnable runnable, Args ... args)
-				: _runnable{std::move(runnable)}, r{std::bind(&ImplType<Runnable, Args...>::runRunnable, this, args...)}
+				: r{std::bind(&ImplType<Runnable, Args...>::runRunnable, this, args...)}, _runnable{std::move(runnable)}
 		{}
 
 		ImplType(ImplType &&other) noexcept

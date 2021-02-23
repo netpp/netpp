@@ -1,6 +1,5 @@
 #include "socket/SocketIO.h"
 #include "socket/Socket.h"
-#include "ByteArray.h"
 #include <cstring>
 #include "stub/IO.h"
 extern "C" {
@@ -9,45 +8,55 @@ extern "C" {
 }
 
 namespace netpp::internal::socket {
-ByteArray2IOVector::ByteArray2IOVector()
-	: m_vec{nullptr}, m_count{0}, _buffer{nullptr}
-{}
+ByteArray2Msghdr::ByteArray2Msghdr()
+	: msg{nullptr}, _buffer{nullptr}
+{
+	msg = new ::msghdr;
+	std::memset(msg, 0, sizeof(::msghdr));
+}
 
-ByteArray2IOVector::~ByteArray2IOVector() { delete [] m_vec; }
+ByteArray2Msghdr::~ByteArray2Msghdr()
+{
+	if (msg->msg_iovlen != 0)
+		delete [] msg->msg_iov;
+	delete msg;
+}
 
-ByteArrayIOVectorReaderWithLock::ByteArrayIOVectorReaderWithLock(std::shared_ptr<ByteArray> buffer)
+ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buffer)
 {
 	_buffer = buffer;
 	_buffer->m_bufferMutex.lock();
 	uint64_t bytes = buffer->m_availableSizeToRead;
-	m_count = bytes / ByteArray::BufferNode::BufferSize;
+	::size_t vecCount = bytes / ByteArray::BufferNode::BufferSize;
 	if (bytes % ByteArray::BufferNode::BufferSize != 0)
-		++m_count;
-	if (m_count > 0)
+		++vecCount;
+	if (vecCount > 0)
 	{
-		m_vec = new iovec[m_count];
+		::iovec *vec = new ::iovec[vecCount];
 		std::shared_ptr<ByteArray::BufferNode> node = buffer->_currentReadBufferNode.lock();
 		std::shared_ptr<ByteArray::BufferNode> endNode = buffer->_currentWriteBufferNode.lock()->next;
 		int i = 0;
 		while (node != endNode)
 		{
-			m_vec[i].iov_base = node->buffer + node->start;
+			vec[i].iov_base = node->buffer + node->start;
 			if (node->next == endNode)
-				m_vec[i].iov_len = node->end - node->start;
+				vec[i].iov_len = node->end - node->start;
 			else
-				m_vec[i].iov_len = ByteArray::BufferNode::BufferSize;
+				vec[i].iov_len = ByteArray::BufferNode::BufferSize;
 			node = node->next;
 			++i;
 		}
+		msg->msg_iov = vec;
+		msg->msg_iovlen = vecCount;
 	}
 }
 
-ByteArrayIOVectorReaderWithLock::~ByteArrayIOVectorReaderWithLock()
+ByteArrayReaderWithLock::~ByteArrayReaderWithLock()
 {
 	_buffer->m_bufferMutex.unlock();
 }
 
-void ByteArrayIOVectorReaderWithLock::adjustByteArray(std::size_t size)
+void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 {
 	// move read node
 	std::shared_ptr<ByteArray::BufferNode> node = _buffer->_currentReadBufferNode.lock();
@@ -70,38 +79,46 @@ void ByteArrayIOVectorReaderWithLock::adjustByteArray(std::size_t size)
 	_buffer->unlockedMoveBufferHead();
 }
 
-ByteArrayIOVectorWriterWithLock::ByteArrayIOVectorWriterWithLock(std::shared_ptr<ByteArray> buffer)
+ByteArray::LengthType ByteArrayReaderWithLock::availableBytes()
+{
+	// not use ByteArray::readableBytes(), lock acquired here
+	return _buffer->m_availableSizeToRead;
+}
+
+ByteArrayWriterWithLock::ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer)
 {
 	_buffer = buffer;
 	_buffer->m_bufferMutex.lock();
 	uint64_t bytes = buffer->m_availableSizeToWrite;
-	m_count = bytes / ByteArray::BufferNode::BufferSize;
+	::size_t vecCount = bytes / ByteArray::BufferNode::BufferSize;
 	if (bytes % ByteArray::BufferNode::BufferSize != 0)
-		++m_count;
-	if (m_count > 0)
+		++vecCount;
+	if (vecCount > 0)
 	{
-		m_vec = new iovec[m_count];
+		::iovec *vec = new ::iovec[vecCount];
 		std::shared_ptr<ByteArray::BufferNode> node = buffer->_currentWriteBufferNode.lock();
 		int i = 0;
 		while (node)
 		{
-			m_vec[i].iov_base = node->buffer + node->end;
+			vec[i].iov_base = node->buffer + node->end;
 			if (!node->next)
-				m_vec[i].iov_len = ByteArray::BufferNode::BufferSize - node->end;
+				vec[i].iov_len = ByteArray::BufferNode::BufferSize - node->end;
 			else
-				m_vec[i].iov_len = ByteArray::BufferNode::BufferSize;
+				vec[i].iov_len = ByteArray::BufferNode::BufferSize;
 			node = node->next;
 			++i;
 		}
+		msg->msg_iov = vec;
+		msg->msg_iovlen = vecCount;
 	}
 }
 
-ByteArrayIOVectorWriterWithLock::~ByteArrayIOVectorWriterWithLock()
+ByteArrayWriterWithLock::~ByteArrayWriterWithLock()
 {
 	_buffer->m_bufferMutex.unlock();
 }
 
-void ByteArrayIOVectorWriterWithLock::adjustByteArray(std::size_t size)
+void ByteArrayWriterWithLock::adjustByteArray(ByteArray::LengthType size)
 {
 	// if need to alloc more
 	if (_buffer->m_availableSizeToWrite <= size)
@@ -127,32 +144,39 @@ void ByteArrayIOVectorWriterWithLock::adjustByteArray(std::size_t size)
 	}
 }
 
+ByteArray::LengthType ByteArrayWriterWithLock::availableBytes()
+{
+	// not use ByteArray::unusedBytes(), lock acquired here
+	return _buffer->m_availableSizeToWrite;
+}
+
 // SocketIO
 void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
-	ByteArrayIOVectorWriterWithLock vec(buffer);
-	::msghdr msg;
-	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = vec.vec();
-	msg.msg_iovlen = vec.count();
-	::ssize_t num = stub::recvmsg(socket->fd(), &msg, 0);
+	ByteArrayWriterWithLock writer(buffer);
+	::msghdr *msg = writer.msghdr();
+	// TODO: use ioctl(fd, FIONREAD, &n) to get pending read data on socket
+	::ssize_t num = stub::recvmsg(socket->fd(), msg, 0);
 	if (num != -1)
-		vec.adjustByteArray(num);
+		writer.adjustByteArray(static_cast<std::size_t>(num));
 }
 
 bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
-	// get size before Reader constructed, there comes dead lock 
-	// TODO: get readableBytes can move into ByteArrayIOVectorReaderWithLock
-	std::size_t expectSize = buffer->readableBytes();
-	ByteArrayIOVectorReaderWithLock vec(buffer);
-	::msghdr msg;
-	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = vec.vec();
-	msg.msg_iovlen = vec.count();
-	::ssize_t actualSend = stub::sendmsg(socket->fd(), &msg, MSG_NOSIGNAL);
+	ByteArrayReaderWithLock vec(buffer);
+	std::size_t expectSize = vec.availableBytes();
+	::msghdr *msg = vec.msghdr();
+	::ssize_t actualSend = stub::sendmsg(socket->fd(), msg, MSG_NOSIGNAL);
 	if (actualSend != -1)
-		vec.adjustByteArray(actualSend);
-	return (actualSend <= expectSize);
+	{
+		std::size_t sendSize = static_cast<std::size_t>(actualSend);
+		vec.adjustByteArray(sendSize);
+		return (sendSize <= expectSize);
+	}
+	else
+	{
+		// error that can not recovery throwed as exception
+		return false;
+	}
 }
 }

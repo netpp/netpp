@@ -80,7 +80,7 @@ int close(int fd) noexcept
 
 int pipe2(int pipefd[2], int flags) noexcept
 {
-	int ret = ::pipe2(pipefd, O_NONBLOCK);
+	int ret = ::pipe2(pipefd, flags);
 	if (ret == -1)
 	{
 		LOG_WARN("open pipe failed due to {}", std::strerror(errno));

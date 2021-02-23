@@ -2,9 +2,9 @@
 #include "EventLoop.h"
 #include "support/Log.h"
 
-namespace netpp::time {
+namespace netpp::internal::time {
 TimeWheel::TimeWheel(EventLoop *loop, unsigned tickInterval, unsigned bucketCount)
-	: m_tickTimer(loop), m_buckets(bucketCount), m_timeOutBucketIndex(0)
+	: m_tickTimer(loop), m_timeOutBucketIndex(0), m_buckets(bucketCount)
 {
 	m_tickTimer.setOnTimeout(std::bind(&TimeWheel::tick, this));
 	m_tickTimer.setInterval(tickInterval);

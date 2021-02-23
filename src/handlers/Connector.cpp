@@ -67,7 +67,7 @@ void Connector::handleWrite()
 		LOG_ERROR("Connector error {}", error::errorAsString(err));
 		if (!m_retryTimer)
 		{
-			m_retryTimer = make_unique<time::Timer>(_loopThisHandlerLiveIn);
+			m_retryTimer = make_unique<netpp::time::Timer>(_loopThisHandlerLiveIn);
 			setupTimer();
 		}
 		reconnect();
@@ -122,7 +122,6 @@ std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatc
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto connector = make_shared<Connector>(dispatcher, make_unique<socket::Socket>(serverAddr));
 		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
-		auto eventPtr = event.get();
 		connector->m_events = eventsPrototype;
 		connector->m_epollEvent = std::move(event);
 		connector->_loopThisHandlerLiveIn = loop;

@@ -9,7 +9,7 @@
 
 namespace netpp::internal::epoll {
 EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
-	: activeEvents{0}, _eventHandler{handler}, _watchingFd{fd}, _poll{poll}
+	: _poll{poll}, _eventHandler{handler}, _watchingFd{fd}, activeEvents{0}
 {
 	m_watchingEvents.events = EPOLLRDHUP | EPOLLERR;
 	m_watchingEvents.data.ptr = this;

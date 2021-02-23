@@ -18,19 +18,21 @@ namespace netpp::internal::handlers {
  * try to close it on timeout
  * 
  */
-class IdelConnectionWheelEntry : public time::TimeWheelEntry {
+class IdelConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
 	explicit IdelConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: time::TimeWheelEntry("idle"), _connection{connection}
+		: internal::time::TimeWheelEntry("idle"), _connection{connection}
 	{}
 	~IdelConnectionWheelEntry() override = default;
 
 	void onTimeout() override
 	{
-		LOG_INFO("idle connection timeout, close write");
 		auto conn = _connection.lock();
 		if (conn)
+		{
+			LOG_INFO("idle connection timeout, close write");
 			conn->closeAfterWriteCompleted();
+		}
 	}
 
 private:
@@ -42,26 +44,28 @@ private:
  * have not transfer any data in few time, force close it on timeout
  * 
  */
-class HalfCloseConnectionWheelEntry : public time::TimeWheelEntry {
+class HalfCloseConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
 	explicit HalfCloseConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: time::TimeWheelEntry("hanlf close"), _connection{connection}
+		: internal::time::TimeWheelEntry("hanlf close"), _connection{connection}
 	{}
 	~HalfCloseConnectionWheelEntry() override = default;
 
 	void onTimeout() override
 	{
-		LOG_INFO("half closed connection timeout, close write");
 		auto conn = _connection.lock();
 		if (conn)
+		{
+			LOG_INFO("half closed connection timeout, force close");
 			conn->handleClose();
+		}
 	}
 
 private:
 	std::weak_ptr<TcpConnection> _connection;
 };
 
-TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket, EventLoop *loop)
+TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket)
 		: m_state{socket::TcpState::Established}, 
 		m_isWaitWriting{false}, m_socket{std::move(socket)}, 
 		m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
@@ -199,7 +203,7 @@ void TcpConnection::closeWrite()
 std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
 												 Events eventsPrototype)
 {
-	auto connection = std::make_shared<TcpConnection>(std::move(socket), loop);
+	auto connection = std::make_shared<TcpConnection>(std::move(socket));
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);

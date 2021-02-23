@@ -6,14 +6,16 @@
 #define NETPP_TIMER_H
 
 #include <memory>
-#include "handlers/TimerHandler.h"
-#include "epoll/EpollEvent.h"
+#include <functional>
 extern "C" {
 #include <sys/timerfd.h>
 }
 
 namespace netpp {
 class EventLoop;
+namespace internal::handlers {
+class TimerHandler;
+}
 }
 
 namespace netpp::time {
