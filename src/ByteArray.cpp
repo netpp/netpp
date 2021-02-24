@@ -237,7 +237,10 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 			bytesToCopy = (usedBytesInNode < length) ? usedBytesInNode : length;
 		}
 	}
-	return static_cast<std::size_t>(buffer - bufferStartPtr);
+	if (buffer > bufferStartPtr)
+		return static_cast<std::size_t>(buffer - bufferStartPtr);
+	else
+		return 0;
 }
 
 void ByteArray::unlockedAllocIfNotEnough(std::size_t size)

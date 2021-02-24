@@ -85,7 +85,7 @@ void Timer::setTimeAndRun()
 	timespec now;
 	// can ignore gettime failed
 	::clock_gettime(CLOCK_MONOTONIC, &now);
-	unsigned sec = now.tv_sec + m_interval / 1000;
+	time_t sec = now.tv_sec + m_interval / 1000;
 	long nsec = now.tv_nsec + (static_cast<long>(m_interval) % 1000) * 1000 * 1000;
 	if (nsec > 1000000000)
 	{

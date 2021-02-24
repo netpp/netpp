@@ -65,6 +65,6 @@ TEST_F(TimerTest, TimeWheel)
 		wheel->addToWheel(std::make_shared<TestWheelEntry>(wheel));
 	});
 	EXPECT_THROW(loop.run(), std::runtime_error);
-	EXPECT_LE(wheelTriggerCount, 9);
-	EXPECT_GE(wheelTriggerCount, 7);
+	EXPECT_LE(wheelTriggerCount, 10);
+	EXPECT_GE(wheelTriggerCount, 6);
 }

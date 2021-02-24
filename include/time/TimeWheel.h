@@ -39,6 +39,7 @@ private:
 	void tick();
 
 	netpp::time::Timer m_tickTimer;
+	unsigned m_bucketSize;
 	unsigned m_timeOutBucketIndex;
 
 	using Bucket = std::unordered_set<std::shared_ptr<TimeWheelEntry>>;

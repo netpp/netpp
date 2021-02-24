@@ -6,7 +6,7 @@ namespace netpp {
 class Config {
 // event loop number
 // event loop wait interval
-// enable run user-defined handler in other thread than event loop
+// enable run user-defined handler in event loop
 // user-defined handler threads number
 // enable log
 // enable time wheel to close idle connection, bucket size, tick interval

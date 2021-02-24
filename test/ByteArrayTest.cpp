@@ -11,8 +11,8 @@ extern "C" {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
 
-// TODO: test writeRaw return value
 class ByteArrayTest : public testing::Test {
 protected:
 	void SetUp() override {}
@@ -140,7 +140,7 @@ TEST_F(ByteArrayTest, WithinNodeReadWrite)
 	char buffer[3];
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
-	EXPECT_EQ(byteArray.retrieveRaw(buffer, 3), writeBytes);
+	EXPECT_EQ(byteArray.retrieveRaw(buffer, 3), 3);
 	EXPECT_STREQ(buffer, "12");
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
@@ -153,7 +153,7 @@ TEST_F(ByteArrayTest, WithInNodeReadFromEmpty)
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
 
 	char raw[bufferNodeSize];
-	byteArray.retrieveRaw(raw, bufferNodeSize);
+	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize), 0);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
 
@@ -174,7 +174,7 @@ TEST_F(ByteArrayTest, CrossNodeMoveHead)
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
 
-	byteArray.retrieveRaw(raw, bufferNodeSize);
+	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize), bufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
 
@@ -182,7 +182,7 @@ TEST_F(ByteArrayTest, CrossNodeMoveHead)
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
 
-	byteArray.retrieveRaw(raw, bufferNodeSize);
+	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize), bufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
 
@@ -202,14 +202,14 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteBigEntry)
 	byteArray.writeRaw(raw, bufferNodeSize * 10);	// 16 nodes, last 6 is usable
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize * 10);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 6);
-	byteArray.retrieveRaw(raw, bufferNodeSize * 10);
+	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize * 10), bufferNodeSize * 10);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 6);
 
 	byteArray.writeRaw(raw, bufferNodeSize * 6);	// move head, 10 node is usable
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize * 6);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 10);
-	byteArray.retrieveRaw(raw, bufferNodeSize * 6);
+	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize * 6), bufferNodeSize * 6);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 10);
 }
@@ -228,7 +228,7 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteInt8)
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize + 1);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
 
-	byteArray.retrieveRaw(raw, bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize - 1), bufferNodeSize - 1);
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(int8_t) * 2);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
 
@@ -253,7 +253,7 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteInt64)
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - sizeof(int64_t) + 1);
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize + sizeof(int64_t) - 1);
 
-	byteArray.retrieveRaw(raw, bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize - 1), bufferNodeSize - 1);
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(int64_t));
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - sizeof(int64_t) + 1);
 
@@ -570,7 +570,7 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt8)
 	std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 	char raw[bufferNodeSize * 3] = {'\0'};
 	byteArray->writeRaw(raw, bufferNodeSize * 2 + 1);
-	byteArray->retrieveRaw(raw, bufferNodeSize * 2 + 1);
+	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 2 + 1), bufferNodeSize * 2 + 1);
 	byteArray->writeRaw(raw, bufferNodeSize * 2 - 1);
 	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 - 1);
 	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize * 2);
@@ -587,7 +587,7 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt8)
 	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 + sizeof(int8_t));
 	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize * 2 - sizeof(int8_t) * 2);
 
-	byteArray->retrieveRaw(raw, bufferNodeSize * 2 - 1);
+	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 2 - 1), bufferNodeSize * 2 - 1);
 	EXPECT_EQ(byteArray->readableBytes(), sizeof(int8_t) * 2);
 	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize - sizeof(int8_t));
 

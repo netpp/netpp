@@ -55,6 +55,7 @@ void EventLoop::removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::Even
 
 void EventLoop::runInLoop(std::function<void()> functor)
 {
+	// TODO: wake up epoll_wait via some fd, not waiting for epoll_wait timeout
 	std::lock_guard lck(m_functorMutex);
 	m_pendingFuns.emplace_back(functor);
 }

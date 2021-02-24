@@ -1,6 +1,8 @@
 #include "signal/Signals.h"
+#include <mutex>
 extern "C" {
 #include <signal.h>
+#include <string.h>
 }
 
 namespace netpp::signal {
@@ -42,38 +44,17 @@ Signals toNetppSignal(uint32_t signal)
 
 std::string signalAsString(uint32_t signal)
 {
-#ifdef SIGNAL_DEF
-#undef SIGNAL_DEF
+#if __GLIBC_PREREQ(2, 32)
+	return std::string(::sigdescr_np(signal));
+#else
+	static std::mutex mutex;
+	std::lock_guard lck(mutex);
+	return std::string(::strsignal(signal));
 #endif
-#ifdef LAST_SIGNAL_DEF
-#undef LAST_SIGNAL_DEF
-#endif
-#define SIGNAL_DEF(type)		case SIG##type: sig.append(#type); break;
-#define LAST_SIGNAL_DEF(type)	SIGNAL_DEF(type)
-	// TODO: use strsignal or sigdescr_np(__GLIBC_PREREQ(2, 32)) to get string
-	std::string sig;
-	switch (signal)
-	{
-#include "signal/Signal.def"
-	}
-	return sig;
 }
 
 std::string signalAsString(Signals signal)
 {
-#ifdef SIGNAL_DEF
-#undef SIGNAL_DEF
-#endif
-#ifdef LAST_SIGNAL_DEF
-#undef LAST_SIGNAL_DEF
-#endif
-#define SIGNAL_DEF(type)		case Signals::E_##type: sig.append(#type); break;
-#define LAST_SIGNAL_DEF(type)	SIGNAL_DEF(type)
-	std::string sig;
-	switch (signal)
-	{
-#include "signal/Signal.def"
-	}
-	return sig;
+	return signalAsString(toLinuxSignal(signal));
 }
 }

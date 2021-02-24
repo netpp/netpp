@@ -67,10 +67,11 @@ bool SignalWatcher::isWatching(Signals signal)
 
 bool SignalWatcher::isWatching(uint32_t signal)
 {
-	if (signalFd != -1)
+	if (signalFd != -1 && signal < static_cast<uint32_t>(SIGRTMAX))
 	{
+		int sig = static_cast<int>(signal);
 		std::unique_lock lck(m_watchSignalMutex);
-		return (::sigismember(m_watchingSignals, signal) == 1);
+		return (::sigismember(m_watchingSignals, sig) == 1);
 	}
 	else
 		return false;

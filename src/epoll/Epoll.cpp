@@ -9,6 +9,7 @@
 #include "stub/IO.h"
 #include "stub/Epoll.h"
 #include "error/Exception.h"
+#include <climits>
 
 namespace netpp::internal::epoll {
 Epoll::Epoll()
@@ -24,17 +25,16 @@ Epoll::~Epoll()
 
 std::vector<EpollEvent *> Epoll::poll()
 {
-	int nums = stub::epoll_wait(m_epfd, &m_activeEvents[0], m_activeEvents.size(), 500);
+	int currentVectorSize = static_cast<int>(m_activeEvents.size());
+	int nums = stub::epoll_wait(m_epfd, &m_activeEvents[0], currentVectorSize, 500);
 
 	if (nums == -1)
 	{
 		LOG_INFO("epoll_wait failed, poll next time");
 		return std::vector<EpollEvent *>();
 	}
-	// if event vector is full, expand it
-	using SizeType = std::vector<::epoll_event>::size_type;
-	SizeType activeEventCount = static_cast<SizeType>(nums);
-	if (activeEventCount == m_activeEvents.size())
+	// if event vector is full, expand it, limit vector's max size is less than INT_MAX
+	if ((nums == currentVectorSize) && ((currentVectorSize * 2) < INT_MAX))
 	{
 		LOG_INFO("active events array resize to {}", m_activeEvents.size() * 2);
 		m_activeEvents.resize(m_activeEvents.size() * 2);
@@ -42,10 +42,12 @@ std::vector<EpollEvent *> Epoll::poll()
 
 	// TODO: try not to return this, avoid memory allocation
 	std::vector<EpollEvent *> activeChannels;
-	for (SizeType i = 0; i < activeEventCount; ++i)
+	for (int i = 0; i < nums; ++i)
 	{
-		uint32_t event = m_activeEvents[i].events;
-		auto epollEvent = static_cast<EpollEvent *>(m_activeEvents[i].data.ptr);
+		using EventVectorSize = std::vector<epoll_event>::size_type;
+		EventVectorSize index = static_cast<EventVectorSize>(i);
+		uint32_t event = m_activeEvents[index].events;
+		auto epollEvent = static_cast<EpollEvent *>(m_activeEvents[index].data.ptr);
 		epollEvent->setActiveEvents(event);
 		activeChannels.emplace_back(epollEvent);
 	}
