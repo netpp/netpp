@@ -86,11 +86,11 @@ public:
 	double retrieveDouble();
 	std::string retrieveString(std::size_t length);
 	/**
-	 * @brief retrive raw data from ByteArray to buffer
+	 * @brief Retrive raw data from ByteArray to buffer
 	 * 
-	 * @param buffer		store data here
-	 * @param length		how many bytes to retrieve
-	 * @return std::size_t	the actual size retrieved from ByteArray
+	 * @param buffer		Store data here
+	 * @param length		How many bytes to retrieve
+	 * @return std::size_t	The actual size retrieved from ByteArray
 	 */
 	std::size_t retrieveRaw(char *buffer, std::size_t length);
 
@@ -123,14 +123,14 @@ private:
 	 * @brief Alloc more buffer
 	 * 1. move unused buffer node from head to tail
 	 * 2. if available writeable buffer size is still less than size, alloc double size of nodes than current
-	 * @param size	at lease n bytes available
-	 * @note this method will not acquire lock
+	 * @param size	At lease n bytes available
+	 * @note This method will not acquire lock
 	 */
 	void unlockedAllocIfNotEnough(std::size_t size);
 
 	/**
 	 * @brief Move unused buffer to tail, avoid memory alloc
-	 * @note this method will not acquire lock
+	 * @note This method will not acquire lock
 	 */
 	void unlockedMoveBufferHead();
 

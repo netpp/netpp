@@ -16,13 +16,13 @@ namespace netpp::internal::epoll {
 class EpollEvent;
 
 /**
- * @brief wrapper of epoll
+ * @brief Wrapper of epoll
  * 
  */
 class Epoll {
 public:
 	/**
-	 * @brief Construct a new Epoll object
+	 * @brief An Epoll object is a wrapp of epoll, can wait, conrtol epoll events
 	 * @throw ResourceLimitException
 	 * 1.file descriptors limit
 	 * 2.insufficient memory to create the kernel object

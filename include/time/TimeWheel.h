@@ -7,13 +7,16 @@
 #include <string>
 
 namespace netpp::internal::time {
-// TODO: maybe move TimeWheel to internal namespace
 class TimeWheelEntry {
 	friend class TimeWheel;
 public:
 	TimeWheelEntry(std::string name = "") : m_wheelName{name}, m_indexInWheel{0} {}
 	virtual ~TimeWheelEntry() = default;
 
+	/**
+	 * @brief To do what when time wheel triggered
+	 * 
+	 */
 	virtual void onTimeout() = 0;
 
 private:
@@ -24,7 +27,7 @@ private:
 class TimeWheel {
 public:
 	/**
-	 * @brief Construct a new Time Wheel object
+	 * @brief Construct a TimeWheel
 	 * 
 	 * @param loop			The event loop live in
 	 * @param tickInterval	Wheel rotate interval, by milliseconds

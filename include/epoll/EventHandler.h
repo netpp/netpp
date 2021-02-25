@@ -13,6 +13,7 @@ class EventLoop;
 
 namespace netpp::internal::epoll {
 // TODO: set handler priority
+// TODO: let user have the ability to define thier own handler
 class EventHandler {
 public:
 	explicit EventHandler() = default;

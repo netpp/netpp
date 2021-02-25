@@ -47,11 +47,13 @@ public:
 
 	/// @brief is watching signal
 	static bool isWatching(Signals signal);
-	static bool isWatching(uint32_t signal);
+	static bool isWatching(int signal);
 
+// for SignalHandler
 private:
 	static int signalFd;
 
+private:
 	static ::sigset_t *m_watchingSignals;
 	static std::shared_ptr<internal::handlers::SignalHandler> m_signalHandler;
 

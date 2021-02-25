@@ -27,12 +27,13 @@ void SignalHandler::handleRead()
 		unsigned readNum = bytes / sizeof(::signalfd_siginfo);
 		for (unsigned i = 0; i < readNum; ++i)
 		{
-			LOG_TRACE("signal {} occurred", signal::signalAsString(signals[i].ssi_signo));
+			int signalNo = static_cast<int>(signals[i].ssi_signo);
+			LOG_TRACE("signal {} occurred", signal::signalAsString(signalNo));
 			// watching this signal
-			if (signal::SignalWatcher::isWatching(signals[i].ssi_signo))
-				m_events.onSignal(signal::toNetppSignal(signals[i].ssi_signo));// TODO: can pass more signal info to user
+			if (signal::SignalWatcher::isWatching(signalNo))
+				m_events.onSignal(signal::toNetppSignal(signalNo));// TODO: can pass more signal info to user
 			else
-				LOG_ERROR("not watching signal {}, but signal handler received it", signal::signalAsString(signals[i].ssi_signo));
+				LOG_ERROR("not watching signal {}, but signal handler received it", signal::signalAsString(signalNo));
 		}
 	}
 	else

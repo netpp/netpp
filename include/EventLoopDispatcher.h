@@ -16,11 +16,34 @@ namespace netpp {
  */
 class EventLoopDispatcher {
 public:
+	/**
+	 * @brief Construct a EventLoopDispatcher object
+	 * 
+	 * @param loopsCount				how many loops will be created
+	 */
 	explicit EventLoopDispatcher(unsigned loopsCount = 1);
+
+	/**
+	 * @brief Construct a EventLoopDispatcher object
+	 * 
+	 * @param loopsCount				how many loops will be created
+	 * @param timeWheelRotateInterval	the time wheel tick interval
+	 * @param timeWheelBucketCount		how many bockets the time wheel contains
+	 */
 	EventLoopDispatcher(unsigned loopsCount, unsigned timeWheelRotateInterval, unsigned timeWheelBucketCount);
 
+	/**
+	 * @brief start run all event loop in this dispatcher
+	 * @note one loop will run in caller thread, would block caller
+	 * 
+	 */
 	void startLoop();
 
+	/**
+	 * @brief dispatch an event loop
+	 * 
+	 * @return EventLoop* 
+	 */
 	EventLoop *dispatchEventLoop();
 
 private:

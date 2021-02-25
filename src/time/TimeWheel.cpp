@@ -26,6 +26,7 @@ void TimeWheel::addToWheel(std::shared_ptr<TimeWheelEntry> entry)
 	}
 }
 
+// FIXME: wheel item might remove itself on timeout, case TimeWheel::tick() iteration broken
 /*void TimeWheel::removeFromWheel(std::weak_ptr<TimeWheelEntry> entry)
 {
 	auto item = entry.lock();

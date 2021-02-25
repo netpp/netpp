@@ -21,7 +21,9 @@ class TimerHandler;
 namespace netpp::time {
 /**
  * @brief Timer runs in EventLoop, but the ownship does not belong to EventLoop,
- * if user does not own it, the timer will never triggred
+ * if user does not own it, the timer will never triggred.
+ * 
+ * Timer is not thread, consider protect it if used in multithreads
  * 
  */
 class Timer {
@@ -31,37 +33,37 @@ public:
 	explicit Timer(EventLoop *loop);
 	~Timer();
 
-	/// @brief callback on timeout, the callback must NOT throw exception
+	/// @brief Callback on timeout, the callback must NOT throw exception
 	inline void setOnTimeout(std::function<void()> callback) { m_callback = callback; }
-	/// @brief set timer trigger interval, by default, interval is 1000ms
+	/// @brief Set timer trigger interval, by default, interval is 1000ms
 	void setInterval(unsigned msec);
-	/// @brief set timer is single shot, by default, the value is true
+	/// @brief Set timer is single shot, by default, the value is true
 	void setSingleShot(bool singleShot) { m_singleShot = singleShot; }
 
-	/// @brief get timer interval
+	/// @brief Get timer interval
 	inline unsigned interval() const { return m_interval; }
-	/// @brief get is signle shot
+	/// @brief Get is signle shot
 	inline bool singleShot() const { return m_singleShot; }
-	/// @brief get is timer running
+	/// @brief Get is timer running
 	inline bool running() const { return m_running; }
 
-	/// @brief run timer
+	/// @brief Run timer
 	void start();
-	/// @brief stop timer
+	/// @brief Stop timer
 	void stop();
 
-	/// @brief how many times the timer tirggered
+	/// @brief How many times the timer tirggered
 	inline uint64_t triggeredCount() const { return m_timeOutCount; }
 
 // for TimerHandler
 private:
-	/// @brief called on timeout, for internal use
+	/// @brief Called on timeout, for internal use
 	void onTimeOut();
-	/// @brief get timerfd
+	/// @brief Get timerfd
 	inline int fd() const { return m_timerFd; }
 
 private:
-	/// @brief set up timer, and start to run
+	/// @brief Set up timer, and start to run
 	void setTimeAndRun();
 	
 	unsigned m_interval;

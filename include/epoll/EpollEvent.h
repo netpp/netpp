@@ -43,6 +43,7 @@ public:
 	 */
 	void deactiveEvents();
 
+	// TODO: provide methods to control other epoll event
 	/**
 	 * @brief let epoll watch readable event
 	 */

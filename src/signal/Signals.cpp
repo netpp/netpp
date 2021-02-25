@@ -24,7 +24,7 @@ int toLinuxSignal(Signals signal)
 	return sig;
 }
 
-Signals toNetppSignal(uint32_t signal)
+Signals toNetppSignal(int signal)
 {
 #ifdef SIGNAL_DEF
 #undef SIGNAL_DEF
@@ -42,14 +42,16 @@ Signals toNetppSignal(uint32_t signal)
 	return sig;
 }
 
-std::string signalAsString(uint32_t signal)
+std::string signalAsString(int signal)
 {
+	if (signal < 0 || signal > SIGRTMAX)
+		return "";
 #if __GLIBC_PREREQ(2, 32)
-	return std::string(::sigdescr_np(signal));
+	return ::sigdescr_np(signal);
 #else
 	static std::mutex mutex;
 	std::lock_guard lck(mutex);
-	return std::string(::strsignal(signal));
+	return ::strsignal(signal);
 #endif
 }
 

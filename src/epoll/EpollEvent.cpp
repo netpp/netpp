@@ -11,6 +11,7 @@ namespace netpp::internal::epoll {
 EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
 	: _poll{poll}, _eventHandler{handler}, _watchingFd{fd}, activeEvents{0}
 {
+	// TODO: default watching event should be set by EventHandlers
 	m_watchingEvents.events = EPOLLRDHUP | EPOLLERR;
 	m_watchingEvents.data.ptr = this;
 }
@@ -18,6 +19,7 @@ EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
 void EpollEvent::handleEvents()
 {
 	auto handler = _eventHandler.lock();
+	// TODO: should handle more events
 	if (handler)
 	{
 		if (activeEvents & EPOLLERR)

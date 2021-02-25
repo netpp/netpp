@@ -36,6 +36,7 @@ EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount, unsigned timeWheel
 EventLoop *EventLoopDispatcher::dispatchEventLoop()
 {
 	// TODO: load balance
+	// TODO: make this thread safe
 	if (m_loops.size() == 0)
 		return nullptr;
 	if (++m_dispatchIndex >= m_loops.size())

@@ -13,6 +13,7 @@
 #include "support/ThreadPool.hpp"
 
 namespace netpp {
+namespace internal {
 /**
  * @brief test if class has method, only for Events
  * @param METHOD method name
@@ -33,10 +34,24 @@ ASSERT_HAS_EVENT_METHOD(WriteCompleted)
 ASSERT_HAS_EVENT_METHOD(Disconnect)
 ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
 ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
+}
 
 /**
- * @brief netpp events, callbacks
+ * @brief netpp events, callbacks.
  * 
+ * user will define their event handler class to accept comming events,
+ * who's methods should have same signature in this class.
+ * 
+ * User-defined handler mighit run in different thread, make sure it's 
+ * thread safe.
+ * 
+ * @section Events you can handle
+ * @see Events::onConnected
+ * @see Events::onMessageReceived
+ * @see Events::onWriteCompleted
+ * @see Events::onDisconnect
+ * @see Events::onError
+ * @see Events::onSignal
  */
 class Events final {
 public:
@@ -54,37 +69,67 @@ public:
 	: m_eventsPool{std::make_unique<support::ThreadPool>(threads)}, m_impl{impl}
 	{
 		Impl *implPtr = impl.get();
-		if constexpr (hasConnected<Impl>::value)
+		if constexpr (internal::hasConnected<Impl>::value)
 			m_connectedCb = std::bind(&Impl::onConnected, implPtr, std::placeholders::_1);
-		if constexpr (hasMessageReceived<Impl>::value)
+		if constexpr (internal::hasMessageReceived<Impl>::value)
 			m_receiveMsgCb = std::bind(&Impl::onMessageReceived, implPtr, std::placeholders::_1);
-		if constexpr (hasWriteCompleted<Impl>::value)
+		if constexpr (internal::hasWriteCompleted<Impl>::value)
 			m_writeCompletedCb = std::bind(&Impl::onWriteCompleted, implPtr);
-		if constexpr (hasDisconnect<Impl>::value)
+		if constexpr (internal::hasDisconnect<Impl>::value)
 			m_disconnectCb = std::bind(&Impl::onDisconnect, implPtr);
-		if constexpr (hasError<Impl>::value)
+		if constexpr (internal::hasError<Impl>::value)
 			m_errorCb = std::bind(&Impl::onError, implPtr, std::placeholders::_1);
-		if constexpr (hasSignal<Impl>::value)
+		if constexpr (internal::hasSignal<Impl>::value)
 			m_signalCb = std::bind(&Impl::onSignal, implPtr, std::placeholders::_1);
 		// FIXME: start threads after runs loop, start too soon may cause block signal fail
 		m_eventsPool->start();
 	}
 
+	/**
+	 * @brief handle connected event, triggered when a tcp connection just established
+	 * 
+	 * @param channel	provide a way sending data to pear, as connection just established, 
+	 * 					the buffer should by empty, and not readable
+	 */
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
 	{ if (m_connectedCb) m_eventsPool->run(m_connectedCb, channel); }
 
+	/**
+	 * @brief handle received message, triggered when pear send some data
+	 * 
+	 * @param channel	to read or write connection
+	 */
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{ if (m_receiveMsgCb) m_eventsPool->run(m_receiveMsgCb, channel); }
 
+	/**
+	 * @brief triggered all data in buffer has wrote out
+	 * 
+	 */
 	void onWriteCompleted()
 	{ if (m_writeCompletedCb) m_eventsPool->run(m_writeCompletedCb); }
 
+	/**
+	 * @brief handle disconnected, triggered when a tcp connection has being closed
+	 * 
+	 */
 	void onDisconnect()
 	{ if (m_disconnectCb) m_eventsPool->run(m_disconnectCb); }
 
+	/**
+	 * @brief triggered when some error occurred
+	 * 
+	 * @param code		the error code
+	 */
+	// TODO: define and list what error can be handled here
 	void onError(error::SocketError code)
 	{ if (m_errorCb) m_eventsPool->run(m_errorCb, code); }
 
+	/**
+	 * @brief if signal watcher is enabled, watched signals will be handled here
+	 * 
+	 * @param signal	the signal number
+	 */
 	void onSignal(signal::Signals signal)
 	{ if (m_signalCb) m_eventsPool->run(m_signalCb, signal); }
 

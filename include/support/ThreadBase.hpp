@@ -11,6 +11,10 @@
 #include <future>
 
 namespace netpp::internal::support {
+/**
+ * @brief Wrap runnables, make it type less
+ * 
+ */
 class RunnableWrapper {
 public:
 	template<typename Runnable, typename ... Args>
@@ -75,7 +79,10 @@ public:
 	std::unique_ptr<ImplBase> m_runnable;
 };
 
-
+/**
+ * @brief The thread safe queue
+ * 
+ */
 template<typename T>
 class ThreadSafeQueue {
 public:

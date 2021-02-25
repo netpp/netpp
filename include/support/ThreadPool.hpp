@@ -18,7 +18,7 @@ class ThreadPool {
 	using TaskType = internal::support::RunnableWrapper;
 public:
 	/**
-	 * @brief Create a thread pool, threads will not start before start() is called
+	 * @brief Create a thread pool, threads will not be created before start() is called
 	 * 
 	 * @param threadNum if <= 0, use hardware thread number, else create n threads
 	 */

@@ -17,6 +17,7 @@ EventLoop::EventLoop(unsigned tickInterval, unsigned bucketCount)
 {
 	try
 	{
+		// FIXME: can only run in single thread
 		while (true)
 		{
 			std::vector<internal::epoll::EpollEvent *> activeChannels = m_poll.poll();
@@ -50,6 +51,8 @@ void EventLoop::addEventHandlerToLoop(std::shared_ptr<internal::epoll::EventHand
 
 void EventLoop::removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::EventHandler> handler)
 {
+	// TODO: remove fd from epoll
+	// FIXME: make this thread safe
 	m_handlers.erase(handler);
 }
 

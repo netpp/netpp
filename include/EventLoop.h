@@ -35,11 +35,34 @@ public:
 	EventLoop(unsigned tickInterval, unsigned bucketCount);
 	~EventLoop() = default;
 
+	/**
+	 * @brief start run event loop, any uncatched exception will terminal the loop
+	 * 
+	 */
 	[[noreturn]] void run();
+
+	/**
+	 * @brief add new event handler to event loop
+	 * 
+	 * @param handler the adding event handler
+	 */
 	void addEventHandlerToLoop(std::shared_ptr<internal::epoll::EventHandler> handler);
+
+	/**
+	 * @brief remove event handler from event loop
+	 * 
+	 * @param handler the removing event handler
+	 */
 	void removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::EventHandler> handler);
 
+	/// @brief get poller object in this loop
 	inline internal::epoll::Epoll *getPoll() { return &m_poll; }
+
+	/**
+	 * @brief get time wheel in this loop
+	 * @note it could be nullptr if not time wheel was created
+	 * 
+	 */
 	internal::time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
 
 	/// @brief runs method in event loop
