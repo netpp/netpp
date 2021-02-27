@@ -12,7 +12,13 @@ namespace netpp::internal::stub {
 extern int close(int fd) noexcept;
 extern ::ssize_t write(int fd, const void *buf, ::size_t count) noexcept;
 extern ::ssize_t read(int fd, void *buf, ::size_t count) noexcept;
-extern int pipe2(int pipefd[2], int flags) noexcept;
+
+/**
+ * @brief create a pipe
+ * 
+ * @throw ResourceLimitException on (EMFILE, ENFILE)
+ */
+extern int pipe2(int pipefd[2], int flags);
 
 /**
  * @brief send message on socket

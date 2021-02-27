@@ -61,7 +61,7 @@ void Connector::handleWrite()
 {
 	LOG_TRACE("Connector write available");
 	error::SocketError err = m_socket->getError();
-	// TODO: maybe can retry in other situations
+	// XXX: maybe can retry in other situations
 	if (err == error::SocketError::E_TIMEDOUT || err == error::SocketError::E_CONNREFUSED)
 	{
 		LOG_ERROR("Connector error {}", error::errorAsString(err));
@@ -109,7 +109,7 @@ void Connector::handleWrite()
 
 void Connector::handleError()
 {
-	// TODO: will EPOLLERR happend in connector?
+	// XXX: will EPOLLERR happend in connector?
 	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
@@ -121,9 +121,8 @@ std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatc
 	{
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto connector = make_shared<Connector>(dispatcher, make_unique<socket::Socket>(serverAddr));
-		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
 		connector->m_events = eventsPrototype;
-		connector->m_epollEvent = std::move(event);
+		connector->m_epollEvent = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
 		connector->_loopThisHandlerLiveIn = loop;
 		connector->m_state = socket::TcpState::Closed;
 

@@ -7,6 +7,7 @@
 
 #include "epoll/Epoll.h"
 #include "time/TimeWheel.h"
+#include "handlers/RunInLoopHandler.h"
 #include <unordered_set>
 #include <functional>
 #include <mutex>
@@ -24,7 +25,7 @@ public:
 	 * 1. file descriptors limit
 	 * 2. no more memory
 	 */
-	EventLoop() = default;
+	EventLoop();
 
 	/**
 	 * @brief Construct an EventLoop with timewheel
@@ -36,10 +37,12 @@ public:
 	~EventLoop() = default;
 
 	/**
-	 * @brief start run event loop, any uncatched exception will terminal the loop
+	 * @brief start run never ending event loop, however, the loop 
+	 * will be terminated if any uncatched exception throwed, if 
+	 * the loop is already running, return immediately
 	 * 
 	 */
-	[[noreturn]] void run();
+	void run();
 
 	/**
 	 * @brief add new event handler to event loop
@@ -69,12 +72,11 @@ public:
 	void runInLoop(std::function<void()> functor);
 
 private:
+	std::atomic_flag m_loopRunning;
 	internal::epoll::Epoll m_poll;
 	std::unordered_set<std::shared_ptr<internal::epoll::EventHandler>> m_handlers;	// epoll events handlers
 
-	std::mutex m_functorMutex;							// guard m_pendingFuns
-	std::vector<std::function<void()>> m_pendingFuns;	// methods run in loop
-
+	std::shared_ptr<internal::handlers::RunInLoopHandler> m_runInLoop;
 	std::unique_ptr<internal::time::TimeWheel> m_kickIdleConnectionWheel;
 };
 }

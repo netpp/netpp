@@ -78,7 +78,7 @@ int close(int fd) noexcept
 	return size;
 }
 
-int pipe2(int pipefd[2], int flags) noexcept
+int pipe2(int pipefd[2], int flags)
 {
 	int ret = ::pipe2(pipefd, flags);
 	if (ret == -1)
@@ -88,8 +88,10 @@ int pipe2(int pipefd[2], int flags) noexcept
 		{
 			case EFAULT:
 			case EINVAL:
+				break;
 			case EMFILE:
 			case ENFILE:
+				throw error::ResourceLimitException(errno);
 				break;
 		}
 	}

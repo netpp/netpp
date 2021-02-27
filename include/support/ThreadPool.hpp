@@ -88,7 +88,7 @@ private:
 
 	std::atomic_bool m_quit;
 	std::atomic_uint m_activeThreads;
-	std::atomic_uint threadNumber;
+	uint threadNumber;	// thread number will not change after constructed
 	std::atomic_uint taskCount;
 
 	std::mutex m_waitTaskMutex;

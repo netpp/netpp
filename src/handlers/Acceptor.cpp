@@ -70,7 +70,7 @@ void Acceptor::handleRead()
 
 void Acceptor::handleError()
 {
-	// TODO: will EPOLLERR happend in acceptor?
+	// XXX: will EPOLLERR happend in acceptor?
 	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
