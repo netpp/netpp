@@ -18,6 +18,7 @@ public:
 	 * 
 	 */
 	virtual void onTimeout() = 0;
+	virtual bool eraseOnTimeout() { return true; }
 
 private:
 	std::string m_wheelName;
@@ -35,7 +36,7 @@ public:
 	 */
 	TimeWheel(EventLoop *loop, unsigned tickInterval, unsigned bucketCount);
 	void addToWheel(std::shared_ptr<TimeWheelEntry> entry);
-	// void removeFromWheel(std::weak_ptr<TimeWheelEntry> entry);
+	void removeFromWheel(std::weak_ptr<TimeWheelEntry> entry);
 	void renew(std::weak_ptr<TimeWheelEntry> entry);
 
 private:

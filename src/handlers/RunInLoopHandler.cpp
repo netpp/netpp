@@ -26,7 +26,7 @@ void RunInLoopHandler::handleIn()
 {
 	::eventfd_t v;
 	stub::eventfd_read(m_wakeUpFd, &v);
-	LOG_INFO("Run in loop trigged, {} pending functors to run", v);
+	LOG_DEBUG("Run in loop trigged, {} pending functors to run", v);
 	std::vector<std::function<void()>> funs;
 	{
 		std::lock_guard lck(m_functorMutex);

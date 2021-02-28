@@ -51,10 +51,10 @@ protected:
 
 TEST_F(EpollEventTest, AddEvent)
 {
-	// TODO test this
+	// TODO: test this
 }
 
 TEST_F(EpollEventTest, RemoveEvent)
 {
-	// TODO test this
+	// TODO: test this
 }

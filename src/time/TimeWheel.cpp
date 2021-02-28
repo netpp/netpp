@@ -26,8 +26,7 @@ void TimeWheel::addToWheel(std::shared_ptr<TimeWheelEntry> entry)
 	}
 }
 
-// FIXME: wheel item might remove itself on timeout, case TimeWheel::tick() iteration broken
-/*void TimeWheel::removeFromWheel(std::weak_ptr<TimeWheelEntry> entry)
+void TimeWheel::removeFromWheel(std::weak_ptr<TimeWheelEntry> entry)
 {
 	auto item = entry.lock();
 	if (item)
@@ -38,7 +37,7 @@ void TimeWheel::addToWheel(std::shared_ptr<TimeWheelEntry> entry)
 		if (entryIt != bucket.end())
 			bucket.erase(entryIt);
 	}
-}*/
+}
 
 void TimeWheel::renew(std::weak_ptr<TimeWheelEntry> entry)
 {
@@ -68,11 +67,16 @@ void TimeWheel::tick()
 	if (m_timeOutBucketIndex == m_bucketSize)
 		m_timeOutBucketIndex = 0;
 	auto &bucket = m_buckets[m_timeOutBucketIndex];
-	for (auto entry : bucket)
+	for (auto it = bucket.begin(); it != bucket.end();)
 	{
+		// make a copy incase onTimeout will erase itself
+		std::shared_ptr<TimeWheelEntry> entry = (*it);
 		LOG_INFO("wheel entry {} time out", entry->m_wheelName);
 		entry->onTimeout();
+		if (entry->eraseOnTimeout())
+			it = bucket.erase(it);
+		else
+			++it;
 	}
-	bucket.clear();
 }
 }

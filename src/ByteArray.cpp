@@ -93,7 +93,7 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		unlockedAllocIfNotEnough(length);
 	
 	std::size_t bytesToWrite = (availableSize < length) ? availableSize : length;
-	while (node && availableSize > 0 && length > 0)
+	while (node && length > 0)
 	{
 		std::memcpy(node->buffer + node->end, data, bytesToWrite);
 		node->end += bytesToWrite;
@@ -102,7 +102,10 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		m_availableSizeToRead += bytesToWrite;
 		m_availableSizeToWrite -= bytesToWrite;
 		node = node->next;
-		if (node)
+		// have next node
+		// has more to write
+		// this node is full
+		if (node && (length != 0 || node->end == BufferNode::BufferSize))
 		{
 			_currentWriteBufferNode = node;
 			availableSize = BufferNode::BufferSize;
@@ -219,7 +222,7 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 	std::shared_ptr<BufferNode> node = _currentReadBufferNode.lock();
 	std::size_t usedBytesInNode = node->end - node->start;		// how many bytes used in this node
 	std::size_t bytesToCopy = (usedBytesInNode < length) ? usedBytesInNode : length;
-	while (node && usedBytesInNode > 0 && length > 0)
+	while (node && length > 0)
 	{
 		std::memcpy(buffer, node->buffer + node->start, bytesToCopy);
 		node->start += bytesToCopy;
@@ -227,11 +230,18 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 		length -= bytesToCopy;
 		m_availableSizeToRead -= bytesToCopy;
 		// is current node empty
-		bool readOut = (node->start == BufferNode::BufferSize);
+		bool readOut = (node->start == node->end);
+		// if read node moved, move write node also
+		bool mayBeMoveWriteNode = (node == _currentWriteBufferNode.lock());
 		node = node->next;
-		// move ReadNode when 1.has next node 2.this node is empty
+		// move ReadNode when
+		// 1.has next node
+		// 2.this node is empty
 		if (node && readOut)
 		{
+			// move cross write node
+			if (mayBeMoveWriteNode)
+				_currentWriteBufferNode = node;
 			_currentReadBufferNode = node;
 			usedBytesInNode = node->end - node->start;
 			bytesToCopy = (usedBytesInNode < length) ? usedBytesInNode : length;
@@ -272,15 +282,23 @@ void ByteArray::unlockedMoveBufferHead()
 		m_availableSizeToWrite += BufferNode::BufferSize;
 		m_bufferHead->start = 0;
 		m_bufferHead->end = 0;
-		// second to _currentReadBufferNode
+		// _currentReadBufferNode will always behind head
 		std::shared_ptr<BufferNode> node = m_bufferHead;
 		while (node->next != readNode)
 		{
-			m_availableSizeToWrite += BufferNode::BufferSize;
-			node->start = 0;
-			node->end = 0;
+			// TODO: adjust logic here
+			if (node != m_bufferHead)
+			{
+				m_availableSizeToWrite += BufferNode::BufferSize;
+				node->start = 0;
+				node->end = 0;
+			}
 			node = node->next;
 		}
+		// the last node
+		node->start = 0;
+		node->end = 0;
+		// 
 		tail->next = m_bufferHead;
 		m_bufferHead = readNode;
 		node->next = nullptr;

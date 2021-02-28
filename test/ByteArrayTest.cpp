@@ -223,6 +223,7 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteInt8)
 	EXPECT_EQ(byteArray.unusedBytes(), 1);
 
 	byteArray.writeInt8(1);		// write 1 byte, new node alloc
+	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize);
 	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
 	byteArray.writeInt8(2);		// write 1 byte
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize + 1);

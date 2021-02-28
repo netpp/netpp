@@ -101,7 +101,7 @@ void TcpConnection::handleOut()
 		// may not write all data
 		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))
 		{
-			m_epollEvent->active(epoll::Event::OUT);
+			m_epollEvent->deactive(epoll::Event::OUT);
 			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
 			if (m_state == socket::TcpState::Closing)
@@ -131,6 +131,12 @@ void TcpConnection::handleRdhup()
 {
 	LOG_TRACE("Socket {} disconnected", m_socket->fd());
 	// no need to remove wheels, they will self destructed after timeout
+	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
+	if (wheel)
+	{
+		wheel->removeFromWheel(_idleConnectionWheel);
+		wheel->removeFromWheel(_halfCloseWheel);
+	}
 	m_events.onDisconnect();
 	m_epollEvent->disable();
 	// extern TcpConnection life after remove

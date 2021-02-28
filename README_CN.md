@@ -1,9 +1,9 @@
 # Netpp - 现代C++网络库
 中文 [English](https://github.com/netpp/netpp/blob/master/README.md)  
-netpp是一个基于事件的现代网络库，基于reactor和epoll，提供特性：  
+netpp是Linux平台上基于reactor和epoll的现代网络库，提供特性：  
 * 链式的缓存节点
 * 非虚函数的用户接口
-* 每个循环属于不同线程
+* 每个事件循环属于不同线程
 * 信号处理
 * 踢掉空连接
 ## 依赖库

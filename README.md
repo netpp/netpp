@@ -1,5 +1,5 @@
 # netpp
-An event based, modern c++ network library
+An event based, modern c++ network library on Linux
 =======
 [中文](https://github.com/netpp/netpp/blob/master/README_CN.md) English  
 netpp is an event based, modern c++ network library, based on reactor pattern and epoll, supporting features:  
