@@ -36,7 +36,7 @@ SignalWatcher SignalWatcher::watch(Signals signal)
 	{
 		std::unique_lock lck(m_watchSignalMutex);
 		::sigaddset(m_watchingSignals, toLinuxSignal(signal));
-		::signalfd(signalFd, m_watchingSignals, SFD_NONBLOCK);
+		::signalfd(signalFd, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
 		m_waitWatchSignalChange.notify_one();
 	}
 	return SignalWatcher();
@@ -48,7 +48,7 @@ SignalWatcher SignalWatcher::restore(Signals signal)
 	{
 		std::unique_lock lck(m_watchSignalMutex);
 		::sigaddset(m_watchingSignals, toLinuxSignal(signal));
-		::signalfd(signalFd, m_watchingSignals, SFD_NONBLOCK);
+		::signalfd(signalFd, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
 		m_waitWatchSignalChange.notify_one();
 	}
 	return SignalWatcher();
@@ -109,7 +109,7 @@ void SignalWatcher::enableWatchSignal()
 
 		// signal fd has an empty signal set by default
 		::sigemptyset(&blockThreadSignals);
-		SignalWatcher::signalFd = ::signalfd(-1, &blockThreadSignals, SFD_NONBLOCK);
+		SignalWatcher::signalFd = ::signalfd(-1, &blockThreadSignals, SFD_NONBLOCK | SFD_CLOEXEC);
 	});
 }
 }

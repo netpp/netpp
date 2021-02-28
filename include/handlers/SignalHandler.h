@@ -25,10 +25,7 @@ public:
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 * 
 	 */
-	void handleRead() override;
-	void handleWrite() override {};
-	void handleError() override {};
-	void handleClose() override {};
+	void handleIn() override;
 
 	/**
 	 * @brief stop handle signal fd event, however, watched signal emited will still

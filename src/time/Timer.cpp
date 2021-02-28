@@ -19,13 +19,13 @@ namespace netpp::time {
 Timer::Timer(EventLoop *loop)
 	: m_interval(1000), m_singleShot{true}, m_running{false}, m_timeOutCount{0}
 {
-	m_timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
+	m_timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 	std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
 	LOG_TRACE("Timer fd {}", m_timerFd);
 
 	m_handler = make_shared<internal::handlers::TimerHandler>(this);
 	m_handler->m_epollEvent = make_unique<internal::epoll::EpollEvent>(loop->getPoll(), m_handler, m_timerFd);
-	m_handler->m_epollEvent->setEnableRead(true);
+	m_handler->m_epollEvent->active(internal::epoll::Event::IN);
 	m_handler->_loopThisHandlerLiveIn = loop;
 }
 

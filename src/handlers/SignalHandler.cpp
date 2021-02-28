@@ -12,7 +12,7 @@ extern "C" {
 }
 
 namespace netpp::internal::handlers {
-void SignalHandler::handleRead()
+void SignalHandler::handleIn()
 {
 	static constexpr int maxSignalRead = 20;
 	::signalfd_siginfo signals[maxSignalRead];
@@ -46,7 +46,7 @@ void SignalHandler::stop()
 {
 	auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([externLife](){
-		externLife->m_epollEvent->deactiveEvents();
+		externLife->m_epollEvent->disable();
 		externLife->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(externLife);
 	});
 }
@@ -63,7 +63,7 @@ std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop,
 
 	loop->runInLoop([signalHandler]{
 		signalHandler->_loopThisHandlerLiveIn->addEventHandlerToLoop(signalHandler);
-		signalHandler->m_epollEvent->setEnableRead(true);
+		signalHandler->m_epollEvent->active(epoll::Event::IN);
 		LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
 	});
 	return signalHandler;

@@ -167,4 +167,41 @@ retryRecvMsg:
 	}
 	return ret;
 }
+
+int eventfd(unsigned int initval, int flags)
+{
+	int fd = ::eventfd(initval, flags);
+	if (fd == -1)
+	{
+		switch (errno)
+		{
+		case EINVAL:
+			break;
+		case EMFILE:
+		case ENFILE:
+		case ENODEV:
+		case ENOMEM:
+			throw error::ResourceLimitException(errno);
+		}
+	}
+	return fd;
+}
+
+int eventfd_read(int fd, ::eventfd_t *value)
+{
+	int ret = ::eventfd_read(fd, value);
+	if (ret == -1)
+	{}
+	return ret;
+}
+
+int eventfd_write(int fd, ::eventfd_t value)
+{
+	int ret = ::eventfd_write(fd, value);
+	if (ret == -1)
+	{
+		return -1;
+	}
+	return ret;
+}
 }

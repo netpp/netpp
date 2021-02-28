@@ -36,9 +36,9 @@ EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount, unsigned timeWheel
 EventLoop *EventLoopDispatcher::dispatchEventLoop()
 {
 	// TODO: load balance
-	// TODO: make this thread safe
 	if (m_loops.size() == 0)
 		return nullptr;
+	std::lock_guard lck(m_indexMutex);
 	if (++m_dispatchIndex >= m_loops.size())
 		m_dispatchIndex = 0;
 	return m_loops[m_dispatchIndex].get();

@@ -31,21 +31,21 @@ public:
 	~Epoll();
 
 	/**
-	 * @brief wait for event once, if nothing ready, returned in 500ms
+	 * @brief Wait for event once
 	 * 
-	 * @return a vector of the ready events
+	 * @return A vector of the ready events
 	 */
 	std::vector<EpollEvent *> poll();
 
 	/**
-	 * @brief add or update epoll watching events
+	 * @brief Add or update epoll watching events
 	 * 
-	 * @param channelEvent	pending update event
+	 * @param channelEvent	Pending update event
 	 */
 	void updateEvent(EpollEvent *channelEvent);
 
 	/**
-	 * @brief remove event from epoll
+	 * @brief Remove event from epoll
 	 * 
 	 * @param channelEvent 
 	 */

@@ -23,7 +23,7 @@ void Acceptor::listen()
 			if (acceptor->m_state == socket::TcpState::Closed)
 			{
 				acceptor->_loopThisHandlerLiveIn->addEventHandlerToLoop(acceptor);
-				acceptor->m_epollEvent->setEnableRead(true);
+				acceptor->m_epollEvent->active(epoll::Event::IN);
 				acceptor->m_socket->listen();
 				acceptor->m_state = socket::TcpState::Established;
 			}
@@ -40,13 +40,13 @@ void Acceptor::stop()
 	// extern life after remove
 	auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([externLife]{
-		externLife->m_epollEvent->deactiveEvents();
+		externLife->m_epollEvent->disable();
 		externLife->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(externLife);
 		externLife->m_state = socket::TcpState::Closed;
 	});
 }
 
-void Acceptor::handleRead()
+void Acceptor::handleIn()
 {
 	try
 	{
@@ -66,12 +66,6 @@ void Acceptor::handleRead()
 	{
 		m_events.onError(rle.getSocketErrorCode());
 	}
-}
-
-void Acceptor::handleError()
-{
-	// XXX: will EPOLLERR happend in acceptor?
-	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
 std::shared_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,

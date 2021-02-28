@@ -24,7 +24,7 @@ void Connector::connect()
 			{
 				connector->_loopThisHandlerLiveIn->addEventHandlerToLoop(connector);
 				// connect may success immediately, manually enable read
-				connector->m_epollEvent->setEnableWrite(true);
+				connector->m_epollEvent->active(epoll::Event::OUT);
 				connector->m_socket->connect();
 				connector->m_state = socket::TcpState::Connecting;
 			}
@@ -50,14 +50,14 @@ void Connector::stopConnect()
 				connector->m_retryTimer->stop();
 				connector->m_retryTimer = nullptr;
 			}
-			connector->m_epollEvent->deactiveEvents();
+			connector->m_epollEvent->disable();
 			connector->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(connector);
 			connector->m_state = socket::TcpState::Closed;
 		}
 	});
 }
 
-void Connector::handleWrite()
+void Connector::handleOut()
 {
 	LOG_TRACE("Connector write available");
 	error::SocketError err = m_socket->getError();
@@ -84,7 +84,7 @@ void Connector::handleWrite()
 			m_retryTimer = nullptr;
 		}
 		// clean up this first
-		m_epollEvent->deactiveEvents();
+		m_epollEvent->disable();
 
 		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
 																   std::move(m_socket),
@@ -105,12 +105,6 @@ void Connector::handleWrite()
 		LOG_WARN("other connect error", error::errorAsString(err));
 		m_events.onError(err);
 	}
-}
-
-void Connector::handleError()
-{
-	// XXX: will EPOLLERR happend in connector?
-	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
 std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatcher,
@@ -145,7 +139,7 @@ void Connector::setupTimer()
 		auto oldSocket = std::move(m_socket);
 		m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
 		m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), shared_from_this(), m_socket->fd());
-		m_epollEvent->setEnableWrite(true);
+		m_epollEvent->active(epoll::Event::OUT);
 		connect();
 	});
 	m_retryTimer->setSingleShot(false);
@@ -155,7 +149,7 @@ void Connector::setupTimer()
 
 void Connector::reconnect()
 {
-	m_epollEvent->deactiveEvents();
+	m_epollEvent->disable();
 	unsigned currentInterval = m_retryTimer->interval();
 	if (currentInterval < 4000)
 		m_retryTimer->setInterval(currentInterval * 2);

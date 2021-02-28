@@ -23,43 +23,32 @@ public:
 	~Acceptor() override = default;
 
 	/**
-	 * @brief start listen and watch connect event,
+	 * @brief Start listen and watch connect event,
 	 * can be used out side EventLoop, thread safe
 	 * 
 	 */
 	void listen();
 
 	/**
-	 * @brief stop accept incomming connections, remove Acceptor from EventLoop,
+	 * @brief Stop accept incomming connections, remove Acceptor from EventLoop,
 	 * can be used out side EventLoop, thread safe
 	 */
 	void stop();
 
 	/**
-	 * @brief handle read events on accept socket, triggered when
-	 * 1.new connection comming
-	 * @note handlers will run only in EventLoop, NOT thread safe
+	 * @brief EPOLLIN triggered when new connection comming
+	 * @note Handlers will run only in EventLoop, NOT thread safe
 	 * 
 	 */
-	void handleRead() override;
-	void handleWrite() override {};
+	void handleIn() override;
 
 	/**
-	 * @brief handle epoll error, this may not triggered
-	 * @note handlers will run only in EventLoop, NOT thread safe
+	 * @brief Create a new acceptor, thread safe
 	 * 
-	 */
-	void handleError() override;
-
-	void handleClose() override {};
-
-	/**
-	 * @brief create a new acceptor, thread safe
-	 * 
-	 * @param dispatcher				event loop dispatcher, assign acceptor to an EventLoop
-	 * @param listenAddr				the address acceptor should listen
-	 * @param eventsPrototype			user-define event handler
-	 * @return std::weak_ptr<Acceptor>	the acceptor just created
+	 * @param dispatcher				Event loop dispatcher, assign acceptor to an EventLoop
+	 * @param listenAddr				The address acceptor should listen
+	 * @param eventsPrototype			User-define event handler
+	 * @return std::weak_ptr<Acceptor>	The acceptor just created
 	 */
 	static std::shared_ptr<Acceptor> makeAcceptor(EventLoopDispatcher *dispatcher,
 								 Address listenAddr,
@@ -71,7 +60,7 @@ private:
 	Events m_events;	// user-defined event handler
 
 	/**
-	 * @brief the state of acceptor
+	 * @brief The state of acceptor
 	 * 
 	 *             stop()
 	 *         +-----<-----+

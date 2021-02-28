@@ -26,7 +26,7 @@ Epoll::~Epoll()
 std::vector<EpollEvent *> Epoll::poll()
 {
 	int currentVectorSize = static_cast<int>(m_activeEvents.size());
-	int nums = stub::epoll_wait(m_epfd, &m_activeEvents[0], currentVectorSize, 500);
+	int nums = stub::epoll_wait(m_epfd, &m_activeEvents[0], currentVectorSize, -1);
 
 	if (nums == -1)
 	{

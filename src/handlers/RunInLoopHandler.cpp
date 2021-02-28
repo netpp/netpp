@@ -1,15 +1,15 @@
 #include "handlers/RunInLoopHandler.h"
 #include "stub/IO.h"
 #include "EventLoop.h"
+#include "support/Log.h"
 extern "C" {
 #include <fcntl.h>
 }
 
 namespace netpp::internal::handlers {
 RunInLoopHandler::RunInLoopHandler(EventLoop *loop)
-	: m_wakeUpFd{-1, -1}, m_waitingWakeUp{ATOMIC_FLAG_INIT}
 {
-	stub::pipe2(m_wakeUpFd, O_NONBLOCK);
+	m_wakeUpFd = stub::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
 	_loopThisHandlerLiveIn = loop;
 }
 
@@ -17,18 +17,16 @@ RunInLoopHandler::~RunInLoopHandler()
 {
 	// no need to consider thread safety here, 
 	// this handler will always live with event loop
-	m_epollEvent->deactiveEvents();
-	if (m_wakeUpFd[0] != -1)
-		stub::close(m_wakeUpFd[0]);
-	if (m_wakeUpFd[1] != -1)
-		stub::close(m_wakeUpFd[1]);
+	m_epollEvent->disable();
+	if (m_wakeUpFd != -1)
+		stub::close(m_wakeUpFd);
 }
 
-void RunInLoopHandler::handleRead()
+void RunInLoopHandler::handleIn()
 {
-	m_waitingWakeUp.clear(std::memory_order_release);
-	char c;
-	stub::read(m_wakeUpFd[0], &c, sizeof(char));
+	::eventfd_t v;
+	stub::eventfd_read(m_wakeUpFd, &v);
+	LOG_INFO("Run in loop trigged, {} pending functors to run", v);
 	std::vector<std::function<void()>> funs;
 	{
 		std::lock_guard lck(m_functorMutex);
@@ -44,11 +42,7 @@ void RunInLoopHandler::handleRead()
 
 void RunInLoopHandler::addPendingFunction(std::function<void()> functor)
 {
-	if (!m_waitingWakeUp.test_and_set(std::memory_order_consume))
-	{
-		char c;
-		stub::write(m_wakeUpFd[1], &c, sizeof(char));
-	}
+	stub::eventfd_write(m_wakeUpFd, 1);
 	std::lock_guard lck(m_functorMutex);
 	m_pendingFuns.emplace_back(functor);
 }
@@ -56,10 +50,9 @@ void RunInLoopHandler::addPendingFunction(std::function<void()> functor)
 std::shared_ptr<RunInLoopHandler> RunInLoopHandler::makeRunInLoopHandler(EventLoop *loop)
 {
 	auto handler = std::make_shared<RunInLoopHandler>(loop);
-	handler->m_epollEvent = std::make_unique<epoll::EpollEvent>(loop->getPoll(), handler, handler->m_wakeUpFd[0]);
+	handler->m_epollEvent = std::make_unique<epoll::EpollEvent>(loop->getPoll(), handler, handler->m_wakeUpFd);
 	loop->addEventHandlerToLoop(handler);
-	// TODO: enable read only when add some pending functors
-	handler->m_epollEvent->setEnableRead(true);
+	handler->m_epollEvent->active(epoll::Event::IN);
 	return handler;
 }
 }

@@ -15,7 +15,7 @@ using std::make_unique;
 namespace netpp::internal::socket {
 Socket::Socket(const Address &addr)
 {
-	m_socketFd = stub::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, IPPROTO_TCP);
+	m_socketFd = stub::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
 	m_addr = addr;
 	LOG_DEBUG("Socket fd: {}", m_socketFd);
 }
@@ -46,7 +46,7 @@ std::unique_ptr<Socket> Socket::accept() const
 	std::shared_ptr<::sockaddr_in> addr{std::make_shared<::sockaddr_in>()};
 	socklen_t addrSize = sizeof(::sockaddr_in);
 	std::memset(addr.get(), 0, addrSize);
-	int newSocket = stub::accept4(m_socketFd, reinterpret_cast<::sockaddr *>(addr.get()), &addrSize, SOCK_NONBLOCK);
+	int newSocket = stub::accept4(m_socketFd, reinterpret_cast<::sockaddr *>(addr.get()), &addrSize, SOCK_NONBLOCK | SOCK_CLOEXEC);
 	LOG_TRACE("Accepted new client with fd {}", newSocket);
 	return make_unique<Socket>(newSocket, Address(addr));
 }

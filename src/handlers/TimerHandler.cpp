@@ -12,7 +12,7 @@ TimerHandler::TimerHandler(netpp::time::Timer *timer)
 	: _timer{timer}
 {}
 
-void TimerHandler::handleRead()
+void TimerHandler::handleIn()
 {
 	uint64_t tirggeredCount;
 	if (::read(_timer->fd(), &tirggeredCount, sizeof(uint64_t)) != -1)
@@ -23,7 +23,7 @@ void TimerHandler::remove()
 {
 	auto timer = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([timer]{
-		timer->m_epollEvent->deactiveEvents();
+		timer->m_epollEvent->disable();
 		timer->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(timer);
 	});
 }

@@ -11,49 +11,65 @@ namespace netpp::internal::epoll {
 EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
 	: _poll{poll}, _eventHandler{handler}, _watchingFd{fd}, activeEvents{0}
 {
-	// TODO: default watching event should be set by EventHandlers
-	m_watchingEvents.events = EPOLLRDHUP | EPOLLERR;
+	m_watchingEvents.events = 0;
 	m_watchingEvents.data.ptr = this;
 }
 
 void EpollEvent::handleEvents()
 {
 	auto handler = _eventHandler.lock();
-	// TODO: should handle more events
 	if (handler)
 	{
 		if (activeEvents & EPOLLERR)
-			handler->handleError();
+			handler->handleErr();
 		if (activeEvents & EPOLLRDHUP)
-			handler->handleClose();
+			handler->handleRdhup();
 		if (activeEvents & EPOLLIN)
-			handler->handleRead();
+			handler->handleIn();
 		if (activeEvents & EPOLLOUT)
-			handler->handleWrite();
+			handler->handleOut();
+		if (activeEvents & EPOLLPRI)
+			handler->handlePri();
+		if (activeEvents & EPOLLHUP)
+			handler->handleHup();
 	}
 }
 
-void EpollEvent::setEnableWrite(bool enable)
+void EpollEvent::active(std::initializer_list<Event> events)
 {
-	LOG_TRACE("Set {} enable write {}", _watchingFd, enable);
-	if (enable)
-		m_watchingEvents.events |= EPOLLOUT;
-	else
-		m_watchingEvents.events &= ~EPOLLOUT;
+	for (auto event : events)
+	{
+		switch (event)
+		{
+			case Event::IN:		m_watchingEvents.events |= EPOLLIN;		break;
+			case Event::OUT:	m_watchingEvents.events |= EPOLLOUT;	break;
+			case Event::RDHUP:	m_watchingEvents.events |= EPOLLRDHUP;	break;
+			case Event::PRI:	m_watchingEvents.events |= EPOLLPRI;	break;
+			case Event::ERR:	m_watchingEvents.events |= EPOLLERR;	break;
+			case Event::HUP:	m_watchingEvents.events |= EPOLLHUP;	break;
+		}
+	}
 	_poll->updateEvent(this);
 }
 
-void EpollEvent::setEnableRead(bool enable)
+void EpollEvent::deactive(std::initializer_list<Event> events)
 {
-	LOG_TRACE("Set {} enable read {}", _watchingFd, enable);
-	if (enable)
-		m_watchingEvents.events |= EPOLLIN;
-	else
-		m_watchingEvents.events &= ~EPOLLIN;
+	for (auto event : events)
+	{
+		switch (event)
+		{
+			case Event::IN:		m_watchingEvents.events &= ~EPOLLIN;	break;
+			case Event::OUT:	m_watchingEvents.events &= ~EPOLLOUT;	break;
+			case Event::RDHUP:	m_watchingEvents.events &= ~EPOLLRDHUP;	break;
+			case Event::PRI:	m_watchingEvents.events &= ~EPOLLPRI;	break;
+			case Event::ERR:	m_watchingEvents.events &= ~EPOLLERR;	break;
+			case Event::HUP:	m_watchingEvents.events &= ~EPOLLHUP;	break;
+		}
+	}
 	_poll->updateEvent(this);
 }
 
-void EpollEvent::deactiveEvents()
+void EpollEvent::disable()
 {
 	_poll->removeEvent(this);
 }

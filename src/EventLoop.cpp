@@ -5,6 +5,7 @@
 #include "EventLoop.h"
 #include "epoll/EpollEvent.h"
 #include "support/Log.h"
+#include "handlers/RunInLoopHandler.h"
 
 namespace netpp {
 EventLoop::EventLoop()
@@ -44,15 +45,15 @@ void EventLoop::run()
 	}
 }
 
-void EventLoop::addEventHandlerToLoop(std::shared_ptr<internal::epoll::EventHandler> handler)
+void EventLoop::addEventHandlerToLoop(Handler handler)
 {
+	std::lock_guard lck(m_handlersMutex);
 	m_handlers.insert(handler);
 }
 
-void EventLoop::removeEventHandlerFromLoop(std::shared_ptr<internal::epoll::EventHandler> handler)
+void EventLoop::removeEventHandlerFromLoop(Handler handler)
 {
-	// TODO: remove fd from epoll before erase
-	// FIXME: make this thread safe
+	std::lock_guard lck(m_handlersMutex);
 	m_handlers.erase(handler);
 }
 

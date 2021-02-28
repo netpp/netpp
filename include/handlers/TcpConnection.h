@@ -34,28 +34,28 @@ public:
 	 * 1.socket has pending read data
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 */
-	void handleRead() override;
+	void handleIn() override;
 
 	/**
 	 * @brief handle write events on connection, triggered when
 	 * 1.socket is ready to write
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 */
-	void handleWrite() override;
+	void handleOut() override;
 
 	/**
 	 * @brief handle error events on connection, triggered when
 	 * 1.
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 */
-	void handleError() override;
+	void handleErr() override;
 
 	/**
 	 * @brief handle error events on connection, triggered when
 	 * 1.side close this connection
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 */
-	void handleClose() override;
+	void handleRdhup() override;
 
 	/**
 	 * @brief After write some data to ByteArray, use this to send.

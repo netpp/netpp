@@ -14,7 +14,8 @@ class EventLoop;
 
 namespace netpp::internal::handlers {
 /**
- * @brief Handle run in loop problems
+ * @brief The functors that 'runs in loop' actually runs here,
+ * every EventLoop contains an instance of this
  * 
  */
 class RunInLoopHandler : public epoll::EventHandler, public std::enable_shared_from_this<RunInLoopHandler> {
@@ -28,10 +29,7 @@ public:
 	explicit RunInLoopHandler(EventLoop *loop);
 	~RunInLoopHandler();
 
-	void handleRead() override;
-	void handleWrite() override {};
-	void handleError() override {};
-	void handleClose() override {};
+	void handleIn() override;
 
 	/**
 	 * @brief Add functor to run, and wake up event loop
@@ -43,8 +41,8 @@ public:
 	static std::shared_ptr<RunInLoopHandler> makeRunInLoopHandler(EventLoop *loop);
 
 private:
-	int m_wakeUpFd[2];
-	std::atomic_flag m_waitingWakeUp;
+	// TODO: maybe this wake up fd can put in event loop, for other class to use
+	int m_wakeUpFd;
 	std::mutex m_functorMutex;
 	std::vector<std::function<void()>> m_pendingFuns;	// methods run in loop
 };

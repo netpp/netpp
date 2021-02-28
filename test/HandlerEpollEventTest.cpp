@@ -8,23 +8,23 @@ class Handler : public netpp::internal::epoll::EventHandler {
 	friend class EpollEventTest;
 public:
 	Handler()
-		: readTriggerCount{0}, writeTriggerCount{0}, errorTriggerCount{0}, disconnectTriggerCount{0}
+		// : readTriggerCount{0}, writeTriggerCount{0}, errorTriggerCount{0}, disconnectTriggerCount{0}
 	{}
 	~Handler() override = default;
 
-	void handleRead() noexcept override
-	{ ++readTriggerCount; }
-	void handleWrite() noexcept override
-	{ ++writeTriggerCount; }
-	void handleError() noexcept override
-	{ ++errorTriggerCount; }
-	void handleClose() noexcept override
-	{ ++disconnectTriggerCount; }
+	// void handleRead() noexcept override
+	// { ++readTriggerCount; }
+	// void handleWrite() noexcept override
+	// { ++writeTriggerCount; }
+	// void handleError() noexcept override
+	// { ++errorTriggerCount; }
+	// void handleClose() noexcept override
+	// { ++disconnectTriggerCount; }
 
-	int readTriggerCount;
-	int writeTriggerCount;
-	int errorTriggerCount;
-	int disconnectTriggerCount;
+	// int readTriggerCount;
+	// int writeTriggerCount;
+	// int errorTriggerCount;
+	// int disconnectTriggerCount;
 };
 
 class EpollEventTest : public testing::Test {

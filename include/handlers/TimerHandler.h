@@ -29,10 +29,7 @@ public:
 	 * 1.time fd timeout
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 */
-	void handleRead() override;
-	void handleWrite() override {}
-	void handleError() override {}
-	void handleClose() override {};
+	void handleIn() override;
 
 	/**
 	 * @brief Remove timer handler from event loop

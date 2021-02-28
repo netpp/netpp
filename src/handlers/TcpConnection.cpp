@@ -57,7 +57,7 @@ public:
 		if (conn)
 		{
 			LOG_INFO("half closed connection timeout, force close");
-			conn->handleClose();
+			conn->handleRdhup();
 		}
 	}
 
@@ -71,7 +71,7 @@ TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket)
 		m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
 {}
 
-void TcpConnection::handleRead()
+void TcpConnection::handleIn()
 {
 	try
 	{
@@ -93,14 +93,15 @@ void TcpConnection::handleRead()
 	}
 }
 
-void TcpConnection::handleWrite()
+void TcpConnection::handleOut()
 {
 	try
 	{
 		renewWheel();
-		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))	// if write all
+		// may not write all data
+		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))
 		{
-			m_epollEvent->setEnableWrite(false);
+			m_epollEvent->active(epoll::Event::OUT);
 			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
 			if (m_state == socket::TcpState::Closing)
@@ -120,18 +121,18 @@ void TcpConnection::handleWrite()
 	}
 }
 
-void TcpConnection::handleError()
+void TcpConnection::handleErr()
 {
 	LOG_ERROR("Socket {} error", m_socket->fd());
 	m_events.onError(error::SocketError::E_EPOLLERR);
 }
 
-void TcpConnection::handleClose()
+void TcpConnection::handleRdhup()
 {
 	LOG_TRACE("Socket {} disconnected", m_socket->fd());
 	// no need to remove wheels, they will self destructed after timeout
 	m_events.onDisconnect();
-	m_epollEvent->deactiveEvents();
+	m_epollEvent->disable();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
@@ -148,7 +149,7 @@ void TcpConnection::sendInLoop()
 		if (connection)
 		{
 			connection->m_isWaitWriting = true;
-			connection->m_epollEvent->setEnableWrite(true);
+			connection->m_epollEvent->active(epoll::Event::OUT);
 		}
 	});
 }
@@ -211,8 +212,8 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	connection->_loopThisHandlerLiveIn = loop;
 	// set up events
 	loop->addEventHandlerToLoop(connection);
-	eventPtr->setEnableWrite(false);
-	eventPtr->setEnableRead(true);
+	eventPtr->deactive(epoll::Event::OUT);
+	eventPtr->active({epoll::Event::IN, epoll::Event::ERR, epoll::Event::RDHUP});
 	// set up kick idle connection here
 	auto wheel = loop->getTimeWheel();
 	if (wheel)

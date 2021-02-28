@@ -28,46 +28,37 @@ public:
 	~Connector() override = default;
 
 	/**
-	 * @brief try to connect to peer, Connector will be removed from EventLoop after connect success
+	 * @brief Try to connect to peer, Connector will be removed from EventLoop after connect success
 	 * can be used out side EventLoop, thread safe
 	 */
 	void connect();
 
 	/**
-	 * @brief if connecting, stop retry to connect, if already connected, do nothing
+	 * @brief If connecting, stop retry to connect, if already connected, do nothing
 	 * can be used out side EventLoop, thread safe
 	 */
 	void stopConnect();
 
 	/**
-	 * @brief get the TcpConnection connected by Connector
+	 * @brief Get the TcpConnection connected by Connector
 	 */
 	std::weak_ptr<TcpConnection> getConnection() const { return _connection; }
 
 	/**
-	 * @brief is already connected
-	 * can be used out side EventLoop, thread safe
+	 * @brief Is already connected
+	 * Can be used out side EventLoop, thread safe
 	 */
 	bool connected() const { return m_connectionEstablished.load(std::memory_order_relaxed); }
-
-	void handleRead() override {};
 	
 	/**
-	 * @brief handle write events on connector socket, triggered when
-	 * 1.connect state changed
-	 * if connect failed in some situations, should start retry connect
-	 * @note handlers will run only in EventLoop, NOT thread safe
+	 * @brief Handle EPOLLOUT triggered when connect state changed,
+	 * if connect failed in some situations, should start retry connect.
+	 * @note Handlers will run only in EventLoop, NOT thread safe.
+	 * @note EPOLLIN should be triggered together with EPOLLOUT in connector
+	 * when connect state changed, but we there's no need to handle it again
 	 * 
 	 */
-	void handleWrite() override;
-
-	/**
-	 * @brief handle epoll error, this may not triggered
-	 * @note handlers will run only in EventLoop, NOT thread safe
-	 * 
-	 */
-	void handleError() override;
-	void handleClose() override {};
+	void handleOut() override;
 
 	/**
 	 * @brief create a new connector, thread safe

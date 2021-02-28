@@ -19,10 +19,12 @@ public:
 	explicit EventHandler() = default;
 	virtual ~EventHandler() = default;
 
-	virtual void handleRead() = 0;
-	virtual void handleWrite() = 0;
-	virtual void handleError() = 0;
-	virtual void handleClose() = 0;
+	virtual void handleIn() {}
+	virtual void handleOut() {}
+	virtual void handleErr() {}
+	virtual void handleRdhup() {}
+	virtual void handlePri() {}
+	virtual void handleHup() {}
 
 protected:
 	EventLoop *_loopThisHandlerLiveIn;

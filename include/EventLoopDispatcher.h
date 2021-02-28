@@ -48,7 +48,8 @@ public:
 
 private:
 	using EventLoopVector = std::vector<std::unique_ptr<EventLoop>>;
-	EventLoopVector::size_type m_dispatchIndex;
+	std::mutex m_indexMutex;
+	EventLoopVector::size_type m_dispatchIndex;	// guarded by m_indexMutex
 	EventLoopVector m_loops;
 	std::unique_ptr<support::ThreadPool> m_threadPool;
 };
