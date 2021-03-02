@@ -146,7 +146,7 @@ void ByteArrayWriterWithLock::adjustByteArray(ByteArray::LengthType size)
 
 ByteArray::LengthType ByteArrayWriterWithLock::availableBytes()
 {
-	// not use ByteArray::unusedBytes(), lock acquired here
+	// not use ByteArray::writeableBytes(), lock acquired here
 	return _buffer->m_availableSizeToWrite;
 }
 

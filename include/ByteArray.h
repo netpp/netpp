@@ -29,7 +29,7 @@ class ByteArrayWriterWithLock;
  * of node's buffer, WriteNode will to move to next node.
  * Before any data wrote, the writeable bytes will be checked, if the pending length
  * is not satisfied, the head movement or memory allocation will applied.
- * The 'head movement' target at move 'unused' nodes(as I said before, the movement 
+ * The 'head movement' target at move 'writeable' nodes(as I said before, the movement 
  * of ReadNode, lead nodes between head and ReadNode out of usage) to tail, avoid 
  * memory allocation.
  * If still not enough space for pending data after move, allocat nodes twice than 
@@ -101,8 +101,8 @@ public:
 	inline LengthType readableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
 
 	/** 
-	 * @brief The unused bytes in buffer.
-	 * The 'unused' means the length from WriteNode's end to last node's end.
+	 * @brief The writeable bytes in buffer.
+	 * The 'writeable' means the length from WriteNode's end to last node's end.
 	 * 
 	 * WriteNode
 	 *     |
@@ -114,9 +114,9 @@ public:
 	 * |  buffer  ||  buffer  |
 	 * +----------++----------+
 	 *    end|                |
-	 *       |-----unused-----|
+	 *       |----writeable---|
 	 */
-	inline LengthType unusedBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
+	inline LengthType writeableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
 
 private:
 	/**

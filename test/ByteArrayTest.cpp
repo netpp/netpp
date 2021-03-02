@@ -32,138 +32,138 @@ TEST_F(ByteArrayTest, WithinNodeReadWrite)
 	int writeBytes = 0;
 	int writeInTotal = 0;
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	byteArray.writeInt8(1);
 	writeBytes = sizeof(int8_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeBytes);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeBytes);
 	EXPECT_EQ(byteArray.retrieveInt8(), 1);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeInt16(2);
 	writeBytes = sizeof(int16_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveInt16(), 2);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeInt32(3);
 	writeBytes = sizeof(int32_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveInt32(), 3);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeInt64(4);
 	writeBytes = sizeof(int64_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveInt64(), 4);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeUInt8(5);
 	writeBytes = sizeof(uint8_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveUInt8(), 5);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeUInt16(6);
 	writeBytes = sizeof(uint16_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveUInt16(), 6);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeUInt32(7);
 	writeBytes = sizeof(uint32_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveUInt32(), 7);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeUInt64(8);
 	writeBytes = sizeof(uint64_t);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveUInt64(), 8);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeFloat(9.1);
 	writeBytes = sizeof(float);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_FLOAT_EQ(byteArray.retrieveFloat(), 9.1);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	byteArray.writeDouble(10.1);
 	writeBytes = sizeof(double);
 	writeInTotal += writeBytes;
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_FLOAT_EQ(byteArray.retrieveDouble(), 10.1);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	std::string testStr("11");
 	writeBytes = testStr.length() * sizeof(char);
 	writeInTotal += writeBytes;
 	byteArray.writeString(testStr);
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveString(testStr.length()), testStr);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 
 	writeBytes = sizeof(char) * 3;
 	writeInTotal += writeBytes;
 	byteArray.writeRaw("12", 3);
 	char buffer[3];
 	EXPECT_EQ(byteArray.readableBytes(), writeBytes);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 	EXPECT_EQ(byteArray.retrieveRaw(buffer, 3), 3);
 	EXPECT_STREQ(buffer, "12");
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - writeInTotal);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - writeInTotal);
 }
 
 TEST_F(ByteArrayTest, WithInNodeReadFromEmpty)
 {
 	netpp::ByteArray byteArray;
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	char raw[bufferNodeSize];
 	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize), 0);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	byteArray.retrieveString(bufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	byteArray.retrieveDouble();
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 }
 
 TEST_F(ByteArrayTest, CrossNodeMoveHead)
@@ -172,27 +172,27 @@ TEST_F(ByteArrayTest, CrossNodeMoveHead)
 	char raw[bufferNodeSize] = {'\0'};
 	byteArray.writeRaw(raw, bufferNodeSize);	// alloc new node
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize), bufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	byteArray.writeRaw(raw, bufferNodeSize);	// head node will move to tail
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize), bufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 
 	byteArray.writeInt8(1);
 	EXPECT_EQ(byteArray.readableBytes(), 1);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - 1);
 
 	EXPECT_EQ(byteArray.retrieveInt8(), 1);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - 1);
 }
 
 TEST_F(ByteArrayTest, CrossNodeReadWriteBigEntry)
@@ -201,17 +201,17 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteBigEntry)
 	char raw[bufferNodeSize * 10] = {'\0'};
 	byteArray.writeRaw(raw, bufferNodeSize * 10);	// 16 nodes, last 6 is usable
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize * 10);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 6);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize * 6);
 	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize * 10), bufferNodeSize * 10);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 6);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize * 6);
 
 	byteArray.writeRaw(raw, bufferNodeSize * 6);	// move head, 10 node is usable
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize * 6);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 10);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize * 10);
 	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize * 6), bufferNodeSize * 6);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize * 10);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize * 10);
 }
 
 TEST_F(ByteArrayTest, CrossNodeReadWriteInt8)
@@ -220,26 +220,26 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteInt8)
 	char raw[bufferNodeSize] = {'\0'};
 	byteArray.writeRaw(raw, bufferNodeSize - 1);	// write 1023 bytes
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize - 1);
-	EXPECT_EQ(byteArray.unusedBytes(), 1);
+	EXPECT_EQ(byteArray.writeableBytes(), 1);
 
 	byteArray.writeInt8(1);		// write 1 byte, new node alloc
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize);
 	byteArray.writeInt8(2);		// write 1 byte
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize + 1);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - 1);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize - 1), bufferNodeSize - 1);
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(int8_t) * 2);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - 1);
 
 	EXPECT_EQ(byteArray.retrieveInt8(), 1);
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(int8_t));
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - 1);
 
 	EXPECT_EQ(byteArray.retrieveInt8(), 2);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - 1);
 }
 
 TEST_F(ByteArrayTest, CrossNodeReadWriteInt64)
@@ -248,19 +248,19 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteInt64)
 	char raw[bufferNodeSize] = {'\0'};
 	byteArray.writeRaw(raw, bufferNodeSize - 1);	// write 1023 bytes
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize - 1);
-	EXPECT_EQ(byteArray.unusedBytes(), 1);
+	EXPECT_EQ(byteArray.writeableBytes(), 1);
 
 	byteArray.writeInt64(9223372000004775807);		// new node alloc
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - sizeof(int64_t) + 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - sizeof(int64_t) + 1);
 	EXPECT_EQ(byteArray.readableBytes(), bufferNodeSize + sizeof(int64_t) - 1);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, bufferNodeSize - 1), bufferNodeSize - 1);
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(int64_t));
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - sizeof(int64_t) + 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - sizeof(int64_t) + 1);
 
 	EXPECT_EQ(byteArray.retrieveInt64(), 9223372000004775807);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
-	EXPECT_EQ(byteArray.unusedBytes(), bufferNodeSize - sizeof(int64_t) + 1);
+	EXPECT_EQ(byteArray.writeableBytes(), bufferNodeSize - sizeof(int64_t) + 1);
 }
 
 TEST_F(ByteArrayTest, ContinuousReadWriteByteArray)
@@ -571,10 +571,14 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt8)
 	std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 	char raw[bufferNodeSize * 3] = {'\0'};
 	byteArray->writeRaw(raw, bufferNodeSize * 2 + 1);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 + 1);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2 - 1);
 	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 2 + 1), bufferNodeSize * 2 + 1);
+	EXPECT_EQ(byteArray->readableBytes(), 0);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2 - 1);
 	byteArray->writeRaw(raw, bufferNodeSize * 2 - 1);
 	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 - 1);
-	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize * 2);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2);
 	{
 		netpp::internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
 		ASSERT_EQ(writeVec.msghdr()->msg_iovlen, 2);
@@ -586,19 +590,19 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt8)
 		writeVec.adjustByteArray(2);
 	}
 	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 + sizeof(int8_t));
-	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize * 2 - sizeof(int8_t) * 2);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2 - sizeof(int8_t) * 2);
 
 	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 2 - 1), bufferNodeSize * 2 - 1);
 	EXPECT_EQ(byteArray->readableBytes(), sizeof(int8_t) * 2);
-	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize - sizeof(int8_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t));
 
 	EXPECT_EQ(byteArray->retrieveInt8(), 1);
 	EXPECT_EQ(byteArray->readableBytes(), sizeof(int8_t));
-	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize - sizeof(int8_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t));
 
 	EXPECT_EQ(byteArray->retrieveInt8(), 2);
 	EXPECT_EQ(byteArray->readableBytes(), 0);
-	EXPECT_EQ(byteArray->unusedBytes(), bufferNodeSize - sizeof(int8_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t));
 }
 
 TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt64)

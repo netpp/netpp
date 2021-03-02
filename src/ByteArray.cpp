@@ -93,7 +93,7 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		unlockedAllocIfNotEnough(length);
 	
 	std::size_t bytesToWrite = (availableSize < length) ? availableSize : length;
-	while (node && length > 0)
+	while (length > 0)
 	{
 		std::memcpy(node->buffer + node->end, data, bytesToWrite);
 		node->end += bytesToWrite;
@@ -102,7 +102,6 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		m_availableSizeToRead += bytesToWrite;
 		m_availableSizeToWrite -= bytesToWrite;
 		node = node->next;
-		// have next node
 		// has more to write
 		// this node is full
 		if (node && (length != 0 || node->end == BufferNode::BufferSize))
@@ -229,8 +228,8 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 		buffer += bytesToCopy;
 		length -= bytesToCopy;
 		m_availableSizeToRead -= bytesToCopy;
-		// is current node empty
-		bool readOut = (node->start == node->end);
+		// is current node empty(start pointer point reach max size)
+		bool readOut = (node->start == BufferNode::BufferSize);
 		// if read node moved, move write node also
 		bool mayBeMoveWriteNode = (node == _currentWriteBufferNode.lock());
 		node = node->next;
@@ -273,36 +272,29 @@ void ByteArray::unlockedAllocIfNotEnough(std::size_t size)
 
 void ByteArray::unlockedMoveBufferHead()
 {
-	std::shared_ptr<BufferNode> tail = _bufferTail.lock();
 	std::shared_ptr<BufferNode> readNode = _currentReadBufferNode.lock();
+	if (readNode == m_bufferHead)
+		return;
 	// move unused buffer node to end
-	if (m_bufferHead != readNode)
+	std::shared_ptr<BufferNode> node = m_bufferHead;
+	std::shared_ptr<BufferNode> lastNode = m_bufferHead;
+	while (node && node != readNode)
 	{
-		// the first node
 		m_availableSizeToWrite += BufferNode::BufferSize;
-		m_bufferHead->start = 0;
-		m_bufferHead->end = 0;
-		// _currentReadBufferNode will always behind head
-		std::shared_ptr<BufferNode> node = m_bufferHead;
-		while (node->next != readNode)
-		{
-			// TODO: adjust logic here
-			if (node != m_bufferHead)
-			{
-				m_availableSizeToWrite += BufferNode::BufferSize;
-				node->start = 0;
-				node->end = 0;
-			}
-			node = node->next;
-		}
-		// the last node
 		node->start = 0;
 		node->end = 0;
-		// 
+		lastNode = node;
+		node = node->next;
+	}
+	std::shared_ptr<BufferNode> tail = _bufferTail.lock();
+	// readNode might be head(only one node in list), node not point to next
+	// if node moved, node will never equal to readNode
+	if (lastNode != readNode)
+	{
 		tail->next = m_bufferHead;
 		m_bufferHead = readNode;
-		node->next = nullptr;
-		_bufferTail = node;
+		lastNode->next = nullptr;
+		_bufferTail = lastNode;
 	}
 }
 
