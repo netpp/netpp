@@ -25,19 +25,19 @@ void ByteArray::writeInt8(int8_t value)
 #pragma GCC diagnostic ignored "-Wconversion"
 void ByteArray::writeInt16(int16_t value)
 {
-	int16_t v = htobe16(value);
+	int16_t v = ::htobe16(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(int16_t));
 }
 
 void ByteArray::writeInt32(int32_t value)
 {
-	int32_t v = htobe32(value);
+	int32_t v = ::htobe32(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(int32_t));
 }
 
 void ByteArray::writeInt64(int64_t value)
 {
-	int64_t v = htobe64(value);
+	int64_t v = ::htobe64(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(int64_t));
 }
 #pragma GCC diagnostic pop
@@ -49,19 +49,19 @@ void ByteArray::writeUInt8(uint8_t value)
 
 void ByteArray::writeUInt16(uint16_t value)
 {
-	uint16_t v = htobe16(value);
+	uint16_t v = ::htobe16(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(uint16_t));
 }
 
 void ByteArray::writeUInt32(uint32_t value)
 {
-	uint32_t v = htobe32(value);
+	uint32_t v = ::htobe32(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(uint32_t));
 }
 
 void ByteArray::writeUInt64(uint64_t value)
 {
-	uint64_t v = htobe64(value);
+	uint64_t v = ::htobe64(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(uint64_t));
 }
 
@@ -128,7 +128,7 @@ int16_t ByteArray::retrieveInt16()
 	int16_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(int16_t)) != sizeof(int16_t))
 		return 0;
-	v = be16toh(v);
+	v = ::be16toh(v);
 	return v;
 }
 
@@ -137,7 +137,7 @@ int32_t ByteArray::retrieveInt32()
 	int32_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(int32_t)) != sizeof(int32_t))
 		return 0;
-	v = be32toh(v);
+	v = ::be32toh(v);
 	return v;
 }
 
@@ -146,7 +146,7 @@ int64_t ByteArray::retrieveInt64()
 	int64_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(int64_t)) != sizeof(int64_t))
 		return 0;
-	v = be64toh(v);
+	v = ::be64toh(v);
 	return v;
 }
 #pragma GCC diagnostic pop
@@ -164,7 +164,7 @@ uint16_t ByteArray::retrieveUInt16()
 	uint16_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(uint16_t)) != sizeof(uint16_t))
 		return 0;
-	v = be16toh(v);
+	v = ::be16toh(v);
 	return v;
 }
 
@@ -173,7 +173,7 @@ uint32_t ByteArray::retrieveUInt32()
 	uint32_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(uint32_t)) != sizeof(uint32_t))
 		return 0;
-	v = be32toh(v);
+	v = ::be32toh(v);
 	return v;
 }
 
@@ -182,7 +182,7 @@ uint64_t ByteArray::retrieveUInt64()
 	uint64_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(uint64_t)) != sizeof(uint64_t))
 		return 0;
-	v = be64toh(v);
+	v = ::be64toh(v);
 	return v;
 }
 

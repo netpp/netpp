@@ -28,6 +28,7 @@ public:
 	 * 2.insufficient memory to create the kernel object
 	 */
 	Epoll();
+	// TODO: define with Rule-of-Three(effective modern c++ item 17)
 	~Epoll();
 
 	/**

@@ -44,6 +44,7 @@ public:
 	ByteArray2Msghdr();
 	virtual ~ByteArray2Msghdr();
 
+	// TODO: return ::iovec *, provide more scalability
 	::msghdr *msghdr() { return msg; }
 	virtual void adjustByteArray(ByteArray::LengthType size) = 0;
 	virtual ByteArray::LengthType availableBytes() = 0;

@@ -55,7 +55,6 @@ class ByteArray {
 	friend class internal::socket::ByteArrayReaderWithLock;
 	friend class internal::socket::ByteArrayWriterWithLock;
 public:
-
 	using LengthType = std::uint64_t;
 	ByteArray();
 
@@ -152,6 +151,7 @@ private:
 	LengthType m_availableSizeToRead;
 	LengthType m_availableSizeToWrite;
 	unsigned m_nodeCount;						// node number
+	// TODO: use unique_ptr here
 	std::shared_ptr<BufferNode> m_bufferHead;	// the head of buffer node
 	std::weak_ptr<BufferNode> _bufferTail;		// the tail of buffer node
 	std::weak_ptr<BufferNode> _currentReadBufferNode;	// start read buffer from

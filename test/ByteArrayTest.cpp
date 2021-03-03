@@ -570,15 +570,9 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt8)
 {
 	std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
 	char raw[bufferNodeSize * 3] = {'\0'};
-	byteArray->writeRaw(raw, bufferNodeSize * 2 + 1);
-	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 + 1);
-	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2 - 1);
-	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 2 + 1), bufferNodeSize * 2 + 1);
-	EXPECT_EQ(byteArray->readableBytes(), 0);
-	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2 - 1);
-	byteArray->writeRaw(raw, bufferNodeSize * 2 - 1);
-	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 - 1);
-	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2);
+	byteArray->writeRaw(raw, bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize + 1);
 	{
 		netpp::internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
 		ASSERT_EQ(writeVec.msghdr()->msg_iovlen, 2);
@@ -589,10 +583,10 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt8)
 		writeToIOVec(writeVec.msghdr()->msg_iov, 1, &data, sizeof(int8_t));
 		writeVec.adjustByteArray(2);
 	}
-	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 2 + sizeof(int8_t));
-	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 2 - sizeof(int8_t) * 2);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 + sizeof(int8_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t));
 
-	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 2 - 1), bufferNodeSize * 2 - 1);
+	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 3 - 1), bufferNodeSize * 3 - 1);
 	EXPECT_EQ(byteArray->readableBytes(), sizeof(int8_t) * 2);
 	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t));
 
@@ -606,6 +600,31 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt8)
 }
 
 TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt64)
-{}
+{
+	std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
+	char raw[bufferNodeSize * 3] = {'\0'};
+	byteArray->writeRaw(raw, bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize + 1);
+	{
+		netpp::internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ASSERT_EQ(writeVec.msghdr()->msg_iovlen, 2);
+		EXPECT_NE(writeVec.msghdr()->msg_iov, nullptr);
+		int64_t data = htobe64(9223372000004775807);
+		writeToIOVec(writeVec.msghdr()->msg_iov, 0, &data, sizeof(int8_t));
+		writeToIOVec(writeVec.msghdr()->msg_iov, 1, reinterpret_cast<char *>(&data) + sizeof(int8_t), sizeof(int8_t) * 7);
+		writeVec.adjustByteArray(sizeof(int64_t));
+	}
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 + sizeof(int8_t) * 7);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t) * 7);
+
+	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 3 - 1), bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->readableBytes(), sizeof(int64_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t) * 7);
+
+	EXPECT_EQ(byteArray->retrieveInt64(), 9223372000004775807);
+	EXPECT_EQ(byteArray->readableBytes(), 0);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t) * 7);
+}
 
 #pragma GCC diagnostic pop

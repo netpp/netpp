@@ -101,10 +101,7 @@ ByteArrayWriterWithLock::ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buff
 		while (node)
 		{
 			vec[i].iov_base = node->buffer + node->end;
-			if (!node->next)
-				vec[i].iov_len = ByteArray::BufferNode::BufferSize - node->end;
-			else
-				vec[i].iov_len = ByteArray::BufferNode::BufferSize;
+			vec[i].iov_len = ByteArray::BufferNode::BufferSize - node->end;
 			node = node->next;
 			++i;
 		}
@@ -129,18 +126,18 @@ void ByteArrayWriterWithLock::adjustByteArray(ByteArray::LengthType size)
 	_buffer->m_availableSizeToRead += size;
 	while (size > 0)
 	{
-		if (size > ByteArray::BufferNode::BufferSize)
+		if (size >= (ByteArray::BufferNode::BufferSize - node->end))
 		{
+			size -= (ByteArray::BufferNode::BufferSize - node->end);
 			node->end = ByteArray::BufferNode::BufferSize;
-			size -= ByteArray::BufferNode::BufferSize;
+			_buffer->_currentWriteBufferNode = node;
+			node = node->next;
 		}
 		else
 		{
 			node->end += size;
 			size = 0;
 		}
-		_buffer->_currentWriteBufferNode = node;
-		node = node->next;
 	}
 }
 
