@@ -1,8 +1,7 @@
 # netpp
-An event based, modern c++ network library on Linux
-=======
 [中文](https://github.com/netpp/netpp/blob/master/README_CN.md) English  
-netpp is an event based, modern c++ network library, based on reactor pattern and epoll, supporting features:  
+## What is netpp
+netpp is an event based, modern c++ TCP network library, based on reactor pattern and epoll, on Linux only, supporting features:  
 * linked buffer node
 * none virtual user interface
 * one loop per thread
@@ -25,42 +24,31 @@ cd build
 cmake ../
 make netpp -j8
 ```
-## How to use netpp
-Examples are under /example directory.
-
-### Start
-Define bevent handler to implement business logic. 
+## Quick start
+Netpp provides non-virtual methods as events notify interface, define event handler and inject to netpp::Events. 
 ```c++
 class Echo {
 public:
     void onMessageReceived(std::shared_ptr<netpp::Channel> channel);
 };
+netpp::Events events(std::make_shared<Echo>());
 ```
-netpp provides following events:
-* onConnected
-* onMessageReceived
-* onWriteCompleted
-* onDisconnect
-* onError
-* onSignal
-
-Create an event loop dispatcher.
+An event loop dispatcher for create and dispatch event loop.
 ```c++
 netpp::core::EventLoopDispatcher dispatcher;
 ```
-Create a server, and assign event handler
+Create a server, and assign event handler and dispatcher
 ```c++
-netpp::Events<Echo> events(std::make_shared<Echo>());
 netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(events));
 server.listen();
 ```
-or a client using.
+or a client
 ```c++
 netpp::Events<Echo> events(std::make_shared<Echo>());
 netpp::TcpClient client(&dispatcher, netpp::Address("127.0.0.1", 12345), std::move(events));
 client.connect();
 ```
-Start an event loop.
+Start event loop.
 ```c++
 dispatcher.startLoop();
 ```

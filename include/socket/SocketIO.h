@@ -36,7 +36,7 @@ namespace SocketIO {
 	bool write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
 };
 
-// TODO: use just contain ::iovec in ByteArray for better performace??
+// TODO: just contain ::iovec in ByteArray for better performace??
 /**
  * @brief Convert ByteArray to ::msghdr, adapte to readv()/writev(), used by SocketIO
  */
