@@ -99,9 +99,11 @@ void TcpConnection::handleOut()
 	{
 		renewWheel();
 		// may not write all data
+		// TODO: handle read/write timeout
 		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))
 		{
 			m_epollEvent->deactive(epoll::Event::OUT);
+			// TODO: do we need high watermark to notify?
 			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
 			if (m_state == socket::TcpState::Closing)

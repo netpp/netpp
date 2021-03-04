@@ -15,6 +15,7 @@ namespace netpp::internal::epoll {
 
 class EpollEvent;
 
+// TODO: support et mode
 /**
  * @brief Wrapper of epoll
  * 

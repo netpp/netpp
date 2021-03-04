@@ -26,28 +26,32 @@ ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buff
 {
 	_buffer = buffer;
 	_buffer->m_bufferMutex.lock();
-	uint64_t bytes = buffer->m_availableSizeToRead;
-	::size_t vecCount = bytes / ByteArray::BufferNode::BufferSize;
-	if (bytes % ByteArray::BufferNode::BufferSize != 0)
-		++vecCount;
-	if (vecCount > 0)
+	unsigned nodes = buffer->m_nodeCount;
+	if (nodes > 0)
 	{
-		::iovec *vec = new ::iovec[vecCount];
+		::iovec *vec = new ::iovec[nodes];
 		std::shared_ptr<ByteArray::BufferNode> node = buffer->_currentReadBufferNode.lock();
 		std::shared_ptr<ByteArray::BufferNode> endNode = buffer->_currentWriteBufferNode.lock()->next;
-		int i = 0;
-		while (node != endNode)
+		std::size_t vecIndex = 0;
+		// has node
+		// current node is not empty
+		while (node != endNode && (node->end - node->start != 0))
 		{
-			vec[i].iov_base = node->buffer + node->start;
-			if (node->next == endNode)
-				vec[i].iov_len = node->end - node->start;
-			else
-				vec[i].iov_len = ByteArray::BufferNode::BufferSize;
+			vec[vecIndex].iov_base = node->buffer + node->start;
+			vec[vecIndex].iov_len = node->end - node->start;
 			node = node->next;
-			++i;
+			++vecIndex;
 		}
-		msg->msg_iov = vec;
-		msg->msg_iovlen = vecCount;
+		if (vecIndex != 0)
+		{
+			msg->msg_iov = vec;
+			msg->msg_iovlen = vecIndex;
+		}
+		else
+		{
+			// if not assign to msg->msg_iov, the destructor will not delete vec
+			delete [] vec;
+		}
 	}
 }
 
@@ -63,16 +67,18 @@ void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 	_buffer->m_availableSizeToRead -= size;
 	while (size > 0)
 	{
-		if (size > ByteArray::BufferNode::BufferSize)
+		if (size >= (ByteArray::BufferNode::BufferSize - node->start))
 		{
+			size -= (ByteArray::BufferNode::BufferSize - node->start);
 			node->start = ByteArray::BufferNode::BufferSize;
-			size -= ByteArray::BufferNode::BufferSize;
+			node->end = ByteArray::BufferNode::BufferSize;
 		}
 		else
 		{
 			node->start += size;
 			size = 0;
 		}
+		// no matter what, read node would pointe to current node
 		_buffer->_currentReadBufferNode = node;
 		node = node->next;
 	}

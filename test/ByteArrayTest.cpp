@@ -627,4 +627,66 @@ TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecWriteInt64)
 	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t) * 7);
 }
 
+TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecReadInt8)
+{
+	std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
+	char raw[bufferNodeSize * 3] = {'\0'};
+	byteArray->writeRaw(raw, bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize + 1);
+	byteArray->writeInt8(1);
+	byteArray->writeInt8(2);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 + sizeof(int8_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t));
+
+	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 3 - 1), bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->readableBytes(), sizeof(int8_t) * 2);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t));
+	{
+		netpp::internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ASSERT_EQ(readVec.msghdr()->msg_iovlen, 2);
+		EXPECT_NE(readVec.msghdr()->msg_iov, nullptr);
+		int8_t data;
+		void *base = readVec.msghdr()->msg_iov[0].iov_base;
+		std::memcpy(&data, base, sizeof(int8_t));
+		EXPECT_EQ(data, 1);
+		base = readVec.msghdr()->msg_iov[1].iov_base;
+		std::memcpy(&data, base, sizeof(int8_t));
+		EXPECT_EQ(data, 2);
+		readVec.adjustByteArray(sizeof(int8_t) * 2);
+	}
+	EXPECT_EQ(byteArray->readableBytes(), 0);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 4 - sizeof(int8_t));
+}
+
+TEST_F(ByteArrayTest, CrossNodeByteArrayAsIOVecReadInt64)
+{
+	std::shared_ptr<netpp::ByteArray> byteArray = std::make_shared<netpp::ByteArray>();
+	char raw[bufferNodeSize * 3] = {'\0'};
+	byteArray->writeRaw(raw, bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize + 1);
+	byteArray->writeInt64(9223372000004775807);
+	EXPECT_EQ(byteArray->readableBytes(), bufferNodeSize * 3 - 1 + sizeof(int64_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t) * 7);
+
+	EXPECT_EQ(byteArray->retrieveRaw(raw, bufferNodeSize * 3 - 1), bufferNodeSize * 3 - 1);
+	EXPECT_EQ(byteArray->readableBytes(), sizeof(int64_t));
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize - sizeof(int8_t) * 7);
+	{
+		netpp::internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ASSERT_EQ(readVec.msghdr()->msg_iovlen, 2);
+		EXPECT_NE(readVec.msghdr()->msg_iov, nullptr);
+		int64_t data;
+		void *base = readVec.msghdr()->msg_iov[0].iov_base;
+		std::memcpy(&data, base, sizeof(int8_t));
+		base = readVec.msghdr()->msg_iov[1].iov_base;
+		std::memcpy(reinterpret_cast<char *>(&data) + 1, base, sizeof(int8_t) * 7);
+		EXPECT_EQ(be64toh(data), 9223372000004775807);
+		readVec.adjustByteArray(sizeof(int64_t));
+	}
+	EXPECT_EQ(byteArray->readableBytes(), 0);
+	EXPECT_EQ(byteArray->writeableBytes(), bufferNodeSize * 4 - sizeof(int8_t) * 7);
+}
+
 #pragma GCC diagnostic pop
