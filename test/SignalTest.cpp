@@ -64,13 +64,8 @@ void killSelfWithSignalWatcher()
 class SignalDeathTest : public testing::Test {
 public:
 protected:
-	static void SetUpTestCase()
-	{
-	}
-
-	static void TearDownTestCase()
-	{
-	}
+	static void SetUpTestCase() {}
+	static void TearDownTestCase() {}
 
 	void SetUp() override {}
 	void TearDown() override {}
@@ -84,4 +79,46 @@ TEST_F(SignalDeathTest, NotHandleSignal)
 TEST_F(SignalDeathTest, HandleSignal)
 {
 	EXPECT_EXIT(killSelfWithSignalWatcher(), testing::KilledBySignal(SIGQUIT), "");
+}
+
+class SignalTest : public testing::Test {
+public:
+protected:
+	static void SetUpTestCase() {}
+	static void TearDownTestCase() {}
+
+	void SetUp() override {}
+	void TearDown() override {}
+};
+
+TEST_F(SignalTest, ConvertSignal)
+{
+	EXPECT_EQ(SIGHUP, netpp::signal::toLinuxSignal(netpp::signal::Signals::E_HUP));
+	EXPECT_EQ(SIGPWR, netpp::signal::toLinuxSignal(netpp::signal::Signals::E_PWR));
+	EXPECT_EQ(SIGSYS, netpp::signal::toLinuxSignal(netpp::signal::Signals::E_SYS));
+
+	EXPECT_EQ(netpp::signal::Signals::E_HUP, netpp::signal::toNetppSignal(SIGHUP));
+	EXPECT_EQ(netpp::signal::Signals::E_PWR, netpp::signal::toNetppSignal(SIGPWR));
+	EXPECT_EQ(netpp::signal::Signals::E_SYS, netpp::signal::toNetppSignal(SIGSYS));
+
+	EXPECT_NE(std::string(), netpp::signal::signalAsString(netpp::signal::Signals::E_HUP));
+	EXPECT_NE(std::string(), netpp::signal::signalAsString(netpp::signal::Signals::E_PWR));
+	EXPECT_NE(std::string(), netpp::signal::signalAsString(netpp::signal::Signals::E_SYS));
+	EXPECT_NE(std::string(), netpp::signal::signalAsString(SIGHUP));
+	EXPECT_NE(std::string(), netpp::signal::signalAsString(SIGPWR));
+	EXPECT_NE(std::string(), netpp::signal::signalAsString(SIGSYS));
+}
+
+TEST_F(SignalTest, SignalWatchStatus)
+{
+	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(netpp::signal::Signals::E_HUP));
+	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(netpp::signal::Signals::E_PWR));
+	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(netpp::signal::Signals::E_SYS));
+	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(SIGHUP));
+	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(SIGPWR));
+	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(SIGSYS));
+
+	// watch signal is not enabled
+	netpp::signal::SignalWatcher::watch(netpp::signal::Signals::E_PWR);
+	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(netpp::signal::Signals::E_PWR));
 }
