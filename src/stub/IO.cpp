@@ -32,6 +32,7 @@ int close(int fd) noexcept
 
 ::ssize_t write(int fd, const void *buf, ::size_t count) noexcept
 {
+restartWrite:
 	::ssize_t size = ::write(fd, buf, count);
 	if (size == -1)
 	{
@@ -45,7 +46,11 @@ int close(int fd) noexcept
 			case EDQUOT:
 			case EFAULT:
 			case EFBIG:
-			case EINTR:// will automatically restart
+				break;
+			case EINTR:
+				// interrupted before any data write
+				goto restartWrite;
+				break;
 			case EINVAL:
 			case EIO:
 			case ENOSPC:
@@ -59,6 +64,7 @@ int close(int fd) noexcept
 
 ::ssize_t read(int fd, void *buf, ::size_t count) noexcept
 {
+restartRead:
 	::ssize_t size = ::read(fd, buf, count);
 	if (size == -1)
 	{
@@ -68,7 +74,11 @@ int close(int fd) noexcept
 			case EAGAIN:
 			case EBADF:
 			case EFAULT:
-			case EINTR:// will automatically restart
+				break;
+			case EINTR:
+				// interrupted before any data read
+				goto restartRead;
+				break;
 			case EINVAL:
 			case EIO:
 			case EISDIR:
@@ -199,9 +209,7 @@ int eventfd_write(int fd, ::eventfd_t value)
 {
 	int ret = ::eventfd_write(fd, value);
 	if (ret == -1)
-	{
-		return -1;
-	}
+	{}
 	return ret;
 }
 }

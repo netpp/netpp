@@ -11,4 +11,4 @@ link_libraries(gtest gmock pthread netpp dl)
 add_executable(test
 main.cpp
 MockSysCallEnvironment.h MockSysCallEnvironment.cpp
-AddressTest.cpp ByteArrayTest.cpp ThreadPoolTest.cpp EpollEventTest.cpp SignalTest.cpp TimerTest.cpp StubTest.cpp)
+SocketAndAddressTest.cpp ByteArrayTest.cpp ThreadPoolTest.cpp EpollEventTest.cpp SignalTest.cpp TimerTest.cpp StubTest.cpp AcceptorTest.cpp)

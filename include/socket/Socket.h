@@ -20,19 +20,19 @@ namespace netpp::internal::socket {
 class Socket {
 public:
 	/**
-	 * @brief create a socket
+	 * @brief Create a socket
 	 * 
-	 * @param addr	address
+	 * @param addr	Address
 	 * @throw SocketException on (EACCES EAFNOSUPPORT)
 	 * @throw ResourceLimitException on (EMFILE ENFILE ENOBUFS ENOMEM)
 	 */
 	explicit Socket(const Address &addr);
 
 	/**
-	 * @brief create a Socket object on existent fd
+	 * @brief Create a Socket object on existent fd
 	 * 
-	 * @param fd	file descriptor
-	 * @param addr	address
+	 * @param fd	File descriptor
+	 * @param addr	Address
 	 * @throw SocketException on fd is -1
 	 */
 	Socket(int fd, const Address &addr);

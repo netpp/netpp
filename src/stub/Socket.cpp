@@ -73,12 +73,17 @@ int listen(int sockfd, int backlog)
 		LOG_WARN("listen failed due to {}", std::strerror(errno));
 		switch (errno)
 		{
-			case EADDRINUSE:
-				throw error::SocketException(errno);
-				break;
 			case EBADF:
+			case EDESTADDRREQ:
 			case ENOTSOCK:
 			case EOPNOTSUPP:
+			case EACCES:
+				throw error::SocketException(errno);
+				break;
+			case EINVAL:
+				break;
+			case ENOBUFS:
+				throw error::ResourceLimitException(errno);
 				break;
 		}
 	}
