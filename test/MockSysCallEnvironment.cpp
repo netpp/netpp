@@ -71,6 +71,12 @@ int SysCall::mock_shutdown(int sockfd, int how)
 int SysCall::mock_getsockopt(int sockfd, int level, int optname, void *optval, ::socklen_t *optlen)
 { return MockSysCallEnvironment::real_getsockopt(sockfd, level, optname, optval, optlen); }
 
+int SysCall::mock_timerfd_create(int clockid, int flags)
+{ return MockSysCallEnvironment::real_timerfd_create(clockid, flags); }
+
+int SysCall::mock_timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value)
+{ return MockSysCallEnvironment::real_timerfd_settime(fd, flags, new_value, old_value); }
+
 SysCall *MockSysCallEnvironment::defaultSysMock;
 SysCall *MockSysCallEnvironment::sysMock;
 
@@ -96,6 +102,9 @@ Accept4 MockSysCallEnvironment::real_accept4;
 Connect MockSysCallEnvironment::real_connect;
 Shutdown MockSysCallEnvironment::real_shutdown;
 GetSockOpt MockSysCallEnvironment::real_getsockopt;
+
+TimerfdCreate MockSysCallEnvironment::real_timerfd_create;
+TimerfdSettime MockSysCallEnvironment::real_timerfd_settime;
 
 void MockSysCallEnvironment::SetUp()
 {
@@ -125,6 +134,9 @@ void MockSysCallEnvironment::SetUp()
 	real_connect = reinterpret_cast<Connect>(::dlsym(RTLD_NEXT, "connect"));
 	real_shutdown = reinterpret_cast<Shutdown>(::dlsym(RTLD_NEXT, "shutdown"));
 	real_getsockopt = reinterpret_cast<GetSockOpt>(::dlsym(RTLD_NEXT, "getsockopt"));
+
+	real_timerfd_create = reinterpret_cast<TimerfdCreate>(::dlsym(RTLD_NEXT, "timerfd_create"));
+	real_timerfd_settime = reinterpret_cast<TimerfdSettime>(::dlsym(RTLD_NEXT, "timerfd_settime"));
 }
 
 void MockSysCallEnvironment::registerMock(SysCall *mock)
@@ -241,5 +253,15 @@ int shutdown(int sockfd, int how)
 int getsockopt(int sockfd, int level, int optname, void *optval, ::socklen_t *optlen)
 {
 	return MockSysCallEnvironment::sysMock->mock_getsockopt(sockfd, level, optname, optval, optlen);
+}
+
+int timerfd_create(int clockid, int flags)
+{
+	return MockSysCallEnvironment::sysMock->mock_timerfd_create(clockid, flags);
+}
+
+int timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value)
+{
+	return MockSysCallEnvironment::sysMock->mock_timerfd_settime(fd, flags, new_value, old_value);
 }
 }

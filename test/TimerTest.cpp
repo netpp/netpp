@@ -2,6 +2,15 @@
 #include "time/TimeWheel.h"
 #include "EventLoop.h"
 #include "support/ThreadPool.hpp"
+#include "MockSysCallEnvironment.h"
+#include <gmock/gmock.h>
+
+class MockTimer : public SysCall {
+public:
+	MOCK_METHOD(::ssize_t, mock_read, (int, void *, ::size_t), (override));
+	MOCK_METHOD(int, mock_timerfd_create, (int, int), (override));
+	MOCK_METHOD(int, mock_timerfd_settime, (int, int, const struct itimerspec *, struct itimerspec *), (override));
+};
 
 class TimerTest : public testing::Test {
 public:

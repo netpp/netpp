@@ -36,8 +36,10 @@ public:
 	virtual int mock_connect(int sockfd, const struct ::sockaddr *addr, ::socklen_t addrlen);
 	virtual int mock_shutdown(int sockfd, int how);
 	virtual int mock_getsockopt(int sockfd, int level, int optname, void *optval, ::socklen_t *optlen);
-};
 
+	virtual int mock_timerfd_create(int clockid, int flags);
+	virtual int mock_timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value);
+};
 
 using EpollCreate = int(*)(int);
 using EpollWait = int(*)(int, struct epoll_event *, int, int);
@@ -61,6 +63,9 @@ using Accept4 = int(*)(int, struct ::sockaddr *, ::socklen_t *, int);
 using Connect = int(*)(int, const struct ::sockaddr *, ::socklen_t);
 using Shutdown = int(*)(int, int);
 using GetSockOpt = int(*)(int, int, int, void *, ::socklen_t *);
+
+using TimerfdCreate = int(*)(int, int);
+using TimerfdSettime = int(*)(int, int, const struct itimerspec *, struct itimerspec *);
 
 class MockSysCallEnvironment : public testing::Environment {
 public:
@@ -100,6 +105,9 @@ public:
 	static Connect real_connect;
 	static Shutdown real_shutdown;
 	static GetSockOpt real_getsockopt;
+
+	static TimerfdCreate real_timerfd_create;
+	static TimerfdSettime real_timerfd_settime;
 };
 
 #endif
