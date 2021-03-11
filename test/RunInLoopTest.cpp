@@ -46,7 +46,7 @@ public:
 int RunInLoopTest::runInLoopCount = 0;
 void *RunInLoopTest::epollEventPtr = nullptr;
 
-MATCHER_P(GetEpollEvent, ev, "")
+MATCHER(GetRunInLoopEpollEvent, "")
 {
 	if (arg)
 	{
@@ -61,20 +61,32 @@ MATCHER_P(GetEpollEvent, ev, "")
 TEST_F(RunInLoopTest, CreateRunInLoopTest)
 {
 	EXPECT_CALL(mock, mock_eventfd).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetEpollEvent(0)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetRunInLoopEpollEvent()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 	netpp::EventLoop eventLoop;
-	// auto runInLoop = netpp::internal::handlers::RunInLoopHandler::makeRunInLoopHandler(&eventLoop);
+	ASSERT_NE(epollEventPtr, nullptr);
 
-	// runInLoop->addPendingFunction([]{});
-	EXPECT_CALL(mock, mock_eventfd_write)
+	// destruction
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, nullptr))
 		.Times(1);
+}
+
+TEST_F(RunInLoopTest, RunFunctorInLoopTest)
+{
+	EXPECT_CALL(mock, mock_eventfd).Times(1);
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetRunInLoopEpollEvent()))
+		.Times(1)
+		.WillOnce(testing::DoAll(testing::Return(0)));
+	netpp::EventLoop eventLoop;
+	
+	EXPECT_CALL(mock, mock_eventfd_write).Times(1);
 	eventLoop.runInLoop([&]{
 		++runInLoopCount;
 	});
 
 	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(epollEventPtr);
+	ASSERT_NE(epollEvent, nullptr);
 	netpp::internal::epoll::Epoll *epoll = eventLoop.getPoll();
 	::epoll_event ev[1];
 	ev[0].data.ptr = static_cast<void *>(epollEvent);
@@ -84,6 +96,21 @@ TEST_F(RunInLoopTest, CreateRunInLoopTest)
 
 	epollEvent->handleEvents();
 	EXPECT_EQ(runInLoopCount, 1);
+
+	EXPECT_CALL(mock, mock_eventfd_write).Times(1);
+	eventLoop.runInLoop([&]{
+		++runInLoopCount;
+	});
+	EXPECT_CALL(mock, mock_eventfd_write).Times(1);
+	eventLoop.runInLoop([&]{
+		++runInLoopCount;
+	});
+	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
+		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
+	epoll->poll();
+
+	epollEvent->handleEvents();
+	EXPECT_EQ(runInLoopCount, 3);
 
 	// destruction
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, nullptr))
