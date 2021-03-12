@@ -58,6 +58,32 @@ void Timer::setInterval(unsigned int msec)
 	m_timerSpec.it_interval.tv_nsec = (static_cast<long>(msec) % 1000) * 1000 * 1000;*/
 }
 
+void Timer::setSingleShot(bool singleShot)
+{
+	if (m_singleShot == singleShot)
+		return;
+	m_singleShot = singleShot;
+	if (running())
+	{
+		// if set to single shot, set interval to 0
+		if (m_singleShot)
+		{
+			m_timerSpec.it_interval.tv_sec = 0;
+			m_timerSpec.it_interval.tv_nsec = 0;
+			LOG_TRACE("Start timer to single shot");
+		}
+		else	// set interval
+		{
+			m_timerSpec.it_interval.tv_sec = m_interval / 1000;
+			m_timerSpec.it_interval.tv_nsec = (static_cast<long>(m_interval) % 1000) * 1000 * 1000;
+			LOG_TRACE("Start timer run repeatedly");
+		}
+		
+		// settime will always success
+		::timerfd_settime(m_timerFd, TFD_TIMER_ABSTIME, &m_timerSpec, nullptr);
+	}
+}
+
 void Timer::start()
 {
 	if (!m_running)
@@ -82,10 +108,10 @@ void Timer::stop()
 void Timer::setTimeAndRun()
 {
 	// get first trigger time
-	timespec now;
+	::timespec now;
 	// can ignore gettime failed
 	::clock_gettime(CLOCK_MONOTONIC, &now);
-	time_t sec = now.tv_sec + m_interval / 1000;
+	::time_t sec = now.tv_sec + m_interval / 1000;
 	long nsec = now.tv_nsec + (static_cast<long>(m_interval) % 1000) * 1000 * 1000;
 	if (nsec > 1000000000)
 	{

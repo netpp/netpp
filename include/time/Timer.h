@@ -37,8 +37,13 @@ public:
 	inline void setOnTimeout(std::function<void()> callback) { m_callback = callback; }
 	/// @brief Set timer trigger interval, by default, interval is 1000ms
 	void setInterval(unsigned msec);
-	/// @brief Set timer is single shot, by default, the value is true
-	void setSingleShot(bool singleShot) { m_singleShot = singleShot; }
+	
+	/**
+	 * @brief Set timer is single shot, by default, the value is true.
+	 * If the timer is running, the signle shot property will effect immediately.
+	 * 
+	 */
+	void setSingleShot(bool singleShot);
 
 	/// @brief Get timer interval
 	inline unsigned interval() const { return m_interval; }

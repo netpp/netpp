@@ -6,6 +6,7 @@
 #include "time/Timer.h"
 #include "support/Log.h"
 #include "EventLoop.h"
+#include "stub/IO.h"
 
 namespace netpp::internal::handlers {
 TimerHandler::TimerHandler(netpp::time::Timer *timer)
@@ -15,7 +16,7 @@ TimerHandler::TimerHandler(netpp::time::Timer *timer)
 void TimerHandler::handleIn()
 {
 	uint64_t tirggeredCount;
-	if (::read(_timer->fd(), &tirggeredCount, sizeof(uint64_t)) != -1)
+	if (stub::read(_timer->fd(), &tirggeredCount, sizeof(uint64_t)) != -1)
 		_timer->onTimeOut();
 }
 
