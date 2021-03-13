@@ -149,6 +149,8 @@ void MockSysCallEnvironment::restoreSysCall()
 	sysMock = defaultSysMock;
 }
 
+void *MockSysCallEnvironment::ptrFromEpollCtl = nullptr;
+
 extern "C" {
 int epoll_create(int size)
 {

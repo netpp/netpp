@@ -2,6 +2,7 @@
 #define MOCKENVIROMENT_H
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 extern "C" {
 #include <unistd.h>
 #include <sys/eventfd.h>
@@ -108,6 +109,20 @@ public:
 
 	static TimerfdCreate real_timerfd_create;
 	static TimerfdSettime real_timerfd_settime;
+
+	static void *ptrFromEpollCtl;
 };
+
+MATCHER(GetPtrFromEpollCtl, "")
+{
+	if (arg)
+	{
+		MockSysCallEnvironment::ptrFromEpollCtl = arg->data.ptr;
+		return arg->data.ptr;
+	}
+	return false;
+}
+
+MATCHER_P(EpollEventEq, event, "") { return arg->events == event; }
 
 #endif

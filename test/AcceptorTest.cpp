@@ -21,26 +21,24 @@ public:
 
 class AcceptorTest : public testing::Test {
 public:
-	static void *runInLoopEpollEventPtr;
 	static int onConnectedCount;
 protected:
 	void SetUp() override
 	{
 		MockSysCallEnvironment::registerMock(&mock);
-		runInLoopEpollEventPtr = nullptr;
+		MockSysCallEnvironment::ptrFromEpollCtl = nullptr;
 		onConnectedCount = 0;
 	}
 
 	void TearDown() override
 	{
 		MockSysCallEnvironment::restoreSysCall();
-		runInLoopEpollEventPtr = nullptr;
+		MockSysCallEnvironment::ptrFromEpollCtl = nullptr;
 		onConnectedCount = 0;
 	}
 
 	MockAcceptor mock;
 };
-void *AcceptorTest::runInLoopEpollEventPtr;
 int AcceptorTest::onConnectedCount;
 
 class EmptyHandler {
@@ -82,27 +80,17 @@ TEST_F(AcceptorTest, CreateTest)
 	EXPECT_EQ(acceptor.get(), nullptr);
 }
 
-MATCHER(GetRunInLoop, "")
-{
-	if (arg)
-	{
-		AcceptorTest::runInLoopEpollEventPtr = arg->data.ptr;
-		return arg->data.ptr;
-	}
-	return false;
-}
-
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 TEST_F(AcceptorTest, ListenTest)
 {
 	// EXPECT_CALL(mock, mock_eventfd).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetRunInLoop()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 		
 	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(runInLoopEpollEventPtr);
+	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
 	ASSERT_NE(epollEvent, nullptr);
 	::epoll_event ev[1];
 	ev[0].data.ptr = static_cast<void *>(epollEvent);
@@ -131,12 +119,12 @@ TEST_F(AcceptorTest, ListenTest)
 TEST_F(AcceptorTest, StopListenTest)
 {
 	// EXPECT_CALL(mock, mock_eventfd).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetRunInLoop()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
-		
+	
 	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(runInLoopEpollEventPtr);
+	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
 	ASSERT_NE(epollEvent, nullptr);
 	::epoll_event ev[1];
 	ev[0].data.ptr = static_cast<void *>(epollEvent);

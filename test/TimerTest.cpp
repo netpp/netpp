@@ -20,12 +20,16 @@ class TimerTest : public testing::Test {
 public:
 	static int timerTriggerCount;
 	static int wheelTriggerCount;
-	static void *epollEventPtr;
 protected:
-	void SetUp() override { timerTriggerCount = 0; }
+	void SetUp() override
+	{
+		timerTriggerCount = 0;
+		MockSysCallEnvironment::ptrFromEpollCtl = nullptr;
+	}
 	void TearDown() override
 	{
 		wheelTriggerCount = 0;
+		MockSysCallEnvironment::ptrFromEpollCtl = nullptr;
 		MockSysCallEnvironment::restoreSysCall();
 	}
 
@@ -34,17 +38,6 @@ protected:
 
 int TimerTest::timerTriggerCount = 0;
 int TimerTest::wheelTriggerCount = 0;
-void *TimerTest::epollEventPtr = nullptr;
-
-MATCHER(GetTimerEpollEvent, "")
-{
-	if (arg)
-	{
-		TimerTest::epollEventPtr = arg->data.ptr;
-		return arg->data.ptr;
-	}
-	return false;
-}
 
 /**
  * @brief ::itimerspec in repeatedly mode,
@@ -55,20 +48,20 @@ MATCHER_P(RepeatedlyTimerEQ, msec,
 	std::string("equal to " + std::to_string(msec / 1000) + ":" + std::to_string(msec % 1000)))
 {
 	bool secInRange;
-	bool msecInRange;
+	// bool msecInRange;
 	if (msec == 0)
 	{
 		secInRange = (arg->it_value.tv_sec == 0);
-		msecInRange = (arg->it_value.tv_nsec == 0);
+		// msecInRange = (arg->it_value.tv_nsec == 0);
 	}
 	else
 	{
 		::timespec now;
 		::clock_gettime(CLOCK_MONOTONIC, &now);
 		::time_t sec = now.tv_sec + msec / 1000;
-		long nsec = now.tv_nsec + (static_cast<long>(msec) % 1000) * 1000 * 1000;
+		// long nsec = now.tv_nsec + (static_cast<long>(msec) % 1000) * 1000 * 1000;
 		secInRange = ((sec - arg->it_value.tv_sec) < 1000);
-		msecInRange = ((nsec - arg->it_value.tv_nsec) < 1000000);
+		// msecInRange = ((nsec - arg->it_value.tv_nsec) < 1000000);
 	}
 	bool secEq;
 	bool msecEq;
@@ -82,7 +75,7 @@ MATCHER_P(RepeatedlyTimerEQ, msec,
 		secEq = (arg->it_interval.tv_sec == msec / 1000);
 		msecEq = (arg->it_interval.tv_nsec / 1000000 == msec % 1000);
 	}
-	return secInRange && msecInRange && secEq && msecEq;
+	return secInRange && secEq && msecEq;
 }
 
 /**
@@ -93,24 +86,24 @@ MATCHER_P(RepeatedlyTimerEQ, msec,
 MATCHER_P(SingleShotTimerEQ, msec, "")
 {
 	bool secInRange;
-	bool msecInRange;
+	// bool msecInRange;
 	if (msec == 0)
 	{
 		secInRange = (arg->it_value.tv_sec == 0);
-		msecInRange = (arg->it_value.tv_nsec == 0);
+		// msecInRange = (arg->it_value.tv_nsec == 0);
 	}
 	else
 	{
 		::timespec now;
 		::clock_gettime(CLOCK_MONOTONIC, &now);
 		::time_t sec = now.tv_sec + msec / 1000;
-		long nsec = now.tv_nsec + (static_cast<long>(msec) % 1000) * 1000 * 1000;
+		// long nsec = now.tv_nsec + (static_cast<long>(msec) % 1000) * 1000 * 1000;
 		secInRange = ((sec - arg->it_value.tv_sec) < 1000);
-		msecInRange = ((nsec - arg->it_value.tv_nsec) < 1000000);
+		// msecInRange = ((nsec - arg->it_value.tv_nsec) < 1000000);
 	}
 	bool secEq = (arg->it_interval.tv_sec == 0);
 	bool msecEq = (arg->it_interval.tv_nsec == 0);
-	return secInRange && msecInRange && secEq && msecEq;
+	return secInRange && secEq && msecEq;
 }
 
 TEST_F(TimerTest, SingleShotTimerTest)
@@ -120,7 +113,7 @@ TEST_F(TimerTest, SingleShotTimerTest)
 	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetTimerEpollEvent()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
@@ -163,7 +156,7 @@ TEST_F(TimerTest, RepeatedlyTimerTest)
 	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetTimerEpollEvent()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
@@ -207,7 +200,7 @@ TEST_F(TimerTest, SetSingleShotWhileRunningTest)
 	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetTimerEpollEvent()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
@@ -244,13 +237,13 @@ TEST_F(TimerTest, TimerTriggerTest)
 	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetTimerEpollEvent()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
 	timer->setOnTimeout([&]{ ++timerTriggerCount; });
 
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(epollEventPtr);
+	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
 	ASSERT_NE(epollEvent, nullptr);
 	netpp::internal::epoll::Epoll *epoll = eventLoop.getPoll();
 	::epoll_event ev[1];

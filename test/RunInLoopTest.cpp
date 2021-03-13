@@ -28,44 +28,33 @@ protected:
 	void SetUp() override
 	{
 		runInLoopCount = 0;
+		MockSysCallEnvironment::ptrFromEpollCtl = nullptr;
 		MockSysCallEnvironment::registerMock(&mock);
 	}
 
 	void TearDown() override
 	{
 		runInLoopCount = 0;
-		epollEventPtr = nullptr;
+		MockSysCallEnvironment::ptrFromEpollCtl = nullptr;
 		MockSysCallEnvironment::restoreSysCall();
 	}
 
 	RunInLoopMock mock;
 public:
 	static int runInLoopCount;
-	static void *epollEventPtr;
 };
 int RunInLoopTest::runInLoopCount = 0;
-void *RunInLoopTest::epollEventPtr = nullptr;
-
-MATCHER(GetRunInLoopEpollEvent, "")
-{
-	if (arg)
-	{
-		RunInLoopTest::epollEventPtr = arg->data.ptr;
-		return arg->data.ptr;
-	}
-	return false;
-}
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 TEST_F(RunInLoopTest, CreateRunInLoopTest)
 {
 	EXPECT_CALL(mock, mock_eventfd).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetRunInLoopEpollEvent()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 	netpp::EventLoop eventLoop;
-	ASSERT_NE(epollEventPtr, nullptr);
+	ASSERT_NE(MockSysCallEnvironment::ptrFromEpollCtl, nullptr);
 
 	// destruction
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, nullptr))
@@ -75,7 +64,7 @@ TEST_F(RunInLoopTest, CreateRunInLoopTest)
 TEST_F(RunInLoopTest, RunFunctorInLoopTest)
 {
 	EXPECT_CALL(mock, mock_eventfd).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetRunInLoopEpollEvent()))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
 	netpp::EventLoop eventLoop;
@@ -85,7 +74,7 @@ TEST_F(RunInLoopTest, RunFunctorInLoopTest)
 		++runInLoopCount;
 	});
 
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(epollEventPtr);
+	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
 	ASSERT_NE(epollEvent, nullptr);
 	netpp::internal::epoll::Epoll *epoll = eventLoop.getPoll();
 	::epoll_event ev[1];

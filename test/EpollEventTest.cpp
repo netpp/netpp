@@ -33,8 +33,6 @@ public:
 	MOCK_METHOD(int, mock_close, (int), (override));
 };
 
-MATCHER_P(EpollEventEq, event, "") { return arg->events == event; }
-
 class EpollEventTest : public testing::Test {
 protected:
 	void SetUp() override
