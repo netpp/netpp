@@ -49,7 +49,7 @@ SignalWatcher SignalWatcher::restore(Signals signal)
 	if (signalFd != -1)
 	{
 		std::unique_lock lck(m_watchSignalMutex);
-		::sigaddset(m_watchingSignals, toLinuxSignal(signal));
+		::sigdelset(m_watchingSignals, toLinuxSignal(signal));
 		::signalfd(signalFd, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
 		m_waitWatchSignalChange.notify_one();
 	}
@@ -88,30 +88,30 @@ void SignalWatcher::enableWatchSignal()
 			m_watchingSignals = new ::sigset_t;
 			::sigemptyset(m_watchingSignals);
 		}
-
-		// enable netpp watch signal will create a new thread, who will block
-		// watching signals only, other signals out side the block signal set
-		// will be handled by default.
-		m_unHandledSignalThread = std::thread([]{
-			while(true)
-			{
-				std::unique_lock lck(m_watchSignalMutex);
-				::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
-				m_waitWatchSignalChange.wait(lck);
-				LOG_DEBUG("signal set changed, reset block");
-			}
-		});
-		m_unHandledSignalThread.detach();
-
 		// block all signals at very beginning, all thread will inherits this mask
 		// no signal will send to threads created later
 		::sigset_t blockThreadSignals;
 		::sigfillset(&blockThreadSignals);
 		::pthread_sigmask(SIG_SETMASK, &blockThreadSignals, nullptr);
 
-		// signal fd has an empty signal set by default
-		::sigemptyset(&blockThreadSignals);
-		SignalWatcher::signalFd = ::signalfd(-1, &blockThreadSignals, SFD_NONBLOCK | SFD_CLOEXEC);
+		SignalWatcher::signalFd = ::signalfd(-1, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
+
+		// enable netpp watch signal will create a new thread, who will block
+		// watching signals only, other signals out side the block signal set
+		// will be handled by default.
+		if (SignalWatcher::signalFd != -1)
+		{
+			m_unHandledSignalThread = std::thread([]{
+				while(true)
+				{
+					std::unique_lock lck(m_watchSignalMutex);
+					::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
+					m_waitWatchSignalChange.wait(lck);
+					LOG_DEBUG("signal set changed, reset block");
+				}
+			});
+			m_unHandledSignalThread.detach();
+		}
 	});
 }
 }

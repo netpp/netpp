@@ -222,7 +222,6 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	connection->_loopThisHandlerLiveIn = loop;
 	// set up events
 	loop->addEventHandlerToLoop(connection);
-	eventPtr->deactive(epoll::Event::OUT);
 	eventPtr->active({epoll::Event::IN, epoll::Event::ERR, epoll::Event::RDHUP});
 	// set up kick idle connection here
 	auto wheel = loop->getTimeWheel();

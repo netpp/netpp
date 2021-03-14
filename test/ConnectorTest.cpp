@@ -6,6 +6,8 @@
 #include "Address.h"
 #include "EventLoop.h"
 
+ACTION_P(SetArg3ToErrno, value) { *static_cast<int *>(arg3) = value; }
+
 class MockConnector : public SysCall {
 public:
 	MOCK_METHOD(int, mock_epoll_wait, (int, struct epoll_event *, int, int), (override));
@@ -157,7 +159,11 @@ TEST_F(ConnectorTest, StopConnectTest)
 
 	EXPECT_CALL(mock, mock_getsockopt)
 		.WillOnce(testing::DoAll(SetArg3ToErrno(0), testing::Return(0)));
+	EXPECT_CALL(mock, mock_epoll_ctl)
+		.Times(1);
 	connector->handleOut();
+	EXPECT_CALL(mock, mock_eventfd_write)
+		.Times(1);
 	connector->stopConnect();	// connected, do nothing
 	EXPECT_CALL(mock, mock_epoll_wait)
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
@@ -171,8 +177,6 @@ TEST_F(ConnectorTest, StopConnectTest)
 }
 
 #pragma GCC diagnostic pop
-
-ACTION_P(SetArg3ToErrno, value) { *static_cast<int *>(arg3) = value; }
 
 TEST_F(ConnectorTest, ConnectTest)
 {

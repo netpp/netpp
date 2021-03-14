@@ -77,6 +77,27 @@ int SysCall::mock_timerfd_create(int clockid, int flags)
 int SysCall::mock_timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value)
 { return MockSysCallEnvironment::real_timerfd_settime(fd, flags, new_value, old_value); }
 
+int SysCall::mock_sigaddset(sigset_t *set, int signum)
+{ return MockSysCallEnvironment::real_sigaddset(set, signum); }
+
+int SysCall::mock_signalfd(int fd, const sigset_t *mask, int flags)
+{ return MockSysCallEnvironment::real_signalfd(fd, mask, flags); }
+
+int SysCall::mock_sigdelset(sigset_t *set, int signum)
+{ return MockSysCallEnvironment::real_sigdelset(set, signum); }
+
+int SysCall::mock_sigismember(const sigset_t *set, int signum)
+{ return MockSysCallEnvironment::real_sigismember(set, signum); }
+
+int SysCall::mock_sigemptyset(sigset_t *set)
+{ return MockSysCallEnvironment::real_sigemptyset(set); }
+
+int SysCall::mock_sigfillset(sigset_t *set)
+{ return MockSysCallEnvironment::real_sigfillset(set); }
+
+int SysCall::mock_pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset)
+{ return MockSysCallEnvironment::real_pthread_sigmask(how, set, oldset); }
+
 SysCall *MockSysCallEnvironment::defaultSysMock;
 SysCall *MockSysCallEnvironment::sysMock;
 
@@ -105,6 +126,14 @@ GetSockOpt MockSysCallEnvironment::real_getsockopt;
 
 TimerfdCreate MockSysCallEnvironment::real_timerfd_create;
 TimerfdSettime MockSysCallEnvironment::real_timerfd_settime;
+
+SigAddSet MockSysCallEnvironment::real_sigaddset;
+SignalFd MockSysCallEnvironment::real_signalfd;
+SigDelSet MockSysCallEnvironment::real_sigdelset;
+SigIsMember MockSysCallEnvironment::real_sigismember;
+SigEmptySet MockSysCallEnvironment::real_sigemptyset;
+SigFillSet MockSysCallEnvironment::real_sigfillset;
+PthreadSigMask MockSysCallEnvironment::real_pthread_sigmask;
 
 void MockSysCallEnvironment::SetUp()
 {
@@ -137,6 +166,14 @@ void MockSysCallEnvironment::SetUp()
 
 	real_timerfd_create = reinterpret_cast<TimerfdCreate>(::dlsym(RTLD_NEXT, "timerfd_create"));
 	real_timerfd_settime = reinterpret_cast<TimerfdSettime>(::dlsym(RTLD_NEXT, "timerfd_settime"));
+
+	real_sigaddset = reinterpret_cast<SigAddSet>(::dlsym(RTLD_NEXT, "sigaddset"));
+	real_signalfd = reinterpret_cast<SignalFd>(::dlsym(RTLD_NEXT, "signalfd"));
+	real_sigdelset = reinterpret_cast<SigDelSet>(::dlsym(RTLD_NEXT, "sigdelset"));
+	real_sigismember = reinterpret_cast<SigIsMember>(::dlsym(RTLD_NEXT, "sigismember"));
+	real_sigemptyset = reinterpret_cast<SigEmptySet>(::dlsym(RTLD_NEXT, "sigemptyset"));
+	real_sigfillset = reinterpret_cast<SigFillSet>(::dlsym(RTLD_NEXT, "sigfillset"));
+	real_pthread_sigmask = reinterpret_cast<PthreadSigMask>(::dlsym(RTLD_NEXT, "pthread_sigmask"));
 }
 
 void MockSysCallEnvironment::registerMock(SysCall *mock)
@@ -265,5 +302,40 @@ int timerfd_create(int clockid, int flags)
 int timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value)
 {
 	return MockSysCallEnvironment::sysMock->mock_timerfd_settime(fd, flags, new_value, old_value);
+}
+
+int signalfd(int fd, const sigset_t *mask, int flags)
+{
+	return MockSysCallEnvironment::sysMock->mock_signalfd(fd, mask, flags);
+}
+
+int pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset)
+{
+	return MockSysCallEnvironment::sysMock->mock_pthread_sigmask(how, set, oldset);
+}
+
+int sigemptyset(sigset_t *set)
+{
+	return MockSysCallEnvironment::sysMock->mock_sigemptyset(set);
+}
+
+int sigfillset(sigset_t *set)
+{
+	return MockSysCallEnvironment::sysMock->mock_sigfillset(set);
+}
+
+int sigaddset(sigset_t *set, int signum)
+{
+	return MockSysCallEnvironment::sysMock->mock_sigaddset(set, signum);
+}
+
+int sigdelset(sigset_t *set, int signum)
+{
+	return MockSysCallEnvironment::sysMock->mock_sigdelset(set, signum);
+}
+
+int sigismember(const sigset_t *set, int signum)
+{
+	return MockSysCallEnvironment::sysMock->mock_sigismember(set, signum);
 }
 }

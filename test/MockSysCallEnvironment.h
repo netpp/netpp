@@ -40,6 +40,14 @@ public:
 
 	virtual int mock_timerfd_create(int clockid, int flags);
 	virtual int mock_timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value);
+
+	virtual int mock_sigaddset(sigset_t *set, int signum);
+	virtual int mock_signalfd(int fd, const sigset_t *mask, int flags);
+	virtual int mock_sigdelset(sigset_t *set, int signum);
+	virtual int mock_sigismember(const sigset_t *set, int signum);
+	virtual int mock_sigemptyset(sigset_t *set);
+	virtual int mock_sigfillset(sigset_t *set);
+	virtual int mock_pthread_sigmask(int how, const sigset_t *set, sigset_t *oldset);
 };
 
 using EpollCreate = int(*)(int);
@@ -67,6 +75,14 @@ using GetSockOpt = int(*)(int, int, int, void *, ::socklen_t *);
 
 using TimerfdCreate = int(*)(int, int);
 using TimerfdSettime = int(*)(int, int, const struct itimerspec *, struct itimerspec *);
+
+using SigAddSet = int(*)(sigset_t *, int);
+using SignalFd = int(*)(int, const sigset_t *, int);
+using SigDelSet = int(*)(sigset_t *, int);
+using SigIsMember = int(*)(const sigset_t *, int);
+using SigEmptySet = int(*)(sigset_t *);
+using SigFillSet = int(*)(sigset_t *);
+using PthreadSigMask = int(*)(int, const sigset_t *, sigset_t *);
 
 class MockSysCallEnvironment : public testing::Environment {
 public:
@@ -110,6 +126,14 @@ public:
 	static TimerfdCreate real_timerfd_create;
 	static TimerfdSettime real_timerfd_settime;
 
+	static SigAddSet real_sigaddset;
+	static SignalFd real_signalfd;
+	static SigDelSet real_sigdelset;
+	static SigIsMember real_sigismember;
+	static SigEmptySet real_sigemptyset;
+	static SigFillSet real_sigfillset;
+	static PthreadSigMask real_pthread_sigmask;
+	
 	static void *ptrFromEpollCtl;
 };
 
@@ -123,6 +147,11 @@ MATCHER(GetPtrFromEpollCtl, "")
 	return false;
 }
 
-MATCHER_P(EpollEventEq, event, "") { return arg->events == event; }
+MATCHER_P(EpollEventEq, event, "")
+{
+	if (arg)
+		return arg->events == event;
+	return true;
+}
 
 #endif
