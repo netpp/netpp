@@ -6,7 +6,6 @@
 #define NETPP_EVENTLOOP_H
 
 #include "epoll/Epoll.h"
-#include "time/TimeWheel.h"
 #include <unordered_set>
 #include <functional>
 #include <mutex>
@@ -16,6 +15,9 @@ namespace netpp {
 namespace internal {
 namespace epoll {
 class EventHandler;
+}
+namespace time {
+class TimeWheel;
 }
 namespace handlers {
 class RunInLoopHandler;
@@ -40,7 +42,7 @@ public:
 	 * @param bucketCount	Contains n buckets
 	 */
 	EventLoop(unsigned tickInterval, unsigned bucketCount);
-	~EventLoop() = default;
+	~EventLoop();
 
 	/**
 	 * @brief Start run never ending event loop, however, the loop 

@@ -4,6 +4,8 @@
 #include "MockSysCallEnvironment.h"
 #include <gmock/gmock.h>
 #include "error/Exception.h"
+#include "Address.h"
+#include "EventLoop.h"
 
 class MockAcceptor : public SysCall {
 public:

@@ -16,7 +16,7 @@ namespace netpp::internal::epoll {
 // TODO: let user have the ability to define thier own handler
 class EventHandler {
 public:
-	explicit EventHandler() = default;
+	EventHandler() = default;
 	virtual ~EventHandler() = default;
 
 	virtual void handleIn() {}

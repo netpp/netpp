@@ -1,7 +1,7 @@
 #ifndef NETPP_SIGNAL_HANDLER_H
 #define NETPP_SIGNAL_HANDLER_H
 
-#include "../epoll/EventHandler.h"
+#include "epoll/EventHandler.h"
 #include "Events.h"
 
 namespace netpp {

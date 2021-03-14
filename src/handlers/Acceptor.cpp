@@ -4,6 +4,10 @@
 #include "EventLoopDispatcher.h"
 #include "error/Exception.h"
 #include "error/SocketError.h"
+#include "Address.h"
+#include "socket/Socket.h"
+#include "socket/SocketEnums.h"
+#include "EventLoop.h"
 
 using std::make_unique;
 using std::make_shared;
@@ -12,6 +16,8 @@ namespace netpp::internal::handlers {
 Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
 		: _dispatcher{dispatcher}, m_socket{std::move(socket)}
 {}
+
+Acceptor::~Acceptor() = default;
 
 void Acceptor::listen()
 {

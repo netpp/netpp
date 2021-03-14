@@ -7,6 +7,8 @@
 #include "error/Exception.h"
 #include "error/SocketError.h"
 #include "time/TimeWheel.h"
+#include "ByteArray.h"
+#include "socket/Socket.h"
 
 using std::make_unique;
 using std::make_shared;

@@ -3,14 +3,14 @@
 
 #include <memory>
 #include "epoll/EventHandler.h"
-#include "socket/Socket.h"
-#include "ByteArray.h"
 #include "Events.h"
 
 namespace netpp {
 class EventLoop;
+class ByteArray;
 namespace internal::socket {
 enum class TcpState;
+class Socket;
 }
 namespace internal::time {
 class TimeWheelEntry;

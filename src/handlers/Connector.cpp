@@ -5,6 +5,10 @@
 #include "EventLoopDispatcher.h"
 #include "error/Exception.h"
 #include "error/SocketError.h"
+#include "Address.h"
+#include "socket/Socket.h"
+#include "time/Timer.h"
+#include "socket/SocketEnums.h"
 
 using std::make_unique;
 using std::make_shared;
@@ -13,6 +17,8 @@ namespace netpp::internal::handlers {
 Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
 		: _dispatcher(dispatcher), m_socket{std::move(socket)}, m_connectionEstablished{false}
 {}
+
+Connector::~Connector() = default;
 
 void Connector::connect()
 {

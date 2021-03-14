@@ -5,6 +5,8 @@
 #include "EventLoopDispatcher.h"
 #include "support/ThreadPool.hpp"
 #include "support/Log.h"
+#include "support/ThreadPool.hpp"
+#include "EventLoop.h"
 
 namespace netpp {
 EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount)
@@ -32,6 +34,8 @@ EventLoopDispatcher::EventLoopDispatcher(unsigned loopsCount, unsigned timeWheel
 	for (unsigned i = 0; i < loopsCount; ++i)
 		m_loops.emplace_back(std::make_unique<EventLoop>(timeWheelRotateInterval, timeWheelBucketCount));
 }
+
+EventLoopDispatcher::~EventLoopDispatcher() = default;
 
 EventLoop *EventLoopDispatcher::dispatchEventLoop()
 {

@@ -5,9 +5,16 @@
 #ifndef NETPP_EVENTLOOPDISPATCHER_H
 #define NETPP_EVENTLOOPDISPATCHER_H
 
-#include "EventLoop.h"
 #include <memory>
-#include "support/ThreadPool.hpp"
+#include <mutex>
+#include <vector>
+
+namespace netpp {
+class EventLoop;
+namespace support {
+class ThreadPool;
+}
+}
 
 namespace netpp {
 /**
@@ -31,6 +38,8 @@ public:
 	 * @param timeWheelBucketCount		how many bockets the time wheel contains
 	 */
 	EventLoopDispatcher(unsigned loopsCount, unsigned timeWheelRotateInterval, unsigned timeWheelBucketCount);
+
+	~EventLoopDispatcher();
 
 	/**
 	 * @brief start run all event loop in this dispatcher

@@ -4,6 +4,8 @@
 #include "support/Log.h"
 #include <mutex>
 #include <cstring>
+#include "Events.h"
+#include "signal/Signals.h"
 extern "C" {
 #include <unistd.h>
 #include <signal.h>

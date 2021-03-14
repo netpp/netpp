@@ -6,6 +6,7 @@
 #include "epoll/EpollEvent.h"
 #include "support/Log.h"
 #include "handlers/RunInLoopHandler.h"
+#include "time/TimeWheel.h"
 
 namespace netpp {
 EventLoop::EventLoop()
@@ -19,6 +20,8 @@ EventLoop::EventLoop(unsigned tickInterval, unsigned bucketCount)
 {
 	m_kickIdleConnectionWheel = std::make_unique<internal::time::TimeWheel>(this, tickInterval, bucketCount);
 }
+
+EventLoop::~EventLoop() = default;
 
 void EventLoop::run()
 {

@@ -1,18 +1,21 @@
 #ifndef NETPP_SIGNAL_WATCHER_H
 #define NETPP_SIGNAL_WATCHER_H
 
-#include "./Signals.h"
-#include "Events.h"
+#include <mutex>
+#include <memory>
 #include <thread>
+#include <condition_variable>
 
 namespace netpp {
 namespace internal::handlers {
 class SignalHandler;
 }
 class EventLoopDispatcher;
+class Events;
 }
 
 namespace netpp::signal {
+enum class Signals;
 /**
  * @brief The signal handle system, use signalfd
  * 

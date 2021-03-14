@@ -2,13 +2,15 @@
 #define NETPP_ACCEPTOR_H
 
 #include "epoll/EventHandler.h"
-#include "socket/Socket.h"
 #include "Events.h"
-#include "Address.h"
-#include "socket/SocketEnums.h"
 
 namespace netpp {
 class EventLoopDispatcher;
+class Address;
+namespace internal::socket {
+class Socket;
+enum class TcpState;
+}
 }
 
 namespace netpp::internal::handlers {
@@ -20,7 +22,7 @@ class Acceptor : public epoll::EventHandler, public std::enable_shared_from_this
 public:
 	/// @brief Use makeAcceptor to create an Acceptor
 	Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);
-	~Acceptor() override = default;
+	~Acceptor() override;
 
 	/**
 	 * @brief Start listen and watch connect event,
