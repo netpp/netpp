@@ -6,13 +6,15 @@
 #define NETPP_EVENTS_H
 
 #include <functional>
-#include "Channel.h"
 #include <memory>
+#include "Channel.h"
 #include "error/SocketError.h"
 #include "signal/Signals.h"
-#include "support/ThreadPool.hpp"
 
 namespace netpp {
+namespace support {
+class ThreadPool;
+}
 namespace internal {
 /**
  * @brief test if class has method, only for Events
@@ -62,11 +64,11 @@ public:
 	 * 
 	 * @tparam Impl		The user-defined event handler
 	 * @param impl		shared_ptr to event handler, all event loop will shared same instance, make sure it's thread safe
-	 * @param threads	threads event handler will use, <= 0 will let ThreadPool to find out
+	 * @param threads	threads event handler will use, <= 0 will run handler in loop thread
 	 */
 	template<typename Impl>
 	explicit Events(std::shared_ptr<Impl> impl, int threads = 0)
-	: m_eventsPool{std::make_unique<support::ThreadPool>(threads)}, m_impl{impl}
+	: m_impl{impl}
 	{
 		Impl *implPtr = static_cast<Impl *>(m_impl.get());
 		if constexpr (internal::hasConnected<Impl>::value)
@@ -81,8 +83,7 @@ public:
 			m_errorCb = std::bind(&Impl::onError, implPtr, std::placeholders::_1);
 		if constexpr (internal::hasSignal<Impl>::value)
 			m_signalCb = std::bind(&Impl::onSignal, implPtr, std::placeholders::_1);
-		// FIXME: start threads after runs loop, start too soon may cause block signal fail
-		m_eventsPool->start();
+		initThread(threads);
 	}
 
 	/**
@@ -91,30 +92,26 @@ public:
 	 * @param channel	provide a way sending data to pear, as connection just established, 
 	 * 					the buffer should by empty, and not readable
 	 */
-	void onConnected(const std::shared_ptr<netpp::Channel> &channel)
-	{ if (m_connectedCb) m_eventsPool->run(m_connectedCb, channel); }
+	void onConnected(const std::shared_ptr<netpp::Channel> &channel);
 
 	/**
 	 * @brief handle received message, triggered when pear send some data
 	 * 
 	 * @param channel	to read or write connection
 	 */
-	void onMessageReceived(const std::shared_ptr<netpp::Channel> &channel)
-	{ if (m_receiveMsgCb) m_eventsPool->run(m_receiveMsgCb, channel); }
+	void onMessageReceived(const std::shared_ptr<netpp::Channel> &channel);
 
 	/**
 	 * @brief triggered all data in buffer has wrote out
 	 * 
 	 */
-	void onWriteCompleted()
-	{ if (m_writeCompletedCb) m_eventsPool->run(m_writeCompletedCb); }
+	void onWriteCompleted();
 
 	/**
 	 * @brief handle disconnected, triggered when a tcp connection has being closed
 	 * 
 	 */
-	void onDisconnect()
-	{ if (m_disconnectCb) m_eventsPool->run(m_disconnectCb); }
+	void onDisconnect();
 
 	/**
 	 * @brief triggered when some error occurred
@@ -122,18 +119,18 @@ public:
 	 * @param code		the error code
 	 */
 	// TODO: define and list what error can be handled here
-	void onError(error::SocketError code)
-	{ if (m_errorCb) m_eventsPool->run(m_errorCb, code); }
+	void onError(error::SocketError code);
 
 	/**
 	 * @brief if signal watcher is enabled, watched signals will be handled here
 	 * 
 	 * @param signal	the signal number
 	 */
-	void onSignal(signal::Signals signal)
-	{ if (m_signalCb) m_eventsPool->run(m_signalCb, signal); }
+	void onSignal(signal::Signals signal);
 
 private:
+	void initThread(int threadsCount);
+
 	// every event handler will shared same thread pool
 	std::shared_ptr<support::ThreadPool> m_eventsPool;
 

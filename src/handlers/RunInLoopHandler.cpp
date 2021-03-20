@@ -17,7 +17,8 @@ RunInLoopHandler::~RunInLoopHandler()
 {
 	// no need to consider thread safety here, 
 	// this handler will always live with event loop
-	m_epollEvent->disable();
+	if (m_epollEvent)
+		m_epollEvent->disable();
 	if (m_wakeUpFd != -1)
 		stub::close(m_wakeUpFd);
 }
@@ -26,17 +27,17 @@ void RunInLoopHandler::handleIn()
 {
 	::eventfd_t v;
 	stub::eventfd_read(m_wakeUpFd, &v);
-	LOG_DEBUG("Run in loop trigged, {} pending functors to run", v);
-	std::vector<std::function<void()>> funs;
+	LOG_DEBUG("Run in loop triggered, {} pending functors to run", v);
+	std::vector<std::function<void()>> functors;
 	{
 		std::lock_guard lck(m_functorMutex);
 		if (!m_pendingFunctors.empty())
 		{
-			funs = m_pendingFunctors;
+			functors = m_pendingFunctors;
 			m_pendingFunctors.clear();
 		}
 	}
-	for (auto &f : funs)
+	for (auto &f : functors)
 		f();
 }
 

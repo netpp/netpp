@@ -114,8 +114,8 @@ void Connector::handleOut()
 }
 
 std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatcher,
-											 Address serverAddr,
-											 Events eventsPrototype)
+													const Address &serverAddr,
+													Events eventsPrototype)
 {
 	try
 	{

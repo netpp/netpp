@@ -46,8 +46,8 @@ public:
 	 * @return std::weak_ptr<Acceptor>	The acceptor just created
 	 */
 	static std::shared_ptr<Acceptor> makeAcceptor(EventLoopDispatcher *dispatcher,
-								 Address listenAddr,
-								 Events eventsPrototype);
+												  const Address &listenAddr,
+												  Events eventsPrototype);
 
 protected:
 	/**

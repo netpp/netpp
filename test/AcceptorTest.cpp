@@ -3,6 +3,7 @@
 #define private public
 #define protected public
 #include "handlers/Acceptor.h"
+#include "handlers/RunInLoopHandler.h"
 #include "EventLoopDispatcher.h"
 #include "MockSysCallEnvironment.h"
 #include "error/Exception.h"
@@ -23,6 +24,12 @@ public:
 	MOCK_METHOD(int, mock_connect, (int, const struct ::sockaddr *, ::socklen_t), (override));
 	MOCK_METHOD(int, mock_shutdown, (int, int), (override));
 	MOCK_METHOD(int, mock_getsockopt, (int, int, int, void *, ::socklen_t *), (override));
+};
+
+class MockRunInLoop : public netpp::internal::handlers::RunInLoopHandler {
+public:
+	MockRunInLoop() : RunInLoopHandler(nullptr) {}
+	void handleIn() override { netpp::internal::handlers::RunInLoopHandler::handleIn(); }
 };
 
 class AcceptorTest : public testing::Test {
@@ -90,77 +97,46 @@ TEST_F(AcceptorTest, CreateTest)
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 TEST_F(AcceptorTest, ListenTest)
 {
-	// EXPECT_CALL(mock, mock_eventfd).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
-		.Times(1)
-		.WillOnce(testing::DoAll(testing::Return(0)));
-		
 	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
-	ASSERT_NE(epollEvent, nullptr);
-	::epoll_event ev[1];
-	ev[0].data.ptr = static_cast<void *>(epollEvent);
 	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
-	netpp::internal::epoll::Epoll *epoll = loop->getPoll();
+	loop->m_runInLoop = std::make_unique<MockRunInLoop>();
+
 	EXPECT_CALL(mock, mock_socket)
 		.Times(1);
-	std::shared_ptr<netpp::internal::handlers::Acceptor> acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
+	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
 			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
-		);
-	
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, testing::_))
-		.Times(1);
+			);
+
 	acceptor->listen();
-
-	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
-		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
-	EXPECT_CALL(mock, mock_listen);
-	epollEvent->handleEvents();
-
-	// destruction
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, testing::_));
+	loop->m_runInLoop->handleIn();
 }
 
 TEST_F(AcceptorTest, StopListenTest)
 {
-	// EXPECT_CALL(mock, mock_eventfd).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
-		.Times(1)
-		.WillOnce(testing::DoAll(testing::Return(0)));
-	
 	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
-	ASSERT_NE(epollEvent, nullptr);
-	::epoll_event ev[1];
-	ev[0].data.ptr = static_cast<void *>(epollEvent);
 	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
-	netpp::internal::epoll::Epoll *epoll = loop->getPoll();
+	loop->m_runInLoop = std::make_unique<MockRunInLoop>();
+
 	EXPECT_CALL(mock, mock_socket)
 		.Times(1);
 	std::shared_ptr<netpp::internal::handlers::Acceptor> acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
 			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
 		);
-	
-	// EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, testing::_))
-		// .Times(1);
+
 	acceptor->stop();
 	acceptor->listen();
 	acceptor->stop();
 
-	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
-		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, testing::_))
 		.Times(0);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, testing::_))
 		.Times(1);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
 		.Times(1);
-	epollEvent->handleEvents();
+	loop->m_runInLoop->handleIn();
 
 	// destruction
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, testing::_));
+	EXPECT_CALL(mock, mock_epoll_ctl);
 }
 
 TEST_F(AcceptorTest, AcceptConnectionTest)
@@ -171,7 +147,7 @@ TEST_F(AcceptorTest, AcceptConnectionTest)
 		);
 	EXPECT_CALL(mock, mock_accept4);
 	acceptor->handleIn();
-	EXPECT_EQ(onConnectedCount, 0);
+	EXPECT_EQ(AcceptorTest::onConnectedCount, 1);
 }
 
 TEST_F(AcceptorTest, AbortConnectionTest)

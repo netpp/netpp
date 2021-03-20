@@ -29,7 +29,7 @@ src/socket/Socket.cpp src/socket/SocketIO.cpp
 src/stub/IO.cpp src/stub/Socket.cpp src/stub/Epoll.cpp
 src/error/Exception.cpp src/error/SocketError.cpp
 src/time/Timer.cpp src/time/TimeWheel.cpp
-src/Address.cpp src/ByteArray.cpp src/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp)
+src/Address.cpp src/ByteArray.cpp src/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp)
 
 add_library(netpp SHARED ${netpp_source})
 add_library(netpp_static STATIC ${netpp_source})

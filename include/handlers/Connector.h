@@ -63,8 +63,8 @@ public:
 	 * @return std::weak_ptr<Connector>	The Connector created
 	 */
 	static std::shared_ptr<Connector> makeConnector(EventLoopDispatcher *dispatcher,
-								  Address serverAddr,
-								  Events eventsPrototype);
+												 const Address &serverAddr,
+												 Events eventsPrototype);
 
 protected:
 	/**

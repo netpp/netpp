@@ -14,7 +14,7 @@ using std::make_shared;
 
 namespace netpp::internal::handlers {
 Acceptor::Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
-		: _dispatcher{dispatcher}, m_socket{std::move(socket)}
+		: _dispatcher{dispatcher}, m_socket{std::move(socket)}, m_state{socket::TcpState::Closed}
 {}
 
 Acceptor::~Acceptor() = default;
@@ -75,7 +75,7 @@ void Acceptor::handleIn()
 }
 
 std::shared_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher,
-											Address listenAddr,
+											const Address &listenAddr,
 											Events eventsPrototype)
 {
 	try
@@ -83,7 +83,6 @@ std::shared_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher
 		EventLoop *loop = dispatcher->dispatchEventLoop();
 		auto acceptor = make_shared<Acceptor>(dispatcher, make_unique<socket::Socket>(listenAddr));
 		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor, acceptor->m_socket->fd());
-		// epoll::EpollEvent *eventPtr = event.get();
 		acceptor->m_events = eventsPrototype;
 		acceptor->m_epollEvent = std::move(event);
 		acceptor->_loopThisHandlerLiveIn = loop;

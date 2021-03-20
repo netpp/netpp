@@ -1,10 +1,14 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#define private public
+#define protected public
 #include "time/TimeWheel.h"
 #include "EventLoop.h"
-#include "support/ThreadPool.hpp"
 #include "MockSysCallEnvironment.h"
-#include <gmock/gmock.h>
 #include "epoll/EpollEvent.h"
+#include "handlers/RunInLoopHandler.h"
+#undef private
+#undef protected
 
 class MockTimer : public SysCall {
 public:
@@ -110,14 +114,9 @@ TEST_F(TimerTest, SingleShotTimerTest)
 {
 	MockSysCallEnvironment::registerMock(&mock);
 
-	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
-		.Times(1)
-		.WillOnce(testing::DoAll(testing::Return(0)));
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
-	// timer->setOnTimeout([]{});
 	// set interval without start do not apply changes
 	EXPECT_CALL(mock, mock_timerfd_settime).Times(0);
 	timer->setInterval(1100);
@@ -143,24 +142,15 @@ TEST_F(TimerTest, SingleShotTimerTest)
 	EXPECT_CALL(mock, mock_timerfd_settime(testing::_, testing::_, SingleShotTimerEQ(0), testing::_))
 		.Times(1);
 	timer->stop();
-
-	// destruction
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, nullptr))
-		.Times(1);
 }
 
 TEST_F(TimerTest, RepeatedlyTimerTest)
 {
 	MockSysCallEnvironment::registerMock(&mock);
 
-	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
-		.Times(1)
-		.WillOnce(testing::DoAll(testing::Return(0)));
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
-	// timer->setOnTimeout([]{});
 	// set interval without start do not apply changes
 	timer->setSingleShot(false);
 	EXPECT_CALL(mock, mock_timerfd_settime).Times(0);
@@ -187,24 +177,15 @@ TEST_F(TimerTest, RepeatedlyTimerTest)
 	EXPECT_CALL(mock, mock_timerfd_settime(testing::_, testing::_, RepeatedlyTimerEQ(0), testing::_))
 		.Times(1);
 	timer->stop();
-
-	// destruction
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, nullptr))
-		.Times(1);
 }
 
 TEST_F(TimerTest, SetSingleShotWhileRunningTest)
 {
 	MockSysCallEnvironment::registerMock(&mock);
 
-	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
-		.Times(1)
-		.WillOnce(testing::DoAll(testing::Return(0)));
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
-	// timer->setOnTimeout([]{});
 	// set interval without start do not apply changes
 	EXPECT_CALL(mock, mock_timerfd_settime).Times(0);
 	timer->setSingleShot(true);
@@ -222,10 +203,6 @@ TEST_F(TimerTest, SetSingleShotWhileRunningTest)
 	EXPECT_CALL(mock, mock_timerfd_settime(testing::_, testing::_, SingleShotTimerEQ(1100), testing::_))
 		.Times(1);
 	timer->setSingleShot(true);
-
-	// destruction
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, nullptr))
-		.Times(1);
 }
 
 #pragma GCC diagnostic push
@@ -234,7 +211,6 @@ TEST_F(TimerTest, TimerTriggerTest)
 {
 	MockSysCallEnvironment::registerMock(&mock);
 
-	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	netpp::EventLoop eventLoop;
 	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
@@ -243,22 +219,21 @@ TEST_F(TimerTest, TimerTriggerTest)
 	std::shared_ptr<netpp::time::Timer> timer = std::make_shared<netpp::time::Timer>(&eventLoop);
 	timer->setOnTimeout([&]{ ++timerTriggerCount; });
 
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
-	ASSERT_NE(epollEvent, nullptr);
+	auto *timerHandler = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
+	ASSERT_NE(timerHandler, nullptr);
 	netpp::internal::epoll::Epoll *epoll = eventLoop.getPoll();
 	::epoll_event ev[1];
-	ev[0].data.ptr = static_cast<void *>(epollEvent);
+	ev[0].data.ptr = static_cast<void *>(timerHandler);
 	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
 	epoll->poll();
 
 	EXPECT_CALL(mock, mock_read).WillOnce(testing::Return(1));
-	epollEvent->handleEvents();
+	timerHandler->handleEvents();
 	EXPECT_EQ(timerTriggerCount, 1);
 
 	// destruction
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, nullptr))
-		.Times(1);
+	EXPECT_CALL(mock, mock_epoll_ctl);
 }
 #pragma GCC diagnostic pop
 
