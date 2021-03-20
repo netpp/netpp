@@ -23,7 +23,7 @@ class EpollEvent;
 class Epoll {
 public:
 	/**
-	 * @brief An Epoll object is a wrapp of epoll, can wait, conrtol epoll events
+	 * @brief An Epoll object is a wrapper of epoll, can wait, control epoll events
 	 * @throw ResourceLimitException
 	 * 1.file descriptors limit
 	 * 2.insufficient memory to create the kernel object

@@ -1,10 +1,14 @@
 #include <gtest/gtest.h>
-#include "MockSysCallEnvironment.h"
 #include <gmock/gmock.h>
+#define private public
+#define protected public
+#include "MockSysCallEnvironment.h"
 #include "handlers/Connector.h"
 #include "EventLoopDispatcher.h"
 #include "Address.h"
 #include "EventLoop.h"
+#undef private
+#undef protected
 
 ACTION_P(SetArg3ToErrno, value) { *static_cast<int *>(arg3) = value; }
 

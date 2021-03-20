@@ -10,7 +10,7 @@ namespace netpp::internal::time {
 class TimeWheelEntry {
 	friend class TimeWheel;
 public:
-	TimeWheelEntry(std::string name = "") : m_wheelName{name}, m_indexInWheel{0} {}
+	explicit TimeWheelEntry(std::string name = "") : m_wheelName{std::move(name)}, m_indexInWheel{0} {}
 	virtual ~TimeWheelEntry() = default;
 
 	/**

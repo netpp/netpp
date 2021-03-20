@@ -28,7 +28,7 @@ public:
 	using Handler = std::shared_ptr<internal::epoll::EventHandler>;
 
 	/**
-	 * @brief Default EventLoop, will not create timewheel
+	 * @brief Default EventLoop, will not create time wheel
 	 * @throw ResourceLimitException
 	 * 1. file descriptors limit
 	 * 2. no more memory
@@ -36,7 +36,7 @@ public:
 	EventLoop();
 
 	/**
-	 * @brief Construct an EventLoop with timewheel
+	 * @brief Construct an EventLoop with time wheel
 	 * 
 	 * @param tickInterval	Wheel rotate interval, by milliseconds
 	 * @param bucketCount	Contains n buckets
@@ -46,7 +46,7 @@ public:
 
 	/**
 	 * @brief Start run never ending event loop, however, the loop 
-	 * will be terminated if any uncatched exception throwed, if 
+	 * will be terminated if any uncached exception threw, if
 	 * the loop is already running, return immediately
 	 * 
 	 */
@@ -57,7 +57,7 @@ public:
 	 * 
 	 * @param handler The adding event handler
 	 */
-	void addEventHandlerToLoop(Handler handler);
+	void addEventHandlerToLoop(const Handler& handler);
 
 	/**
 	 * @brief Remove event handler from event loop.
@@ -66,7 +66,7 @@ public:
 	 * 
 	 * @param handler The removing event handler
 	 */
-	void removeEventHandlerFromLoop(Handler handler);
+	void removeEventHandlerFromLoop(const Handler& handler);
 
 	/// @brief Get poller object in this loop
 	inline internal::epoll::Epoll *getPoll() { return &m_poll; }
@@ -76,7 +76,7 @@ public:
 	 * @note It could be nullptr if not time wheel was created
 	 * 
 	 */
-	internal::time::TimeWheel *getTimeWheel() { return m_kickIdleConnectionWheel.get(); }
+	internal::time::TimeWheel *getTimeWheel() const { return m_kickIdleConnectionWheel.get(); }
 
 	/// @brief Runs method in event loop
 	void runInLoop(std::function<void()> functor);

@@ -10,7 +10,6 @@ extern "C" {
 #include <unistd.h>
 #include <signal.h>
 #include <sys/signalfd.h>
-#include <errno.h>
 }
 
 namespace netpp::signal {

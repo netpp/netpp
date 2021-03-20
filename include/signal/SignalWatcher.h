@@ -17,7 +17,7 @@ class Events;
 namespace netpp::signal {
 enum class Signals;
 /**
- * @brief The signal handle system, use signalfd
+ * @brief The signal handle system, use signal fd
  * 
  */
 class SignalWatcher {
@@ -27,9 +27,9 @@ public:
 	SignalWatcher() = default;
 
 	/**
-	 * @brief enable signal handlering
+	 * @brief enable signal handling
 	 * @note must call before any threads started, or signal may send to unexpected thread,
-	 * recommanding use this at the beginning of main()
+	 * recommending use this at the beginning of main()
 	 * 
 	 */
 	static void enableWatchSignal();

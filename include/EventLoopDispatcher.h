@@ -19,7 +19,7 @@ class ThreadPool;
 namespace netpp {
 /**
  * @brief The dispatcher for event loop,
- * netpp contains multipile reactors, one reactor per loop
+ * netpp contains multiple reactors, one reactor per loop
  */
 class EventLoopDispatcher {
 public:
@@ -35,7 +35,7 @@ public:
 	 * 
 	 * @param loopsCount				how many loops will be created
 	 * @param timeWheelRotateInterval	the time wheel tick interval
-	 * @param timeWheelBucketCount		how many bockets the time wheel contains
+	 * @param timeWheelBucketCount		how many buckets the time wheel contains
 	 */
 	EventLoopDispatcher(unsigned loopsCount, unsigned timeWheelRotateInterval, unsigned timeWheelBucketCount);
 

@@ -20,29 +20,30 @@ public:
 	~SignalHandler() override = default;
 
 	/**
-	 * @brief handle read events on signal fd, triggered when
-	 * 1.signal in watching set emits
-	 * @note handlers will run only in EventLoop, NOT thread safe
-	 * 
-	 */
-	void handleIn() override;
-
-	/**
-	 * @brief stop handle signal fd event, however, watched signal emited will still
+	 * @brief Stop handle signal fd event, however, watched signal emited will still
 	 * send to signal fd
 	 * 
 	 */
 	void stop();
 
 	/**
-	 * @brief create a signal handler, thread safe
-	 * @note there should be ONLY ONE signal handler in system
+	 * @brief Create a signal handler, thread safe
+	 * @note There should be ONLY ONE signal handler in system
 	 * 
-	 * @param loop								the EventLoop signal handler lives in
-	 * @param eventsPrototype					user-define signal handler
-	 * @return std::shared_ptr<SignalHandler>	SignlaHandler created
+	 * @param loop								The EventLoop signal handler lives in
+	 * @param eventsPrototype					User-define signal handler
+	 * @return std::shared_ptr<SignalHandler>	SignalHandler created
 	 */
 	static std::shared_ptr<SignalHandler> makeSignalHandler(EventLoop *loop, Events eventsPrototype);
+
+protected:
+	/**
+	 * @brief Handle read events on signal fd, triggered when
+	 * 1.signal in watching set emits
+	 * @note Handlers will run only in EventLoop, NOT thread safe
+	 *
+	 */
+	void handleIn() override;
 
 private:
 	Events m_events;

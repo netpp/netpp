@@ -5,7 +5,6 @@
 #include "EventLoopDispatcher.h"
 #include "support/ThreadPool.hpp"
 #include "support/Log.h"
-#include "support/ThreadPool.hpp"
 #include "EventLoop.h"
 
 namespace netpp {
@@ -40,7 +39,7 @@ EventLoopDispatcher::~EventLoopDispatcher() = default;
 EventLoop *EventLoopDispatcher::dispatchEventLoop()
 {
 	// TODO: load balance
-	if (m_loops.size() == 0)
+	if (m_loops.empty())
 		return nullptr;
 	std::lock_guard lck(m_indexMutex);
 	if (++m_dispatchIndex >= m_loops.size())
@@ -54,10 +53,10 @@ void EventLoopDispatcher::startLoop()
 	if (m_threadPool)
 	{
 		for (EventLoopVector::size_type i = 1; i < m_loops.size(); ++i)
-			m_threadPool->run(std::bind(&EventLoop::run, m_loops[i].get()));
+			m_threadPool->run(&EventLoop::run, m_loops[i].get());
 		m_threadPool->start();
 	}
-	if (m_loops.size() != 0)
+	if (!m_loops.empty())
 		m_loops[0]->run();
 }
 }

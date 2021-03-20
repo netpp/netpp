@@ -1,5 +1,4 @@
 #include "signal/Signals.h"
-#include <mutex>
 extern "C" {
 #include <signal.h>
 #include <string.h>

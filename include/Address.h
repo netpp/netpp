@@ -11,14 +11,14 @@
 struct sockaddr_in;
 
 namespace netpp {
-// TODO: suppor ipv6
+// TODO: support ipv6
 class Address {
 public:
 	explicit Address(const std::string &ip = "0.0.0.0", unsigned port = 11111);
 	explicit Address(std::shared_ptr<::sockaddr_in> addr);
 
-	std::string ip() const;
-	unsigned port() const;
+	[[nodiscard]] std::string ip() const;
+	[[nodiscard]] unsigned port() const;
 
 	// bool ipv6();
 

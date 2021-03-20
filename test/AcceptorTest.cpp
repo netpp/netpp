@@ -1,11 +1,15 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#define private public
+#define protected public
 #include "handlers/Acceptor.h"
 #include "EventLoopDispatcher.h"
 #include "MockSysCallEnvironment.h"
-#include <gmock/gmock.h>
 #include "error/Exception.h"
 #include "Address.h"
 #include "EventLoop.h"
+#undef private
+#undef protected
 
 class MockAcceptor : public SysCall {
 public:

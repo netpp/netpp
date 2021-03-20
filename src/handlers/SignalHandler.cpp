@@ -4,9 +4,7 @@
 #include "signal/Signals.h"
 #include "stub/IO.h"
 #include "signal/SignalWatcher.h"
-#include "error/Exception.h"
 #include "support/Log.h"
-#include "EventLoop.h"
 extern "C" {
 #include <sys/signalfd.h>
 }
@@ -23,7 +21,7 @@ void SignalHandler::handleIn()
 	);
 	if (readBytes != -1)
 	{
-		unsigned bytes = static_cast<unsigned>(readBytes);
+		auto bytes = static_cast<unsigned>(readBytes);
 		unsigned readNum = bytes / sizeof(::signalfd_siginfo);
 		for (unsigned i = 0; i < readNum; ++i)
 		{

@@ -32,8 +32,8 @@ class ByteArrayWriterWithLock;
  * The 'head movement' target at move 'writeable' nodes(as I said before, the movement 
  * of ReadNode, lead nodes between head and ReadNode out of usage) to tail, avoid 
  * memory allocation.
- * If still not enough space for pending data after move, allocat nodes twice than 
- * current every time utill data can be stored. 
+ * If still not enough space for pending data after move, allocate nodes twice than
+ * current every time util data can be stored.
  * 
  * @section node graphic
  *               ReadNode   WriteNode
@@ -85,7 +85,7 @@ public:
 	double retrieveDouble();
 	std::string retrieveString(std::size_t length);
 	/**
-	 * @brief Retrive raw data from ByteArray to buffer
+	 * @brief Retrieve raw data from ByteArray to buffer
 	 * 
 	 * @param buffer		Store data here
 	 * @param length		How many bytes to retrieve
@@ -95,9 +95,9 @@ public:
 
 	/**
 	 * @brief The readable bytes in buffer.
-	 * From ReadNode's start to WriteNode's endl.
+	 * From ReadNode's start to WriteNode's end.
 	 */
-	inline LengthType readableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
+	inline LengthType readableBytes() const { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
 
 	/** 
 	 * @brief The writeable bytes in buffer.
@@ -115,7 +115,7 @@ public:
 	 *    end|                |
 	 *       |----writeable---|
 	 */
-	inline LengthType writeableBytes() { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
+	inline LengthType writeableBytes() const { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
 
 private:
 	/**
@@ -147,7 +147,7 @@ private:
 		char buffer[BufferSize];	// buffer
 		std::shared_ptr<BufferNode> next;	// next buffer node
 	};
-	std::mutex m_bufferMutex;
+	mutable std::mutex m_bufferMutex;
 	LengthType m_availableSizeToRead;
 	LengthType m_availableSizeToWrite;
 	unsigned m_nodeCount;						// node number

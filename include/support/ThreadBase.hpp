@@ -12,7 +12,7 @@
 
 namespace netpp::internal::support {
 /**
- * @brief Wrap runnables, make it type less
+ * @brief Wrap runnable, make it type less
  * 
  */
 class RunnableWrapper {
@@ -30,7 +30,7 @@ public:
 	RunnableWrapper(RunnableWrapper &) = delete;
 	RunnableWrapper() = default;
 
-	void operator()()
+	void operator()() const
 	{
 		m_runnable->call();
 	}

@@ -69,7 +69,7 @@ void TimeWheel::tick()
 	auto &bucket = m_buckets[m_timeOutBucketIndex];
 	for (auto it = bucket.begin(); it != bucket.end();)
 	{
-		// make a copy incase onTimeout will erase itself
+		// make a copy in case onTimeout will erase itself
 		std::shared_ptr<TimeWheelEntry> entry = (*it);
 		LOG_INFO("wheel entry {} time out", entry->m_wheelName);
 		entry->onTimeout();

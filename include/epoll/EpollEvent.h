@@ -34,11 +34,11 @@ public:
 	EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd);
 	~EpollEvent() = default;
 
-	int fd() const { return _watchingFd; }
+	[[nodiscard]] int fd() const { return _watchingFd; }
 	
 	/**
 	 * @brief Remove epoll_event from epoll
-	 * @note Must call this to remove event from epoll before desctruction
+	 * @note Must call this to remove event from epoll before destruction
 	 */
 	void disable();
 
@@ -52,14 +52,14 @@ public:
 // for Epoll
 private:
 	/**
-	 * @brief Return current activing epoll events
+	 * @brief Return current active epoll events
 	 */
-	inline ::epoll_event watchingEvent() const { return m_watchingEvents; }
+	[[nodiscard]] inline ::epoll_event watchingEvent() const { return m_watchingEvents; }
 
 	/**
 	 * @brief Set active events, used by poller
 	 * 
-	 * @param events activing events
+	 * @param events active events
 	 */
 	void setActiveEvents(uint32_t events) { activeEvents = events; }
 

@@ -9,7 +9,7 @@
 
 namespace netpp {
 TcpServer::TcpServer(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype)
-	: m_addr{addr}, _dispatcher(dispatcher), m_eventPrototype{eventsPrototype}
+	: m_addr{std::move(addr)}, _dispatcher(dispatcher), m_eventPrototype{std::move(eventsPrototype)}
 {}
 
 TcpServer::~TcpServer()

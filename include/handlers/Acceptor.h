@@ -15,7 +15,7 @@ enum class TcpState;
 
 namespace netpp::internal::handlers {
 /**
- * @brief The Acceptor recieves new connection, and create TcpConnection object for each connection
+ * @brief The Acceptor receives new connection, and create TcpConnection object for each connection
  * 
  */
 class Acceptor : public epoll::EventHandler, public std::enable_shared_from_this<Acceptor> {
@@ -32,17 +32,10 @@ public:
 	void listen();
 
 	/**
-	 * @brief Stop accept incomming connections, remove Acceptor from EventLoop,
+	 * @brief Stop accept incoming connections, remove Acceptor from EventLoop,
 	 * can be used out side EventLoop, thread safe
 	 */
 	void stop();
-
-	/**
-	 * @brief EPOLLIN triggered when new connection comming
-	 * @note Handlers will run only in EventLoop, NOT thread safe
-	 * 
-	 */
-	void handleIn() override;
 
 	/**
 	 * @brief Create a new acceptor, thread safe
@@ -55,6 +48,14 @@ public:
 	static std::shared_ptr<Acceptor> makeAcceptor(EventLoopDispatcher *dispatcher,
 								 Address listenAddr,
 								 Events eventsPrototype);
+
+protected:
+	/**
+	 * @brief EPOLLIN triggered when new connection coming
+	 * @note Handlers will run only in EventLoop, NOT thread safe
+	 *
+	 */
+	void handleIn() override;
 
 private:
 	EventLoopDispatcher *_dispatcher;

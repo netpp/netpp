@@ -20,12 +20,12 @@ namespace netpp::internal::handlers {
  * try to close it on timeout
  * 
  */
-class IdelConnectionWheelEntry : public internal::time::TimeWheelEntry {
+class IdleConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
-	explicit IdelConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: internal::time::TimeWheelEntry("idle"), _connection{connection}
+	explicit IdleConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
+		: internal::time::TimeWheelEntry("idle"), _connection{std::move(connection)}
 	{}
-	~IdelConnectionWheelEntry() override = default;
+	~IdleConnectionWheelEntry() override = default;
 
 	void onTimeout() override
 	{
@@ -49,7 +49,7 @@ private:
 class HalfCloseConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
 	explicit HalfCloseConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: internal::time::TimeWheelEntry("hanlf close"), _connection{connection}
+		: internal::time::TimeWheelEntry("half close"), _connection{std::move(connection)}
 	{}
 	~HalfCloseConnectionWheelEntry() override = default;
 
@@ -105,7 +105,7 @@ void TcpConnection::handleOut()
 		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))
 		{
 			m_epollEvent->deactive(epoll::Event::OUT);
-			// TODO: do we need high watermark to notify?
+			// TODO: do we need high/low watermark to notify?
 			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
 			if (m_state == socket::TcpState::Closing)
@@ -218,7 +218,7 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
-	connection->m_events = eventsPrototype;
+	connection->m_events = std::move(eventsPrototype);
 	connection->_loopThisHandlerLiveIn = loop;
 	// set up events
 	loop->addEventHandlerToLoop(connection);
@@ -227,7 +227,7 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	auto wheel = loop->getTimeWheel();
 	if (wheel)
 	{
-		auto idleWheel = std::make_shared<IdelConnectionWheelEntry>(connection);
+		auto idleWheel = std::make_shared<IdleConnectionWheelEntry>(connection);
 		connection->_idleConnectionWheel = idleWheel;
 		wheel->addToWheel(idleWheel);
 	}

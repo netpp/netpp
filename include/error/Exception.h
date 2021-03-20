@@ -12,7 +12,7 @@ enum class SocketError;
 class Exception : public std::exception {
 public:
 	explicit Exception() noexcept = default;
-	const char* what() const noexcept override = 0;
+	[[nodiscard]] const char* what() const noexcept override = 0;
 };
 
 /**
@@ -22,7 +22,7 @@ public:
 class ResourceLimitException : public Exception {
 public:
 	explicit ResourceLimitException(int errCode) noexcept : m_errnoCode{errCode} {}
-	const char* what() const noexcept override;
+	[[nodiscard]] const char* what() const noexcept override;
 	error::SocketError getSocketErrorCode() noexcept;
 private:
 	int m_errnoCode;
@@ -35,7 +35,7 @@ private:
 class SocketException : public Exception {
 public:
 	explicit SocketException(int errCode) noexcept : m_errnoCode{errCode} {}
-	const char* what() const noexcept override;
+	[[nodiscard]] const char* what() const noexcept override;
 	error::SocketError getErrorCode() noexcept;
 private:
 	int m_errnoCode;

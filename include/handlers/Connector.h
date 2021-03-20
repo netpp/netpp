@@ -23,7 +23,7 @@ class TcpConnection;
 /**
  * @brief The Connector try to connect to a given address,
  * connect failed should retry several times, retry interval
- * will double than last one utill a certain max interval
+ * will double than last one util a certain max interval
  */
 class Connector : public epoll::EventHandler, public std::enable_shared_from_this<Connector> {
 public:
@@ -53,14 +53,6 @@ public:
 	 * Can be used out side EventLoop, thread safe
 	 */
 	bool connected() const { return m_connectionEstablished.load(std::memory_order_relaxed); }
-	
-	/**
-	 * @brief Handle EPOLLOUT triggered when connect state changed,
-	 * if connect failed in some situations, should start retry connect.
-	 * @note Handlers will run only in EventLoop, NOT thread safe.
-	 * 
-	 */
-	void handleOut() override;
 
 	/**
 	 * @brief Create a new connector, thread safe
@@ -73,6 +65,15 @@ public:
 	static std::shared_ptr<Connector> makeConnector(EventLoopDispatcher *dispatcher,
 								  Address serverAddr,
 								  Events eventsPrototype);
+
+protected:
+	/**
+	 * @brief Handle EPOLLOUT triggered when connect state changed,
+	 * if connect failed in some situations, should start retry connect.
+	 * @note Handlers will run only in EventLoop, NOT thread safe.
+	 *
+	 */
+	void handleOut() override;
 
 private:
 	/**

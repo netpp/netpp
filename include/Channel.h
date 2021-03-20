@@ -13,14 +13,14 @@ class TcpConnection;
 }
 
 /**
- * @brief A Channel represent a brige to read/write TcpConnection's buffer.
+ * @brief A Channel represent a bridge to read/write TcpConnection's buffer.
  * 
  */
 class Channel {
 public:
 	Channel(std::weak_ptr<internal::handlers::TcpConnection> connection, 
 			std::weak_ptr<ByteArray> writeByteArray, std::weak_ptr<ByteArray> readByteArray)
-		: _connection{connection}, _writeArray{writeByteArray}, _readArray{readByteArray}
+		: _connection{std::move(connection)}, _writeArray{std::move(writeByteArray)}, _readArray{std::move(readByteArray)}
 	{}
 
 	/**
@@ -54,7 +54,7 @@ public:
 	/**
 	 * @brief The readable bytes in byte array
 	 */
-	inline std::size_t availableRead()	{ auto array = _readArray.lock(); if (array) return array->readableBytes(); else return 0; }
+	[[nodiscard]] inline std::size_t availableRead() const { auto array = _readArray.lock(); if (array) return array->readableBytes(); else return 0; }
 
 	/**
 	 * @brief Read from byte array

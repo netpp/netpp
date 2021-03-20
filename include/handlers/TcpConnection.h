@@ -24,11 +24,38 @@ namespace netpp::internal::handlers {
  * 
  */
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
+	friend class HalfCloseConnectionWheelEntry;
 public:
 	/// @brief Use makeTcpConnection to create TcpConnection
 	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket);
 	~TcpConnection() override = default;
 
+	/**
+	 * @brief After write some data to ByteArray, use this to send.
+	 * send operation will not effect immediately, should be sent later.
+	 * thread safe.
+	 */
+	void sendInLoop();
+
+	/**
+	 * @brief Close this connection after all pending data is send.
+	 * close operation will not effect immediately, should be closed later.
+	 * thread safe.
+	 * 
+	 */
+	void closeAfterWriteCompleted();
+
+	/**
+	 * @brief Get the Channel read/write to connection buffer
+	 * thread safe
+	 * @return std::shared_ptr<Channel>	the read/write channel to this connection
+	 */
+	std::shared_ptr<Channel> getIOChannel();
+
+	static std::weak_ptr<TcpConnection> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
+									  Events eventsPrototype);
+
+protected:
 	/**
 	 * @brief handle read events on connection, triggered when
 	 * 1.socket has pending read data
@@ -57,31 +84,6 @@ public:
 	 */
 	void handleRdhup() override;
 
-	/**
-	 * @brief After write some data to ByteArray, use this to send.
-	 * send operation will not effect immediately, should be sent later.
-	 * thread safe.
-	 */
-	void sendInLoop();
-
-	/**
-	 * @brief Close this connection after all pending data is send.
-	 * close operation will not effect immediately, should be closed later.
-	 * thread safe.
-	 * 
-	 */
-	void closeAfterWriteCompleted();
-
-	/**
-	 * @brief Get the Channel read/write to connection buffer
-	 * thread safe
-	 * @return std::shared_ptr<Channel>	the read/write channel to this connection
-	 */
-	std::shared_ptr<Channel> getIOChannel();
-
-	static std::weak_ptr<TcpConnection> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-									  Events eventsPrototype);
-
 private:
 	/**
 	 * @brief refresh time wheel when received any data, prevent closed by
@@ -91,7 +93,7 @@ private:
 
 	/**
 	 * @brief close write on this side, enter tcp four-way-wavehand step,
-	 * if side not close connection and no data transfered, the connection
+	 * if side not close connection and no data transferred, the connection
 	 * will be force closed
 	 */
 	void closeWrite();
@@ -117,7 +119,7 @@ private:
 
 	/// @brief if connection is idle, closed by this time wheel
 	std::weak_ptr<internal::time::TimeWheelEntry> _idleConnectionWheel;
-	/// @brief if connection is half close, and no data transfered, closed by this time wheel
+	/// @brief if connection is half close, and no data transferred, closed by this time wheel
 	std::weak_ptr<internal::time::TimeWheelEntry> _halfCloseWheel;
 };
 }

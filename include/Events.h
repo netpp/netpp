@@ -68,7 +68,7 @@ public:
 	explicit Events(std::shared_ptr<Impl> impl, int threads = 0)
 	: m_eventsPool{std::make_unique<support::ThreadPool>(threads)}, m_impl{impl}
 	{
-		Impl *implPtr = impl.get();
+		Impl *implPtr = static_cast<Impl *>(m_impl.get());
 		if constexpr (internal::hasConnected<Impl>::value)
 			m_connectedCb = std::bind(&Impl::onConnected, implPtr, std::placeholders::_1);
 		if constexpr (internal::hasMessageReceived<Impl>::value)
@@ -91,7 +91,7 @@ public:
 	 * @param channel	provide a way sending data to pear, as connection just established, 
 	 * 					the buffer should by empty, and not readable
 	 */
-	void onConnected(std::shared_ptr<netpp::Channel> channel)
+	void onConnected(const std::shared_ptr<netpp::Channel> &channel)
 	{ if (m_connectedCb) m_eventsPool->run(m_connectedCb, channel); }
 
 	/**
@@ -99,7 +99,7 @@ public:
 	 * 
 	 * @param channel	to read or write connection
 	 */
-	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
+	void onMessageReceived(const std::shared_ptr<netpp::Channel> &channel)
 	{ if (m_receiveMsgCb) m_eventsPool->run(m_receiveMsgCb, channel); }
 
 	/**

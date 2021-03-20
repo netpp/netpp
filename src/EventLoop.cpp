@@ -10,7 +10,7 @@
 
 namespace netpp {
 EventLoop::EventLoop()
-	: m_loopRunning{ATOMIC_FLAG_INIT}
+	: m_loopRunning{false}
 {
 	m_runInLoop = internal::handlers::RunInLoopHandler::makeRunInLoopHandler(this);
 }
@@ -43,18 +43,18 @@ void EventLoop::run()
 	catch (...)
 	{
 		m_loopRunning.clear(std::memory_order_release);
-		LOG_CRITICAL("Exeception from event loop");
+		LOG_CRITICAL("Exception from event loop");
 		throw;
 	}
 }
 
-void EventLoop::addEventHandlerToLoop(Handler handler)
+void EventLoop::addEventHandlerToLoop(const Handler &handler)
 {
 	std::lock_guard lck(m_handlersMutex);
 	m_handlers.insert(handler);
 }
 
-void EventLoop::removeEventHandlerFromLoop(Handler handler)
+void EventLoop::removeEventHandlerFromLoop(const Handler &handler)
 {
 	std::lock_guard lck(m_handlersMutex);
 	m_handlers.erase(handler);
@@ -62,6 +62,6 @@ void EventLoop::removeEventHandlerFromLoop(Handler handler)
 
 void EventLoop::runInLoop(std::function<void()> functor)
 {
-	m_runInLoop->addPendingFunction(functor);
+	m_runInLoop->addPendingFunction(std::move(functor));
 }
 }

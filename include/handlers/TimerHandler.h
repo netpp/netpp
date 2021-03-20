@@ -15,7 +15,7 @@ class Timer;
 
 namespace netpp::internal::handlers {
 /**
- * @brief The TimerHandler handles timefd events, read event will triggered on timeout
+ * @brief The TimerHandler handles time fd events, read event will triggered on timeout
  * 
  */
 class TimerHandler : public epoll::EventHandler, public std::enable_shared_from_this<TimerHandler> {
@@ -25,17 +25,18 @@ public:
 	~TimerHandler() override = default;
 
 	/**
+	 * @brief Remove timer handler from event loop
+	 * 
+	 */
+	void remove();
+
+protected:
+	/**
 	 * @brief handle read events on time fd, triggered when
 	 * 1.time fd timeout
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 */
 	void handleIn() override;
-
-	/**
-	 * @brief Remove timer handler from event loop
-	 * 
-	 */
-	void remove();
 
 private:
 	netpp::time::Timer *_timer;

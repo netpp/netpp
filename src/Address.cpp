@@ -4,7 +4,6 @@
 
 #include "Address.h"
 #include <cstring>
-
 extern "C" {
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -30,7 +29,7 @@ Address::Address(const std::string &ip, unsigned port)
 #pragma GCC diagnostic pop
 
 Address::Address(std::shared_ptr<::sockaddr_in> addr)
-	: m_addr{addr}
+	: m_addr{std::move(addr)}
 {}
 
 std::string Address::ip() const

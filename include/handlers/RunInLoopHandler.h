@@ -27,9 +27,7 @@ public:
 	 * 
 	 */
 	explicit RunInLoopHandler(EventLoop *loop);
-	~RunInLoopHandler();
-
-	void handleIn() override;
+	~RunInLoopHandler() override;
 
 	/**
 	 * @brief Add functor to run, and wake up event loop
@@ -40,11 +38,14 @@ public:
 
 	static std::shared_ptr<RunInLoopHandler> makeRunInLoopHandler(EventLoop *loop);
 
+protected:
+	void handleIn() override;
+
 private:
 	// TODO: maybe this wake up fd can put in event loop, for other class to use
 	int m_wakeUpFd;
 	std::mutex m_functorMutex;
-	std::vector<std::function<void()>> m_pendingFuns;	// methods run in loop
+	std::vector<std::function<void()>> m_pendingFunctors;	// methods run in loop
 };
 }
 

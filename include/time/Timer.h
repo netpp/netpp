@@ -20,10 +20,10 @@ class TimerHandler;
 
 namespace netpp::time {
 /**
- * @brief Timer runs in EventLoop, but the ownship does not belong to EventLoop,
- * if user does not own it, the timer will never triggred.
+ * @brief Timer runs in EventLoop, but the ownership does not belong to EventLoop,
+ * if user does not own it, the timer will never triggered.
  * 
- * Timer is not thread, consider protect it if used in multithreads
+ * Timer is not thread, consider protect it if used in multithreading
  * 
  */
 class Timer {
@@ -34,38 +34,38 @@ public:
 	~Timer();
 
 	/// @brief Callback on timeout, the callback must NOT throw exception
-	inline void setOnTimeout(std::function<void()> callback) { m_callback = callback; }
+	inline void setOnTimeout(std::function<void()> callback) { m_callback = std::move(callback); }
 	/// @brief Set timer trigger interval, by default, interval is 1000ms
-	void setInterval(unsigned msec);
+	void setInterval(unsigned mSec);
 	
 	/**
 	 * @brief Set timer is single shot, by default, the value is true.
-	 * If the timer is running, the signle shot property will effect immediately.
+	 * If the timer is running, the single shot property will effect immediately.
 	 * 
 	 */
 	void setSingleShot(bool singleShot);
 
 	/// @brief Get timer interval
-	inline unsigned interval() const { return m_interval; }
-	/// @brief Get is signle shot
-	inline bool singleShot() const { return m_singleShot; }
+	[[nodiscard]] inline unsigned interval() const { return m_interval; }
+	/// @brief Get is single shot
+	[[nodiscard]] inline bool singleShot() const { return m_singleShot; }
 	/// @brief Get is timer running
-	inline bool running() const { return m_running; }
+	[[nodiscard]] inline bool running() const { return m_running; }
 
 	/// @brief Run timer
 	void start();
 	/// @brief Stop timer
 	void stop();
 
-	/// @brief How many times the timer tirggered
-	inline uint64_t triggeredCount() const { return m_timeOutCount; }
+	/// @brief How many times the timer triggered
+	[[nodiscard]] inline uint64_t triggeredCount() const { return m_timeOutCount; }
 
 // for TimerHandler
 private:
 	/// @brief Called on timeout, for internal use
 	void onTimeOut();
-	/// @brief Get timerfd
-	inline int fd() const { return m_timerFd; }
+	/// @brief Get timer fd
+	[[nodiscard]] inline int fd() const { return m_timerFd; }
 
 private:
 	/// @brief Set up timer, and start to run
@@ -81,7 +81,7 @@ private:
 	int m_timerFd;
 	uint64_t m_timeOutCount;
 
-	// event and hanlder
+	// event and handler
 	std::shared_ptr<internal::handlers::TimerHandler> m_handler;
 };
 }

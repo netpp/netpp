@@ -42,7 +42,7 @@ public:
 	Socket &operator=(Socket &rh) = delete;
 	~Socket();
 
-	inline int fd() const noexcept { return m_socketFd; }
+	[[nodiscard]] inline int fd() const noexcept { return m_socketFd; }
 
 	/**
 	 * @brief Bind address and start listen
@@ -58,7 +58,7 @@ public:
 	 * @throw SocketException on (ECONNABORTED)
 	 * @throw ResourceLimitException on (EMFILE ENFILE ENOBUFS ENOMEM EPERM)
 	 */
-	std::unique_ptr<Socket> accept() const;
+	[[nodiscard]] std::unique_ptr<Socket> accept() const;
 
 	/**
 	 * @brief Connect to server
@@ -70,8 +70,8 @@ public:
 	/**
 	 * @brief Get socket error code
 	 */
-	error::SocketError getError() const noexcept;
-	inline Address getAddr() const noexcept { return m_addr; };
+	[[nodiscard]] error::SocketError getError() const noexcept;
+	[[nodiscard]] inline Address getAddr() const noexcept { return m_addr; };
 
 	/**
 	 * @brief Shutdown write side of socket

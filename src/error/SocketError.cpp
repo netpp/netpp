@@ -1,8 +1,5 @@
 #include "error/SocketError.h"
 #include <cstring>
-extern "C" {
-#include <errno.h>
-}
 
 namespace netpp::error {
 std::string errorAsString(SocketError code)
@@ -55,10 +52,11 @@ SocketError getError(int code)
 #ifndef LAST_SOCKET_ERROR_DEF
 #define LAST_SOCKET_ERROR_DEF(error) SOCKET_ERROR_DEF(error)
 #endif
-	SocketError err = SocketError::E_UNKOWN;
+	SocketError err;
 	switch (code)
 	{
 #include "error/SocketError.def"
+		default: err = SocketError::E_UNKOWN;
 	}
 	return err;
 }

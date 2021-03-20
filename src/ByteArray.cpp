@@ -1,9 +1,7 @@
 #include "ByteArray.h"
 #include <cstring>
 #include "support/Log.h"
-extern "C" {
-#include <assert.h>
-}
+#include <cassert>
 
 namespace netpp {
 ByteArray::ByteArray()
@@ -298,8 +296,7 @@ void ByteArray::unlockedMoveBufferHead()
 	}
 }
 
-// no need to init buffer
 ByteArray::BufferNode::BufferNode()
-	: start{0}, end{0}, next{nullptr}
+	: start{0}, end{0}, buffer{}, next{nullptr}
 {}
 }

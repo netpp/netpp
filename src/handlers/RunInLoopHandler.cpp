@@ -30,10 +30,10 @@ void RunInLoopHandler::handleIn()
 	std::vector<std::function<void()>> funs;
 	{
 		std::lock_guard lck(m_functorMutex);
-		if (!m_pendingFuns.empty())
+		if (!m_pendingFunctors.empty())
 		{
-			funs = m_pendingFuns;
-			m_pendingFuns.clear();
+			funs = m_pendingFunctors;
+			m_pendingFunctors.clear();
 		}
 	}
 	for (auto &f : funs)
@@ -44,7 +44,7 @@ void RunInLoopHandler::addPendingFunction(std::function<void()> functor)
 {
 	stub::eventfd_write(m_wakeUpFd, 1);
 	std::lock_guard lck(m_functorMutex);
-	m_pendingFuns.emplace_back(functor);
+	m_pendingFunctors.emplace_back(std::move(functor));
 }
 
 std::shared_ptr<RunInLoopHandler> RunInLoopHandler::makeRunInLoopHandler(EventLoop *loop)

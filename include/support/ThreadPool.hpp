@@ -22,11 +22,11 @@ public:
 	 * 
 	 * @param threadNum if <= 0, use hardware thread number, else create n threads
 	 */
-	ThreadPool(unsigned threadNum = 0);
+	explicit ThreadPool(unsigned threadNum = 0);
 	~ThreadPool();
 
 	/**
-	 * @brief threads will not run untill call start()
+	 * @brief threads will not run until call start()
 	 * 
 	 * @return true		if all threads start success
 	 * @return false 	if one thread failed to start
@@ -76,14 +76,14 @@ public:
 	inline unsigned queuedTask() const { return taskCount; }
 
 	/**
-	 * @brief block this thread for milliseconds
+	 * @brief Block this thread for milliseconds
 	 * 
-	 * @param msec pass 0 to block forever until all task is done
+	 * @param mSec	pass 0 to block forever until all task is done
 	 */
-	void waitForDone(unsigned msec) const;
+	void waitForDone(unsigned mSec) const;
 
 private:
-	void workerThread(unsigned id);
+	void workerThread();
 	void runTask();
 
 	std::atomic_bool m_quit;
@@ -96,7 +96,6 @@ private:
 
 	internal::support::ThreadSafeQueue<TaskType> workQueue;
 	std::vector<std::thread> threads;
-	static thread_local unsigned threadId;
 };
 }
 

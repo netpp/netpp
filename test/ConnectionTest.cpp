@@ -1,10 +1,15 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#define private public
+#define protected public
+#include "EventLoop.h"
 #include "MockSysCallEnvironment.h"
 #include "handlers/TcpConnection.h"
 #include "socket/Socket.h"
 #include "Address.h"
-#include "EventLoop.h"
+#include "time/TimeWheel.h"
+#undef private
+#undef protected
 extern "C" {
 #include "sys/epoll.h"
 }
@@ -56,6 +61,13 @@ TEST_F(ConnectionTest, CreateConnectionTest)
 
 TEST_F(ConnectionTest, AutoKickTest)
 {}
+
+TEST_F(ConnectionTest, RenewWheel)
+{
+	netpp::EventLoop loop;
+	auto wheelPtr = std::make_unique<netpp::internal::time::TimeWheel>(&loop, 2, 2);
+	loop.m_kickIdleConnectionWheel = std::move(wheelPtr);
+}
 
 TEST_F(ConnectionTest, ConnectionBrokeTest)
 {}

@@ -36,9 +36,9 @@ namespace SocketIO {
 	bool write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
 };
 
-// TODO: just contain ::iovec in ByteArray for better performace??
+// TODO: just contain ::iovec in ByteArray for better performance??
 /**
- * @brief Convert ByteArray to ::msghdr, adapte to readv()/writev(), used by SocketIO
+ * @brief Convert ByteArray to ::msghdr, adapt to readv()/writev(), used by SocketIO
  */
 class ByteArray2Msghdr {
 public:
@@ -68,7 +68,7 @@ protected:
 class ByteArrayReaderWithLock : public ByteArray2Msghdr {
 public:
 	explicit ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buffer);
-	virtual ~ByteArrayReaderWithLock() override;
+	~ByteArrayReaderWithLock() override;
 
 	/**
 	 * @brief Write n bytes into ByteArray
@@ -92,13 +92,13 @@ public:
 class ByteArrayWriterWithLock : public ByteArray2Msghdr {
 public:
 	explicit ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer);
-	virtual ~ByteArrayWriterWithLock() override;
+	~ByteArrayWriterWithLock() override;
 
 	/**
 	 * @brief Read n bytes from ByteArray
 	 * @param size the return value of readv()
 	 */
-	virtual void adjustByteArray(ByteArray::LengthType size) override;
+	void adjustByteArray(ByteArray::LengthType size) override;
 
 	/**
 	 * @brief Get writeable bytes in ByteArray

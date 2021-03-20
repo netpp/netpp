@@ -15,8 +15,8 @@ TimerHandler::TimerHandler(netpp::time::Timer *timer)
 
 void TimerHandler::handleIn()
 {
-	uint64_t tirggeredCount;
-	if (stub::read(_timer->fd(), &tirggeredCount, sizeof(uint64_t)) != -1)
+	uint64_t triggerCount;
+	if (stub::read(_timer->fd(), &triggerCount, sizeof(uint64_t)) != -1)
 		_timer->onTimeOut();
 }
 

@@ -3,8 +3,6 @@
 
 namespace netpp::support {
 
-thread_local unsigned ThreadPool::threadId = 0;
-
 ThreadPool::~ThreadPool()
 {
 	waitTask.notify_all();
@@ -30,7 +28,7 @@ bool ThreadPool::start()
 	try
 	{
 		for (unsigned i = 0; i < threadNumber; ++i)
-			threads.emplace_back(std::thread(&ThreadPool::workerThread, this, i));
+			threads.emplace_back(std::thread(&ThreadPool::workerThread, this));
 		return true;
 	}
 	catch (...)
@@ -41,15 +39,14 @@ bool ThreadPool::start()
 	}
 }
 
-void ThreadPool::workerThread(unsigned id)
+void ThreadPool::workerThread()
 {
-	threadId = id;
 	while (!m_quit)
 	{
 		if (workQueue.empty())
 		{
 			std::unique_lock lck(m_waitTaskMutex);
-			// maybe executing task will ThreadPool is desctruction, did not receive notify
+			// maybe executing task will ThreadPool is destruction, did not receive notify
 			waitTask.wait_for(lck, std::chrono::microseconds(500));
 		}
 		runTask();
@@ -71,16 +68,16 @@ void ThreadPool::runTask()
 	}
 	catch (...)
 	{
-		LOG_CRITICAL("Thread pool task throws an exeception");
+		LOG_CRITICAL("Thread pool task throws an exception");
 		--m_activeThreads;
 		throw;
 	}
 }
 
-void ThreadPool::waitForDone(unsigned msec) const
+void ThreadPool::waitForDone(unsigned mSec) const
 {
-	if (msec != 0)
-		std::this_thread::sleep_for(std::chrono::milliseconds(msec));
+	if (mSec != 0)
+		std::this_thread::sleep_for(std::chrono::milliseconds(mSec));
 	else
 	{
 		while (taskCount != 0 || m_activeThreads != 0)
