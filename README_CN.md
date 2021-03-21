@@ -52,3 +52,6 @@ client.connect();
 dispatcher.startLoop();
 ```
 查看example/*中的示例来获取更详细的信息。
+
+***
+感谢jetbrains为该项目提供全家桶的[开源授权](https://jb.gg/OpenSource)

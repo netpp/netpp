@@ -7,6 +7,7 @@
 #include "EventLoopDispatcher.h"
 #include "Address.h"
 #include "EventLoop.h"
+#include "handlers/RunInLoopHandler.h"
 #undef private
 #undef protected
 
@@ -14,7 +15,6 @@ ACTION_P(SetArg3ToErrno, value) { *static_cast<int *>(arg3) = value; }
 
 class MockConnector : public SysCall {
 public:
-	MOCK_METHOD(int, mock_epoll_wait, (int, struct epoll_event *, int, int), (override));
 	MOCK_METHOD(int, mock_epoll_ctl, (int, int, int, struct epoll_event *), (override));
 
 	MOCK_METHOD(int, mock_socket, (int, int, int), (override));
@@ -27,8 +27,6 @@ public:
 
 	MOCK_METHOD(int, mock_timerfd_create, (int, int), (override));
 	MOCK_METHOD(int, mock_timerfd_settime, (int, int, const struct itimerspec *, struct itimerspec *), (override));
-
-	MOCK_METHOD(int, mock_eventfd_write, (int, ::eventfd_t), (override));
 };
 
 class ConnectorTest : public testing::Test {
@@ -87,34 +85,19 @@ TEST_F(ConnectorTest, CreateConnectorTest)
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 TEST_F(ConnectorTest, ConnectRequestTest)
 {
-	// get run in loop
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
-		.Times(1)
-		.WillOnce(testing::DoAll(testing::Return(0)));
-		
 	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
-	ASSERT_NE(epollEvent, nullptr);
-	::epoll_event ev[1];
-	ev[0].data.ptr = static_cast<void *>(epollEvent);
 	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
-	netpp::internal::epoll::Epoll *epoll = loop->getPoll();
 	EXPECT_CALL(mock, mock_socket)
 		.Times(1);
-	std::shared_ptr<netpp::internal::handlers::Connector> connector = netpp::internal::handlers::Connector::makeConnector(
+	auto connector = netpp::internal::handlers::Connector::makeConnector(
 			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
 		);
-	
-	EXPECT_CALL(mock, mock_eventfd_write)
-		.Times(1);
+
 	connector->connect();
 
-	EXPECT_CALL(mock, mock_epoll_wait)
-		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
 	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	EXPECT_CALL(mock, mock_connect).Times(1);
-	epollEvent->handleEvents();
+	loop->m_runInLoop->handleIn();
 
 	// destruction
 	EXPECT_CALL(mock, mock_epoll_ctl);
@@ -122,59 +105,34 @@ TEST_F(ConnectorTest, ConnectRequestTest)
 
 TEST_F(ConnectorTest, StopConnectTest)
 {
-	// get run in loop
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
-		.Times(1)
-		.WillOnce(testing::DoAll(testing::Return(0)));
-		
 	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::internal::epoll::EpollEvent *epollEvent = static_cast<netpp::internal::epoll::EpollEvent *>(MockSysCallEnvironment::ptrFromEpollCtl);
-	ASSERT_NE(epollEvent, nullptr);
-	::epoll_event ev[1];
-	ev[0].data.ptr = static_cast<void *>(epollEvent);
 	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
-	netpp::internal::epoll::Epoll *epoll = loop->getPoll();
 	EXPECT_CALL(mock, mock_socket)
 		.Times(1);
-	std::shared_ptr<netpp::internal::handlers::Connector> connector = netpp::internal::handlers::Connector::makeConnector(
+	auto connector = netpp::internal::handlers::Connector::makeConnector(
 			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
 		);
-	
-	EXPECT_CALL(mock, mock_eventfd_write)
-		.Times(3);
 	connector->stopConnect();	// do nothing
 	connector->connect();		// connect
 	connector->stopConnect();	// not connected yet, stop connect
 
-	EXPECT_CALL(mock, mock_epoll_wait)
-		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
-	testing::Sequence s1;
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, testing::_))
-		.Times(1)
-		.InSequence(s1);
+		.Times(1);
 	EXPECT_CALL(mock, mock_connect)
-		.Times(1)
-		.InSequence(s1);
+		.Times(1);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, nullptr))
-		.Times(1)
-		.InSequence(s1);
-	epollEvent->handleEvents();
+		.Times(1);
+	loop->m_runInLoop->handleIn();
 
 	EXPECT_CALL(mock, mock_getsockopt)
 		.WillOnce(testing::DoAll(SetArg3ToErrno(0), testing::Return(0)));
 	EXPECT_CALL(mock, mock_epoll_ctl)
 		.Times(1);
 	connector->handleOut();
-	EXPECT_CALL(mock, mock_eventfd_write)
-		.Times(1);
 	connector->stopConnect();	// connected, do nothing
-	EXPECT_CALL(mock, mock_epoll_wait)
-		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, nullptr))
 		.Times(0);
-	epollEvent->handleEvents();
+	loop->m_runInLoop->handleIn();
 
 	// destruction
 	EXPECT_CALL(mock, mock_epoll_ctl);
@@ -198,6 +156,7 @@ TEST_F(ConnectorTest, ConnectTest)
 	// connecting
 	connector->handleOut();
 	// retry
+	EXPECT_CALL(mock, mock_timerfd_create).Times(1);
 	EXPECT_CALL(mock, mock_timerfd_settime).Times(4);
 	connector->handleOut();
 	connector->handleOut();

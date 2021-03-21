@@ -4,12 +4,23 @@ project(netpp)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wconversion")
 
-add_subdirectory(example)
-add_subdirectory(test)
-add_subdirectory(thirdParty/spdlog)
+option(ENABLE_TEST "enable test" ON)
+option(USE_LOG "enable log" ON)
 
+add_subdirectory(example)
 include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(${PROJECT_SOURCE_DIR}/thirdParty/spdlog/include)
+
+if(ENABLE_TEST STREQUAL ON)
+    message(STATUS "Netpp: testing is enabled, add target test")
+    add_subdirectory(test)
+endif()
+
+if(USE_LOG STREQUAL ON)
+    message(STATUS "Netpp: logging is enabled")
+    add_definitions()
+    add_subdirectory(thirdParty/spdlog)
+    include_directories(${PROJECT_SOURCE_DIR}/thirdParty/spdlog/include)
+endif()
 
 set(netpp_source 
 include/epoll/Epoll.h include/epoll/EpollEvent.h include/epoll/EventHandler.h

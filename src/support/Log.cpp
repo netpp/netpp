@@ -3,6 +3,8 @@
 //
 
 #include "support/Log.h"
+
+#ifdef USE_LOG
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/async.h"
@@ -38,3 +40,11 @@ void initLogger(std::string logfile)
 	});
 }
 }
+#else
+
+namespace netpp::internal {
+void initLogger([[maybe_unused]] std::string logfile)
+{}
+}
+
+#endif

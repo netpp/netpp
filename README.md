@@ -54,4 +54,5 @@ dispatcher.startLoop();
 ```
 For more information, take a look at example/*.
 
-Thanks jetbrains for provide [opensource license](https://jb.gg/OpenSource) to project netpp
+***
+Thanks jetbrains for provide [opensource license](https://jb.gg/OpenSource) to project netpp.

@@ -78,7 +78,7 @@ void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 			node->start += size;
 			size = 0;
 		}
-		// no matter what, read node would pointe to current node
+		// no matter what, read node would point to current node
 		_buffer->_currentReadBufferNode = node;
 		node = node->next;
 	}
@@ -172,13 +172,13 @@ bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 	::ssize_t actualSend = stub::sendmsg(socket->fd(), msg, MSG_NOSIGNAL);
 	if (actualSend != -1)
 	{
-		std::size_t sendSize = static_cast<std::size_t>(actualSend);
+		auto sendSize = static_cast<std::size_t>(actualSend);
 		vec.adjustByteArray(sendSize);
 		return (sendSize <= expectSize);
 	}
 	else
 	{
-		// error that can not recovery throwed as exception
+		// error that can not recovery threw as exception
 		return false;
 	}
 }

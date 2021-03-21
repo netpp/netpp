@@ -8,6 +8,7 @@
 #include "stub/IO.h"
 #include "handlers/TimerHandler.h"
 #include "epoll/EpollEvent.h"
+#include <cstring>
 
 using std::make_unique;
 using std::make_shared;

@@ -14,7 +14,6 @@
 
 class MockAcceptor : public SysCall {
 public:
-	MOCK_METHOD(int, mock_epoll_wait, (int, struct epoll_event *, int, int), (override));
 	MOCK_METHOD(int, mock_epoll_ctl, (int, int, int, struct epoll_event *), (override));
 
 	MOCK_METHOD(int, mock_socket, (int, int, int), (override));
@@ -24,12 +23,6 @@ public:
 	MOCK_METHOD(int, mock_connect, (int, const struct ::sockaddr *, ::socklen_t), (override));
 	MOCK_METHOD(int, mock_shutdown, (int, int), (override));
 	MOCK_METHOD(int, mock_getsockopt, (int, int, int, void *, ::socklen_t *), (override));
-};
-
-class MockRunInLoop : public netpp::internal::handlers::RunInLoopHandler {
-public:
-	MockRunInLoop() : RunInLoopHandler(nullptr) {}
-	void handleIn() override { netpp::internal::handlers::RunInLoopHandler::handleIn(); }
 };
 
 class AcceptorTest : public testing::Test {
@@ -99,7 +92,6 @@ TEST_F(AcceptorTest, ListenTest)
 {
 	netpp::EventLoopDispatcher dispatcher(1);
 	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
-	loop->m_runInLoop = std::make_unique<MockRunInLoop>();
 
 	EXPECT_CALL(mock, mock_socket)
 		.Times(1);
@@ -115,7 +107,6 @@ TEST_F(AcceptorTest, StopListenTest)
 {
 	netpp::EventLoopDispatcher dispatcher(1);
 	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
-	loop->m_runInLoop = std::make_unique<MockRunInLoop>();
 
 	EXPECT_CALL(mock, mock_socket)
 		.Times(1);
