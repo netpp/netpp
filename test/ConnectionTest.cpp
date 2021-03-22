@@ -20,6 +20,7 @@ public:
 	MOCK_METHOD(int, mock_epoll_ctl, (int, int, int, struct epoll_event *), (override));
 	MOCK_METHOD(::ssize_t, mock_recvmsg, (int, struct ::msghdr *, int), (override));
 	MOCK_METHOD(::ssize_t, mock_sendmsg, (int, const struct ::msghdr *, int), (override));
+	MOCK_METHOD(int, mock_shutdown, (int, int), (override));
 };
 
 class ConnectionTest : public testing::Test {
@@ -81,10 +82,107 @@ TEST_F(ConnectionTest, RenewWheel)
 }
 
 TEST_F(ConnectionTest, ConnectionBrokeTest)
-{}
+{
+	netpp::EventLoop loop;
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
+		.Times(1);
+	connection->handleRdhup();
+	EXPECT_EQ(ConnectionTest::onDisconnectCount, 1);
+
+	// destruction
+	EXPECT_CALL(mock, mock_epoll_ctl);
+}
+
+TEST_F(ConnectionTest, ReadInBrokenConnectionTest)
+{
+	netpp::EventLoop loop;
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	EXPECT_CALL(mock, mock_recvmsg)
+		.Times(1)
+		.WillOnce(testing::DoAll(testing::Assign(&errno, ECONNREFUSED), testing::Return(-1)));
+	connection->handleIn();
+	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
+			.Times(1);
+	loop.m_runInLoop->handleIn();
+	connection->handleRdhup();
+	EXPECT_EQ(ConnectionTest::onDisconnectCount, 1);
+
+	// destruction
+	EXPECT_CALL(mock, mock_epoll_ctl);
+}
+
+TEST_F(ConnectionTest, WriteToBrokenConnectionTest)
+{
+	netpp::EventLoop loop;
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	EXPECT_CALL(mock, mock_sendmsg)
+			.Times(1)
+			.WillOnce(testing::DoAll(testing::Assign(&errno, EPIPE), testing::Return(-1)));
+	connection->handleOut();
+	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
+			.Times(1);
+	loop.m_runInLoop->handleIn();
+	connection->handleRdhup();
+	EXPECT_EQ(ConnectionTest::onDisconnectCount, 1);
+
+	// destruction
+	EXPECT_CALL(mock, mock_epoll_ctl);
+}
 
 TEST_F(ConnectionTest, ManuallyCloseTest)
-{}
+{
+	netpp::EventLoop loop;
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
+			.Times(0);
+	connection->closeAfterWriteCompleted();
+	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
+			.Times(1);
+	loop.m_runInLoop->handleIn();
+}
+
+TEST_F(ConnectionTest, DelayCloseTest)
+{
+	netpp::EventLoop loop;
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	connection->sendInLoop();
+	connection->closeAfterWriteCompleted();
+	testing::Sequence s;
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLOUT)))
+			.Times(1)
+			.InSequence(s);
+	EXPECT_CALL(mock, mock_shutdown)
+			.Times(0)
+			.InSequence(s);
+	loop.m_runInLoop->handleIn();
+
+//	connection->closeAfterWriteCompleted();
+	EXPECT_CALL(mock, mock_sendmsg)
+			.Times(1)
+			.InSequence(s);
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP)))
+			.Times(1)
+			.InSequence(s);
+	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
+			.Times(1)
+			.InSequence(s);
+	connection->handleOut();
+//	loop.m_runInLoop->handleIn();
+
+	// destruction
+	EXPECT_CALL(mock, mock_epoll_ctl);
+}
 
 TEST_F(ConnectionTest, SendTest)
 {
@@ -120,4 +218,13 @@ TEST_F(ConnectionTest, SendTest)
 }
 
 TEST_F(ConnectionTest, RecvTest)
-{}
+{
+	netpp::EventLoop loop;
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	EXPECT_CALL(mock, mock_recvmsg)
+			.Times(1);
+	connection->handleIn();
+	EXPECT_EQ(ConnectionTest::onMessageReceivedCount, 1);
+}

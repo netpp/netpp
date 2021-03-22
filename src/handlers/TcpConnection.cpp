@@ -170,7 +170,7 @@ void TcpConnection::closeAfterWriteCompleted()
 	// capture weak_ptr in case TcpConnection is destructed
 	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([connectionWeak]{
-		// nothing to write, close direcly
+		// nothing to write, close directly
 		auto connection = connectionWeak.lock();
 		if (connection)
 		{
