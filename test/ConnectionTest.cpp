@@ -71,14 +71,41 @@ TEST_F(ConnectionTest, CreateConnectionTest)
 	EXPECT_CALL(mock, mock_epoll_ctl);
 }
 
-TEST_F(ConnectionTest, AutoKickTest)
-{}
+TEST_F(ConnectionTest, KickConnectionTest)
+{
+	netpp::EventLoop loop(1, 1);
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	ASSERT_EQ(connection->_halfCloseWheel.expired(), true);
+	ASSERT_EQ(connection->_idleConnectionWheel.expired(), false);
+	connection->_idleConnectionWheel.lock()->onTimeout();
+	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
+		.Times(1);
+	loop.m_runInLoop->handleIn();
+	ASSERT_EQ(connection->_halfCloseWheel.expired(), false);
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
+			.Times(1);
+	connection->_halfCloseWheel.lock()->onTimeout();
+	EXPECT_EQ(ConnectionTest::onDisconnectCount, 1);
+
+	// destruction
+	EXPECT_CALL(mock, mock_epoll_ctl);
+}
 
 TEST_F(ConnectionTest, RenewWheel)
 {
-	netpp::EventLoop loop;
-	auto wheelPtr = std::make_unique<netpp::internal::time::TimeWheel>(&loop, 2, 2);
-	loop.m_kickIdleConnectionWheel = std::move(wheelPtr);
+	netpp::EventLoop loop(1, 8);
+	auto handler = std::make_shared<MockHandler>();
+	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
+			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	auto wheel = loop.getTimeWheel();
+	wheel->m_timeOutBucketIndex = 3;
+	connection->handleIn();
+	EXPECT_EQ(connection->_idleConnectionWheel.lock()->m_indexInWheel, 2);
+	wheel->m_timeOutBucketIndex = 4;
+	connection->handleOut();
+	EXPECT_EQ(connection->_idleConnectionWheel.lock()->m_indexInWheel, 3);
 }
 
 TEST_F(ConnectionTest, ConnectionBrokeTest)

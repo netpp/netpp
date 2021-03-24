@@ -2,6 +2,7 @@
 #include "Events.h"
 #include "Channel.h"
 #include "EventLoopDispatcher.h"
+#include <iostream>
 
 class Echo {
 public:

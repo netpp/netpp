@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(netpp)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wconversion")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion")
 
 option(ENABLE_TEST "enable test" ON)
 option(USE_LOG "enable log" ON)
