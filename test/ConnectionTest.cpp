@@ -4,11 +4,11 @@
 #define protected public
 #include "EventLoop.h"
 #include "MockSysCallEnvironment.h"
-#include "handlers/TcpConnection.h"
-#include "socket/Socket.h"
+#include "internal/handlers/TcpConnection.h"
+#include "internal/socket/Socket.h"
 #include "Address.h"
-#include "time/TimeWheel.h"
-#include "handlers/RunInLoopHandler.h"
+#include "internal/time/TimeWheel.h"
+#include "internal/handlers/RunInLoopHandler.h"
 #undef private
 #undef protected
 extern "C" {

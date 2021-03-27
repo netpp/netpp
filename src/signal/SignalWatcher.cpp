@@ -1,14 +1,15 @@
 #include "signal/SignalWatcher.h"
 #include "EventLoopDispatcher.h"
-#include "handlers/SignalHandler.h"
-#include "support/Log.h"
+#include "internal/handlers/SignalHandler.h"
+#include "internal/support/Log.h"
 #include <mutex>
 #include <cstring>
 #include "Events.h"
 #include "signal/Signals.h"
 extern "C" {
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
+#include <utility>
 #include <sys/signalfd.h>
 }
 
@@ -27,7 +28,7 @@ SignalWatcher SignalWatcher::with(EventLoopDispatcher *dispatcher, Events events
 {
 	if (m_signalHandler)
 		m_signalHandler->stop();
-	m_signalHandler = internal::handlers::SignalHandler::makeSignalHandler(dispatcher->dispatchEventLoop(), eventsPrototype);
+	m_signalHandler = internal::handlers::SignalHandler::makeSignalHandler(dispatcher->dispatchEventLoop(), std::move(eventsPrototype));
 	return SignalWatcher();
 }
 

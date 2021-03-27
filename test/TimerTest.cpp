@@ -2,11 +2,11 @@
 #include <gmock/gmock.h>
 #define private public
 #define protected public
-#include "time/TimeWheel.h"
+#include "internal/time/TimeWheel.h"
 #include "EventLoop.h"
 #include "MockSysCallEnvironment.h"
-#include "epoll/EpollEvent.h"
-#include "handlers/RunInLoopHandler.h"
+#include "internal/epoll/EpollEvent.h"
+#include "internal/handlers/RunInLoopHandler.h"
 #undef private
 #undef protected
 

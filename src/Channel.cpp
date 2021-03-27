@@ -3,7 +3,7 @@
 //
 
 #include "Channel.h"
-#include "handlers/TcpConnection.h"
+#include "internal/handlers/TcpConnection.h"
 
 namespace netpp {
 void Channel::send()

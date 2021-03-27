@@ -3,10 +3,10 @@
 //
 
 #include "EventLoop.h"
-#include "epoll/EpollEvent.h"
-#include "support/Log.h"
-#include "handlers/RunInLoopHandler.h"
-#include "time/TimeWheel.h"
+#include "internal/epoll/EpollEvent.h"
+#include "internal/support/Log.h"
+#include "internal/handlers/RunInLoopHandler.h"
+#include "internal/time/TimeWheel.h"
 
 namespace netpp {
 EventLoop::EventLoop()

@@ -2,8 +2,8 @@
 #include <gmock/gmock.h>
 #define private public
 #define protected public
-#include "handlers/Acceptor.h"
-#include "handlers/RunInLoopHandler.h"
+#include "internal/handlers/Acceptor.h"
+#include "internal/handlers/RunInLoopHandler.h"
 #include "EventLoopDispatcher.h"
 #include "MockSysCallEnvironment.h"
 #include "error/Exception.h"

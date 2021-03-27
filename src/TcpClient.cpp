@@ -3,8 +3,8 @@
 //
 
 #include "TcpClient.h"
-#include "handlers/Connector.h"
-#include "handlers/TcpConnection.h"
+#include "internal/handlers/Connector.h"
+#include "internal/handlers/TcpConnection.h"
 #include "EventLoopDispatcher.h"
 
 using std::make_unique;

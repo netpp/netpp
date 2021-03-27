@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
-#include "stub/Epoll.h"
-#include "stub/IO.h"
-#include "stub/Socket.h"
+#include "internal/stub/Epoll.h"
+#include "internal/stub/IO.h"
+#include "internal/stub/Socket.h"
 #include "MockSysCallEnvironment.h"
 #include <gmock/gmock.h>
 #include "error/Exception.h"
 
 class StubSysCall : public SysCall {
 public:
-	~StubSysCall() = default;
+	~StubSysCall() override = default;
 
 	MOCK_METHOD(int, mock_epoll_create, (int), (override));
 	MOCK_METHOD(int, mock_epoll_create1, (int), (override));

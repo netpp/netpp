@@ -2,9 +2,9 @@
 #include "EventLoop.h"
 #include "MockSysCallEnvironment.h"
 #include <gmock/gmock.h>
-#include "epoll/Epoll.h"
-#include "handlers/RunInLoopHandler.h"
-#include "epoll/EpollEvent.h"
+#include "internal/epoll/Epoll.h"
+#include "internal/handlers/RunInLoopHandler.h"
+#include "internal/epoll/EpollEvent.h"
 
 class RunInLoopMock : public SysCall {
 public:

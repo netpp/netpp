@@ -4,7 +4,7 @@
 
 #include "EventLoopDispatcher.h"
 #include "support/ThreadPool.hpp"
-#include "support/Log.h"
+#include "internal/support/Log.h"
 #include "EventLoop.h"
 
 namespace netpp {

@@ -5,7 +5,7 @@
 #ifndef NETPP_EVENTLOOP_H
 #define NETPP_EVENTLOOP_H
 
-#include "epoll/Epoll.h"
+#include "internal/epoll/Epoll.h"
 #include <unordered_set>
 #include <functional>
 #include <mutex>

@@ -3,11 +3,11 @@
 #define private public
 #define protected public
 #include "MockSysCallEnvironment.h"
-#include "handlers/Connector.h"
+#include "internal/handlers/Connector.h"
 #include "EventLoopDispatcher.h"
 #include "Address.h"
 #include "EventLoop.h"
-#include "handlers/RunInLoopHandler.h"
+#include "internal/handlers/RunInLoopHandler.h"
 #undef private
 #undef protected
 

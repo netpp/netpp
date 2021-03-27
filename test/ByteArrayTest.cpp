@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "ByteArray.h"
-#include "socket/SocketIO.h"
+#include "internal/socket/SocketIO.h"
 #include <cstring>
 extern "C" {
 #include <sys/socket.h>

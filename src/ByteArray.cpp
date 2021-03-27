@@ -1,6 +1,6 @@
 #include "ByteArray.h"
 #include <cstring>
-#include "support/Log.h"
+#include "internal/support/Log.h"
 #include <cassert>
 
 namespace netpp {

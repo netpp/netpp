@@ -1,21 +1,19 @@
 #include <gtest/gtest.h>
 #define private public
 #include "signal/SignalWatcher.h"
-#undef private
 #include "signal/Signals.h"
 #include "Events.h"
 #include "error/Exception.h"
 #include "EventLoopDispatcher.h"
-#include "error/Exception.h"
 #include "time/Timer.h"
 #include "MockSysCallEnvironment.h"
-#include "epoll/EpollEvent.h"
+#include "internal/epoll/EpollEvent.h"
 #include "EventLoop.h"
+#undef private
 extern "C" {
-#include <signal.h>
+#include <csignal>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sched.h>
 }
 
 class SignalHandler {

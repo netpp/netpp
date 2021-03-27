@@ -4,10 +4,10 @@
 
 #include "time/Timer.h"
 #include "EventLoop.h"
-#include "support/Log.h"
-#include "stub/IO.h"
-#include "handlers/TimerHandler.h"
-#include "epoll/EpollEvent.h"
+#include "internal/support/Log.h"
+#include "internal/stub/IO.h"
+#include "internal/handlers/TimerHandler.h"
+#include "internal/epoll/EpollEvent.h"
 #include <cstring>
 
 using std::make_unique;

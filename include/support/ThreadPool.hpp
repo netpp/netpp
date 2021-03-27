@@ -7,7 +7,7 @@
 #include <future>
 #include <memory>
 #include <type_traits>
-#include "ThreadBase.hpp"
+#include "internal/support/ThreadBase.hpp"
 
 namespace netpp::support {
 /**
