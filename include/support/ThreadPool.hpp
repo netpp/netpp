@@ -7,7 +7,7 @@
 #include <future>
 #include <memory>
 #include <type_traits>
-#include "internal/support/ThreadBase.hpp"
+#include "ThreadBase.hpp"
 
 namespace netpp::support {
 /**
@@ -15,7 +15,7 @@ namespace netpp::support {
  * 
  */
 class ThreadPool {
-	using TaskType = internal::support::RunnableWrapper;
+	using TaskType = support::RunnableWrapper;
 public:
 	/**
 	 * @brief Create a thread pool, threads will not be created before start() is called
@@ -47,11 +47,11 @@ public:
 	template<typename Runnable, typename ... Args,
 			typename RetType = ResultType<Runnable, Args...>,
 			typename = typename std::enable_if<!std::is_same<RetType, void>::value>::type>
-	std::future<RetType> run(Runnable runnable, Args ... args)
+	std::future<RetType> run(Runnable runnable, Args && ... args)
 	{
 		std::packaged_task<RetType(Args...)> task(runnable);
 		std::future<RetType> res(task.get_future());
-		TaskType wrapper(std::move(task), args...);
+		TaskType wrapper(std::move(task), std::forward<Args>(args)...);
 		++taskCount;
 		workQueue.push(std::move(wrapper));
 		waitTask.notify_one();
@@ -62,10 +62,10 @@ public:
 	template<typename Runnable, typename ... Args,
 			typename RetType = ResultType<Runnable, Args...>,
 			typename = typename std::enable_if<std::is_same<RetType, void>::value>::type>
-	void run(Runnable runnable, Args ... args)
+	void run(Runnable runnable, Args && ... args)
 	{
 		std::packaged_task<RetType(Args...)> task(runnable);
-		TaskType wrapper(std::move(task), args...);
+		TaskType wrapper(std::move(task), std::forward<Args>(args)...);
 		++taskCount;
 		workQueue.push(std::move(wrapper));
 		waitTask.notify_one();
@@ -94,7 +94,7 @@ private:
 	std::mutex m_waitTaskMutex;
 	std::condition_variable waitTask;
 
-	internal::support::ThreadSafeQueue<TaskType> workQueue;
+	support::ThreadSafeQueue<TaskType> workQueue;
 	std::vector<std::thread> threads;
 };
 }

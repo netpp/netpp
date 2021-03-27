@@ -1,11 +1,6 @@
 #ifndef NETPP_SIGNAL_WATCHER_H
 #define NETPP_SIGNAL_WATCHER_H
 
-#include <mutex>
-#include <memory>
-#include <thread>
-#include <condition_variable>
-
 namespace netpp {
 namespace internal::handlers {
 class SignalHandler;
@@ -55,15 +50,6 @@ public:
 // for SignalHandler
 private:
 	static int signalFd;
-
-private:
-	static ::sigset_t *m_watchingSignals;
-	static std::shared_ptr<internal::handlers::SignalHandler> m_signalHandler;
-
-	static std::thread m_unHandledSignalThread;
-	static std::mutex m_watchSignalMutex;
-	/// @brief notify signal watch set changed
-	static std::condition_variable m_waitWatchSignalChange;
 };
 }
 

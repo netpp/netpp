@@ -1,7 +1,7 @@
 #include "signal/Signals.h"
 extern "C" {
-#include <signal.h>
-#include <string.h>
+#include <csignal>
+#include <cstring>
 }
 
 namespace netpp::signal {

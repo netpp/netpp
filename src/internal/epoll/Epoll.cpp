@@ -2,7 +2,6 @@
 // Created by gaojian on 2020/7/5.
 //
 
-#include <cstring>
 #include "internal/epoll/Epoll.h"
 #include "internal/support/Log.h"
 #include "internal/epoll/EpollEvent.h"
@@ -45,7 +44,7 @@ std::vector<EpollEvent *> Epoll::poll()
 	for (int i = 0; i < nums; ++i)
 	{
 		using EventVectorSize = std::vector<epoll_event>::size_type;
-		EventVectorSize index = static_cast<EventVectorSize>(i);
+		auto index = static_cast<EventVectorSize>(i);
 		uint32_t event = m_activeEvents[index].events;
 		auto epollEvent = static_cast<EpollEvent *>(m_activeEvents[index].data.ptr);
 		epollEvent->setActiveEvents(event);

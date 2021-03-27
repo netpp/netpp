@@ -7,6 +7,8 @@
 #include "internal/support/Log.h"
 extern "C" {
 #include <sys/signalfd.h>
+
+#include <utility>
 }
 
 namespace netpp::internal::handlers {
@@ -52,7 +54,7 @@ void SignalHandler::stop()
 std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
 {
 	auto signalHandler = std::make_shared<SignalHandler>();
-	signalHandler->m_events = eventsPrototype;
+	signalHandler->m_events = std::move(eventsPrototype);
 	signalHandler->m_epollEvent = std::make_unique<epoll::EpollEvent>(
 		loop->getPoll(), signalHandler,
 		signal::SignalWatcher::signalFd

@@ -35,9 +35,9 @@ public:
 	 * @param bucketCount	Contains n buckets
 	 */
 	TimeWheel(EventLoop *loop, unsigned tickInterval, unsigned bucketCount);
-	void addToWheel(std::shared_ptr<TimeWheelEntry> entry);
-	void removeFromWheel(std::weak_ptr<TimeWheelEntry> entry);
-	void renew(std::weak_ptr<TimeWheelEntry> entry);
+	void addToWheel(const std::shared_ptr<TimeWheelEntry>& entry);
+	void removeFromWheel(const std::weak_ptr<TimeWheelEntry>& entry);
+	void renew(const std::weak_ptr<TimeWheelEntry>& entry);
 
 private:
 	void tick();

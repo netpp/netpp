@@ -6,6 +6,9 @@
 #include <cstring>
 #include "Events.h"
 #include "signal/Signals.h"
+#include <memory>
+#include <thread>
+#include <condition_variable>
 extern "C" {
 #include <unistd.h>
 #include <csignal>
@@ -17,12 +20,13 @@ namespace netpp::signal {
 // no lock required, signal fd will not change during runtime
 int SignalWatcher::signalFd = -1;
 
-::sigset_t *SignalWatcher::m_watchingSignals;
-std::shared_ptr<internal::handlers::SignalHandler> SignalWatcher::m_signalHandler = nullptr;
+::sigset_t *m_watchingSignals;
+std::shared_ptr<internal::handlers::SignalHandler> m_signalHandler = nullptr;
 
-std::thread SignalWatcher::m_unHandledSignalThread;
-std::mutex SignalWatcher::m_watchSignalMutex;
-std::condition_variable SignalWatcher::m_waitWatchSignalChange;
+std::thread m_unHandledSignalThread;
+std::mutex m_watchSignalMutex;
+/// @brief notify signal set changed
+std::condition_variable m_waitWatchSignalChange;
 
 SignalWatcher SignalWatcher::with(EventLoopDispatcher *dispatcher, Events eventsPrototype)
 {

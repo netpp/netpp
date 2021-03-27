@@ -7,9 +7,6 @@
 
 #include <memory>
 #include <functional>
-extern "C" {
-#include <sys/timerfd.h>
-}
 
 namespace netpp {
 class EventLoop;
@@ -19,6 +16,7 @@ class TimerHandler;
 }
 
 namespace netpp::time {
+class TimerImpl;
 /**
  * @brief Timer runs in EventLoop, but the ownership does not belong to EventLoop,
  * if user does not own it, the timer will never triggered.
@@ -57,30 +55,20 @@ public:
 	/// @brief Stop timer
 	void stop();
 
-	/// @brief How many times the timer triggered
-	[[nodiscard]] inline uint64_t triggeredCount() const { return m_timeOutCount; }
-
 // for TimerHandler
 private:
 	/// @brief Called on timeout, for internal use
 	void onTimeOut();
 	/// @brief Get timer fd
-	[[nodiscard]] inline int fd() const { return m_timerFd; }
+	[[nodiscard]] int fd() const;
 
 private:
-	/// @brief Set up timer, and start to run
-	void setTimeAndRun();
-	
 	unsigned m_interval;
 	bool m_singleShot;
 	bool m_running;	
 	std::function<void()> m_callback;
 
-	// linux timer fd
-	::itimerspec m_timerSpec;
-	int m_timerFd;
-	uint64_t m_timeOutCount;
-
+	std::unique_ptr<time::TimerImpl> m_impl;
 	// event and handler
 	std::shared_ptr<internal::handlers::TimerHandler> m_handler;
 };

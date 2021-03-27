@@ -3,7 +3,6 @@
 #include "internal/support/Log.h"
 #include "EventLoopDispatcher.h"
 #include "error/Exception.h"
-#include "error/SocketError.h"
 #include "Address.h"
 #include "internal/socket/Socket.h"
 #include "internal/socket/SocketEnums.h"

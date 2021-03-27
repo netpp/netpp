@@ -2,6 +2,7 @@
 #define NETPP_CONNECTOR_H
 
 #include <memory>
+#include <atomic>
 #include "internal/epoll/EventHandler.h"
 #include "Events.h"
 

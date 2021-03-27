@@ -5,7 +5,6 @@
 #ifndef NETPP_EVENTLOOP_H
 #define NETPP_EVENTLOOP_H
 
-#include "internal/epoll/Epoll.h"
 #include <unordered_set>
 #include <functional>
 #include <mutex>
@@ -15,6 +14,7 @@ namespace netpp {
 namespace internal {
 namespace epoll {
 class EventHandler;
+class Epoll;
 }
 namespace time {
 class TimeWheel;
@@ -69,7 +69,7 @@ public:
 	void removeEventHandlerFromLoop(const Handler& handler);
 
 	/// @brief Get poller object in this loop
-	inline internal::epoll::Epoll *getPoll() { return &m_poll; }
+	inline internal::epoll::Epoll *getPoll() { return m_poll.get(); }
 
 	/**
 	 * @brief Get time wheel in this loop
@@ -83,7 +83,7 @@ public:
 
 private:
 	std::atomic_flag m_loopRunning;
-	internal::epoll::Epoll m_poll;
+	std::unique_ptr<internal::epoll::Epoll> m_poll;
 
 	std::mutex m_handlersMutex;	// guard m_handlers
 	std::unordered_set<Handler> m_handlers;	// epoll events handlers

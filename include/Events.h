@@ -7,11 +7,15 @@
 
 #include <functional>
 #include <memory>
-#include "Channel.h"
-#include "error/SocketError.h"
-#include "signal/Signals.h"
 
 namespace netpp {
+class Channel;
+namespace error {
+enum class SocketError;
+}
+namespace signal {
+enum class Signals;
+}
 namespace support {
 class ThreadPool;
 }

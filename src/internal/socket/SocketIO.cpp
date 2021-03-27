@@ -24,14 +24,14 @@ ByteArray2Msghdr::~ByteArray2Msghdr()
 
 ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buffer)
 {
-	_buffer = buffer;
+	_buffer = std::move(buffer);
 	_buffer->m_bufferMutex.lock();
-	unsigned nodes = buffer->m_nodeCount;
+	unsigned nodes = _buffer->m_nodeCount;
 	if (nodes > 0)
 	{
-		::iovec *vec = new ::iovec[nodes];
-		std::shared_ptr<ByteArray::BufferNode> node = buffer->_currentReadBufferNode.lock();
-		std::shared_ptr<ByteArray::BufferNode> endNode = buffer->_currentWriteBufferNode.lock()->next;
+		auto *vec = new ::iovec[nodes];
+		std::shared_ptr<ByteArray::BufferNode> node = _buffer->_currentReadBufferNode.lock();
+		std::shared_ptr<ByteArray::BufferNode> endNode = _buffer->_currentWriteBufferNode.lock()->next;
 		std::size_t vecIndex = 0;
 		// has node
 		// current node is not empty
@@ -93,16 +93,16 @@ ByteArray::LengthType ByteArrayReaderWithLock::availableBytes()
 
 ByteArrayWriterWithLock::ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer)
 {
-	_buffer = buffer;
+	_buffer = std::move(buffer);
 	_buffer->m_bufferMutex.lock();
-	uint64_t bytes = buffer->m_availableSizeToWrite;
+	uint64_t bytes = _buffer->m_availableSizeToWrite;
 	::size_t vecCount = bytes / ByteArray::BufferNode::BufferSize;
 	if (bytes % ByteArray::BufferNode::BufferSize != 0)
 		++vecCount;
 	if (vecCount > 0)
 	{
-		::iovec *vec = new ::iovec[vecCount];
-		std::shared_ptr<ByteArray::BufferNode> node = buffer->_currentWriteBufferNode.lock();
+		auto *vec = new ::iovec[vecCount];
+		std::shared_ptr<ByteArray::BufferNode> node = _buffer->_currentWriteBufferNode.lock();
 		int i = 0;
 		while (node)
 		{
@@ -156,7 +156,7 @@ ByteArray::LengthType ByteArrayWriterWithLock::availableBytes()
 // SocketIO
 void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
-	ByteArrayWriterWithLock writer(buffer);
+	ByteArrayWriterWithLock writer(std::move(buffer));
 	::msghdr *msg = writer.msghdr();
 	// TODO: use ioctl(fd, FIONREAD, &n) to get pending read data on socket
 	::ssize_t num = stub::recvmsg(socket->fd(), msg, 0);
@@ -166,7 +166,7 @@ void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 
 bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
-	ByteArrayReaderWithLock vec(buffer);
+	ByteArrayReaderWithLock vec(std::move(buffer));
 	std::size_t expectSize = vec.availableBytes();
 	::msghdr *msg = vec.msghdr();
 	::ssize_t actualSend = stub::sendmsg(socket->fd(), msg, MSG_NOSIGNAL);

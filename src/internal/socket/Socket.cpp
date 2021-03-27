@@ -86,12 +86,14 @@ error::SocketError Socket::getError() const noexcept
 	error::SocketError socketError = error::SocketError::E_UNKOWN;
 	int optval;
 	auto optlen = static_cast<socklen_t>(sizeof optval);
-	if (stub::getsockopt(m_socketFd, SOL_SOCKET, SO_ERROR, &optval, &optlen) != -1)
+	if (stub::getsockopt(m_socketFd, SOL_SOCKET, SO_ERROR, &optval, &optlen) == 0)
 	{
 		switch (optval)
 		{
 			case 0: socketError = error::SocketError::E_NOERROR;	break;
 #include "error/SocketError.def"
+			default:
+				socketError = error::SocketError::E_UNKOWN;
 		}
 	}
 	return socketError;

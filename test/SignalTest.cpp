@@ -9,6 +9,7 @@
 #include "MockSysCallEnvironment.h"
 #include "internal/epoll/EpollEvent.h"
 #include "EventLoop.h"
+#include "internal/epoll/Epoll.h"
 #undef private
 extern "C" {
 #include <csignal>

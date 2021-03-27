@@ -5,9 +5,10 @@
 #ifndef NETPP_CHANNEL_H
 #define NETPP_CHANNEL_H
 
-#include "ByteArray.h"
+#include <memory>
 
 namespace netpp {
+class ByteArray;
 namespace internal::handlers {
 class TcpConnection;
 }
@@ -19,9 +20,7 @@ class TcpConnection;
 class Channel {
 public:
 	Channel(std::weak_ptr<internal::handlers::TcpConnection> connection, 
-			std::weak_ptr<ByteArray> writeByteArray, std::weak_ptr<ByteArray> readByteArray)
-		: _connection{std::move(connection)}, _writeArray{std::move(writeByteArray)}, _readArray{std::move(readByteArray)}
-	{}
+			std::weak_ptr<ByteArray> writeByteArray, std::weak_ptr<ByteArray> readByteArray);
 
 	/**
 	 * @brief Send byte array to socket
@@ -36,41 +35,41 @@ public:
 	/**
 	 * @brief Write to byte array
 	 */
-	inline void writeInt8(int8_t value)		{ auto array = _writeArray.lock(); if (array) array->writeInt8(value); }
-	inline void writeInt16(int16_t value)	{ auto array = _writeArray.lock(); if (array) array->writeInt16(value); }
-	inline void writeInt32(int32_t value)	{ auto array = _writeArray.lock(); if (array) array->writeInt32(value); }
-	inline void writeInt64(int64_t value)	{ auto array = _writeArray.lock(); if (array) array->writeInt64(value); }
-	inline void writeUInt8(uint8_t value)	{ auto array = _writeArray.lock(); if (array) array->writeUInt8(value); }
-	inline void writeUInt16(uint16_t value)	{ auto array = _writeArray.lock(); if (array) array->writeUInt16(value); }
-	inline void writeUInt32(uint32_t value)	{ auto array = _writeArray.lock(); if (array) array->writeUInt32(value); }
-	inline void writeUInt64(uint64_t value)	{ auto array = _writeArray.lock(); if (array) array->writeUInt64(value); }
-	inline void writeFloat(float value)		{ auto array = _writeArray.lock(); if (array) array->writeFloat(value); }
-	inline void writeDouble(double value)	{ auto array = _writeArray.lock(); if (array) array->writeDouble(value); }
-	inline void writeString(std::string value)					{ auto array = _writeArray.lock(); if (array) array->writeString(std::move(value)); }
-	inline void writeRaw(const char *data, std::size_t length)	{ auto array = _writeArray.lock(); if (array) array->writeRaw(data, length); }
+	void writeInt8(int8_t value);
+	void writeInt16(int16_t value);
+	void writeInt32(int32_t value);
+	void writeInt64(int64_t value);
+	void writeUInt8(uint8_t value);
+	void writeUInt16(uint16_t value);
+	void writeUInt32(uint32_t value);
+	void writeUInt64(uint64_t value);
+	void writeFloat(float value);
+	void writeDouble(double value);
+	void writeString(std::string value);
+	void writeRaw(const char *data, std::size_t length);
 
 	// TODO: support sendfile and mmap
 	
 	/**
 	 * @brief The readable bytes in byte array
 	 */
-	[[nodiscard]] inline std::size_t availableRead() const { auto array = _readArray.lock(); if (array) return array->readableBytes(); else return 0; }
+	[[nodiscard]] std::size_t availableRead() const;
 
 	/**
 	 * @brief Read from byte array
 	 */
-	inline int8_t retrieveInt8()		{ auto array = _readArray.lock(); if (array) return array->retrieveInt8(); else return 0; }
-	inline int16_t retrieveInt16()		{ auto array = _readArray.lock(); if (array) return array->retrieveInt16(); else return 0; }
-	inline int32_t retrieveInt32()		{ auto array = _readArray.lock(); if (array) return array->retrieveInt32(); else return 0; }
-	inline int64_t retrieveInt64()		{ auto array = _readArray.lock(); if (array) return array->retrieveInt64(); else return 0; }
-	inline uint8_t retrieveUInt8()		{ auto array = _readArray.lock(); if (array) return array->retrieveUInt8(); else return 0; }
-	inline uint16_t retrieveUInt16()	{ auto array = _readArray.lock(); if (array) return array->retrieveUInt16(); else return 0; }
-	inline uint32_t retrieveUInt32()	{ auto array = _readArray.lock(); if (array) return array->retrieveUInt32(); else return 0; }
-	inline uint64_t retrieveUInt64()	{ auto array = _readArray.lock(); if (array) return array->retrieveUInt64(); else return 0; }
-	inline float retrieveFloat()		{ auto array = _readArray.lock(); if (array) return array->retrieveFloat(); else return 0; }
-	inline double retrieveDouble()		{ auto array = _readArray.lock(); if (array) return array->retrieveDouble(); else return 0; }
-	inline std::string retrieveString(std::size_t length)				{ auto array = _readArray.lock(); if (array) return array->retrieveString(length); else return ""; }
-	inline std::size_t retrieveRaw(char *buffer, std::size_t length)	{ auto array = _readArray.lock(); if (array) return array->retrieveRaw(buffer, length); else return 0; }
+	int8_t retrieveInt8();
+	int16_t retrieveInt16();
+	int32_t retrieveInt32();
+	int64_t retrieveInt64();
+	uint8_t retrieveUInt8();
+	uint16_t retrieveUInt16();
+	uint32_t retrieveUInt32();
+	uint64_t retrieveUInt64();
+	float retrieveFloat();
+	double retrieveDouble();
+	std::string retrieveString(std::size_t length);
+	std::size_t retrieveRaw(char *buffer, std::size_t length);
 
 private:
 	std::weak_ptr<internal::handlers::TcpConnection> _connection;

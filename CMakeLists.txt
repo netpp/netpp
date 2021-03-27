@@ -25,7 +25,7 @@ endif()
 set(netpp_source
 include/internal/epoll/Epoll.h include/internal/epoll/EpollEvent.h include/internal/epoll/EventHandler.h
 include/internal/handlers/Acceptor.h include/internal/handlers/Connector.h include/internal/handlers/TcpConnection.h include/internal/handlers/TimerHandler.h include/internal/handlers/SignalHandler.h include/internal/handlers/RunInLoopHandler.h
-include/internal/support/ThreadBase.hpp include/internal/support/Log.h
+        include/support/ThreadBase.hpp include/internal/support/Log.h
 include/internal/socket/Socket.h include/internal/socket/SocketIO.h
 include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
 include/internal/time/TimeWheel.h

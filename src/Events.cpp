@@ -4,6 +4,9 @@
 
 #include "Events.h"
 #include "support/ThreadPool.hpp"
+#include "Channel.h"
+#include "error/SocketError.h"
+#include "signal/Signals.h"
 
 namespace netpp {
 void Events::onConnected(const std::shared_ptr<netpp::Channel> &channel)

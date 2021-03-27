@@ -23,7 +23,7 @@ class ResourceLimitException : public Exception {
 public:
 	explicit ResourceLimitException(int errCode) noexcept : m_errnoCode{errCode} {}
 	[[nodiscard]] const char* what() const noexcept override;
-	error::SocketError getSocketErrorCode() noexcept;
+	error::SocketError getSocketErrorCode() const noexcept;
 private:
 	int m_errnoCode;
 };
@@ -36,7 +36,7 @@ class SocketException : public Exception {
 public:
 	explicit SocketException(int errCode) noexcept : m_errnoCode{errCode} {}
 	[[nodiscard]] const char* what() const noexcept override;
-	error::SocketError getErrorCode() noexcept;
+	error::SocketError getErrorCode() const noexcept;
 private:
 	int m_errnoCode;
 };

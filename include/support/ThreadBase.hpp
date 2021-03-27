@@ -10,7 +10,7 @@
 #include <iostream>
 #include <future>
 
-namespace netpp::internal::support {
+namespace netpp::support {
 /**
  * @brief Wrap runnable, make it type less
  * 
@@ -18,8 +18,8 @@ namespace netpp::internal::support {
 class RunnableWrapper {
 public:
 	template<typename Runnable, typename ... Args>
-	explicit RunnableWrapper(Runnable runnable, Args ... args)
-			: m_runnable{std::make_unique<ImplType<Runnable, Args...>>(std::move(runnable), args...)}
+	explicit RunnableWrapper(Runnable runnable, Args && ... args)
+			: m_runnable{std::make_unique<ImplType<Runnable, Args...>>(std::move(runnable), std::forward<Args>(args)...)}
 	{}
 
 	RunnableWrapper(RunnableWrapper &&other) noexcept
@@ -55,8 +55,8 @@ public:
 		std::function<void()> r;
 		Runnable _runnable;
 
-		explicit ImplType(Runnable runnable, Args ... args)
-				: r{std::bind(&ImplType<Runnable, Args...>::runRunnable, this, args...)}, _runnable{std::move(runnable)}
+		explicit ImplType(Runnable runnable, Args && ... args)
+				: r{std::bind(&ImplType<Runnable, Args...>::runRunnable, this, std::forward<Args>(args)...)}, _runnable{std::move(runnable)}
 		{}
 
 		ImplType(ImplType &&other) noexcept

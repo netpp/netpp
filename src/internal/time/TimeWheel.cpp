@@ -15,7 +15,7 @@ TimeWheel::TimeWheel(EventLoop *loop, unsigned tickInterval, unsigned bucketCoun
 	}
 }
 
-void TimeWheel::addToWheel(std::shared_ptr<TimeWheelEntry> entry)
+void TimeWheel::addToWheel(const std::shared_ptr<TimeWheelEntry>& entry)
 {
 	if (m_bucketSize != 0)
 	{
@@ -26,7 +26,7 @@ void TimeWheel::addToWheel(std::shared_ptr<TimeWheelEntry> entry)
 	}
 }
 
-void TimeWheel::removeFromWheel(std::weak_ptr<TimeWheelEntry> entry)
+void TimeWheel::removeFromWheel(const std::weak_ptr<TimeWheelEntry>& entry)
 {
 	auto item = entry.lock();
 	if (item)
@@ -39,7 +39,7 @@ void TimeWheel::removeFromWheel(std::weak_ptr<TimeWheelEntry> entry)
 	}
 }
 
-void TimeWheel::renew(std::weak_ptr<TimeWheelEntry> entry)
+void TimeWheel::renew(const std::weak_ptr<TimeWheelEntry>& entry)
 {
 	auto item = entry.lock();
 	if (item && m_bucketSize != 0)

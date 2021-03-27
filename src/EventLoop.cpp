@@ -7,11 +7,13 @@
 #include "internal/support/Log.h"
 #include "internal/handlers/RunInLoopHandler.h"
 #include "internal/time/TimeWheel.h"
+#include "internal/epoll/Epoll.h"
 
 namespace netpp {
 EventLoop::EventLoop()
-	: m_loopRunning{false}
+	: m_loopRunning{false}, m_poll{std::make_unique<internal::epoll::Epoll>()}
 {
+	// make runInLoopHandler needs m_poll, it must made after m_poll
 	m_runInLoop = internal::handlers::RunInLoopHandler::makeRunInLoopHandler(this);
 }
 
@@ -34,7 +36,7 @@ void EventLoop::run()
 		}
 		while (true)
 		{
-			std::vector<internal::epoll::EpollEvent *> activeChannels = m_poll.poll();
+			std::vector<internal::epoll::EpollEvent *> activeChannels = m_poll->poll();
 			for (auto &c : activeChannels)
 				c->handleEvents();
 			activeChannels.clear();

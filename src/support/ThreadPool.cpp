@@ -1,5 +1,6 @@
 #include "support/ThreadPool.hpp"
 #include "internal/support/Log.h"
+#include "support/ThreadBase.hpp"
 
 namespace netpp::support {
 
