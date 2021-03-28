@@ -26,32 +26,32 @@ public:
 	/**
 	 * @brief Construct a EventLoopDispatcher object
 	 * 
-	 * @param loopsCount				how many loops will be created
+	 * @param loopsCount				How many loops will be created
 	 */
 	explicit EventLoopDispatcher(unsigned loopsCount = 1);
 
 	/**
 	 * @brief Construct a EventLoopDispatcher object
 	 * 
-	 * @param loopsCount				how many loops will be created
-	 * @param timeWheelRotateInterval	the time wheel tick interval
-	 * @param timeWheelBucketCount		how many buckets the time wheel contains
+	 * @param loopsCount				How many loops will be created
+	 * @param timeWheelRotateInterval	The time wheel tick interval
+	 * @param timeWheelBucketCount		How many buckets the time wheel contains
 	 */
 	EventLoopDispatcher(unsigned loopsCount, unsigned timeWheelRotateInterval, unsigned timeWheelBucketCount);
 
 	~EventLoopDispatcher();
 
 	/**
-	 * @brief start run all event loop in this dispatcher
-	 * @note one loop will run in caller thread, would block caller
+	 * @brief Start run all event loop in this dispatcher
+	 * @note One loop will run in caller thread, would block caller
 	 * 
 	 */
 	void startLoop();
 
 	/**
-	 * @brief dispatch an event loop
+	 * @brief Dispatch an event loop
 	 * 
-	 * @return EventLoop* 
+	 * @return EventLoop*	The event loop dispatched
 	 */
 	EventLoop *dispatchEventLoop();
 

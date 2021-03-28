@@ -14,43 +14,41 @@ namespace netpp::internal::epoll {
 Epoll::Epoll()
 	: m_activeEvents(32)
 {
-	m_epfd = stub::epoll_create1(EPOLL_CLOEXEC);
+	m_epollFd = stub::epoll_create1(EPOLL_CLOEXEC);
 }
 
 Epoll::~Epoll()
 {
-	stub::close(m_epfd);
+	stub::close(m_epollFd);
 }
 
-std::vector<EpollEvent *> Epoll::poll()
+std::vector<internal::epoll::EpollEvent *>::size_type Epoll::poll(std::vector<internal::epoll::EpollEvent *> &channels)
 {
 	int currentVectorSize = static_cast<int>(m_activeEvents.size());
-	int nums = stub::epoll_wait(m_epfd, &m_activeEvents[0], currentVectorSize, -1);
+	int nums = stub::epoll_wait(m_epollFd, &m_activeEvents[0], currentVectorSize, -1);
 
 	if (nums == -1)
 	{
 		LOG_INFO("epoll_wait failed, poll next time");
-		return std::vector<EpollEvent *>();
+		return 0;
 	}
 	// if event vector is full, expand it, limit vector's max size is less than INT_MAX
 	if ((nums == currentVectorSize) && ((currentVectorSize * 2) < INT_MAX))
 	{
 		LOG_INFO("active events array resize to {}", m_activeEvents.size() * 2);
 		m_activeEvents.resize(m_activeEvents.size() * 2);
+		channels.resize(m_activeEvents.size() * 2);
 	}
-
-	// TODO: try not to return this, avoid memory allocation
-	std::vector<EpollEvent *> activeChannels;
-	for (int i = 0; i < nums; ++i)
+	using VecSize = std::vector<internal::epoll::EpollEvent *>::size_type;
+	auto active = static_cast<VecSize>(nums);
+	for (VecSize i = 0; i < active; ++i)
 	{
-		using EventVectorSize = std::vector<epoll_event>::size_type;
-		auto index = static_cast<EventVectorSize>(i);
-		uint32_t event = m_activeEvents[index].events;
-		auto epollEvent = static_cast<EpollEvent *>(m_activeEvents[index].data.ptr);
+		uint32_t event = m_activeEvents[i].events;
+		auto epollEvent = static_cast<EpollEvent *>(m_activeEvents[i].data.ptr);
 		epollEvent->setActiveEvents(event);
-		activeChannels.emplace_back(epollEvent);
+		channels[i] = epollEvent;
 	}
-	return activeChannels;
+	return active;
 }
 
 void Epoll::updateEvent(EpollEvent *channelEvent)
@@ -77,10 +75,12 @@ void Epoll::updateEvent(EpollEvent *channelEvent)
 			LOG_TRACE("update channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
 			op = EPOLL_CTL_MOD;
 		}
-		stub::epoll_ctl(m_epfd, op, channelFd, &event);
+		stub::epoll_ctl(m_epollFd, op, channelFd, &event);
 	}
 	catch (error::ResourceLimitException &rle)
-	{}
+	{
+		LOG_ERROR("Exception while update events");
+	}
 }
 
 void Epoll::removeEvent(EpollEvent *channelEvent)
@@ -93,7 +93,7 @@ void Epoll::removeEvent(EpollEvent *channelEvent)
 		{
 			LOG_TRACE("remove channel id:{}", channelFd);
 			_events.erase(evIt);
-			if (stub::epoll_ctl(m_epfd, EPOLL_CTL_DEL, channelFd, nullptr) != 0)
+			if (stub::epoll_ctl(m_epollFd, EPOLL_CTL_DEL, channelFd, nullptr) != 0)
 				LOG_ERROR("Failed to remove channel: {} id:{}", std::strerror(errno), channelFd);
 		}
 		else
@@ -102,6 +102,8 @@ void Epoll::removeEvent(EpollEvent *channelEvent)
 		}
 	}
 	catch (error::ResourceLimitException &rle)
-	{}
+	{
+		LOG_ERROR("Exception while remove events");
+	}
 }
 }

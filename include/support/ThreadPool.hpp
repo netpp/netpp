@@ -7,9 +7,11 @@
 #include <future>
 #include <memory>
 #include <type_traits>
-#include "ThreadBase.hpp"
+#include "PooledTask.hpp"
 
 namespace netpp::support {
+template <typename T>
+class ThreadSafeQueue;
 /**
  * @brief The thread pool
  * 
@@ -20,29 +22,29 @@ public:
 	/**
 	 * @brief Create a thread pool, threads will not be created before start() is called
 	 * 
-	 * @param threadNum if <= 0, use hardware thread number, else create n threads
+	 * @param ThreadNum if <= 0, use hardware thread number, else create n threads
 	 */
 	explicit ThreadPool(unsigned threadNum = 0);
 	~ThreadPool();
 
 	/**
-	 * @brief threads will not run until call start()
+	 * @brief Threads will not run until call start()
 	 * 
-	 * @return true		if all threads start success
-	 * @return false 	if one thread failed to start
+	 * @return true		If all threads start success
+	 * @return false 	If one thread failed to start
 	 */
 	bool start();
 
-	/// @brief get runnable return type
+	/// @brief Get runnable return type
 	template <typename Runnable, typename ... Args>
 	using ResultType = typename std::result_of<Runnable(Args...)>::type;
 
 	/**
-	 * @brief add task to thread pool
+	 * @brief Add task to thread pool
 	 * 
-	 * @tparam Runnable		runnable objects
-	 * @tparam Args			params
-	 * @return std::future<RetType>		the future to get runnable return value
+	 * @tparam Runnable		Runnable objects
+	 * @tparam Args			Params to functor
+	 * @return std::future<RetType>		The future to get runnable return value
 	 */
 	template<typename Runnable, typename ... Args,
 			typename RetType = ResultType<Runnable, Args...>,
@@ -52,9 +54,7 @@ public:
 		std::packaged_task<RetType(Args...)> task(runnable);
 		std::future<RetType> res(task.get_future());
 		TaskType wrapper(std::move(task), std::forward<Args>(args)...);
-		++taskCount;
-		workQueue.push(std::move(wrapper));
-		waitTask.notify_one();
+		addTask(std::move(wrapper));
 		return std::move(res);
 	}
 
@@ -62,29 +62,41 @@ public:
 	template<typename Runnable, typename ... Args,
 			typename RetType = ResultType<Runnable, Args...>,
 			typename = typename std::enable_if<std::is_same<RetType, void>::value>::type>
-	void run(Runnable runnable, Args && ... args)
+	std::future<void> run(Runnable runnable, Args && ... args)
 	{
 		std::packaged_task<RetType(Args...)> task(runnable);
+		std::future<void> res(task.get_future());
 		TaskType wrapper(std::move(task), std::forward<Args>(args)...);
-		++taskCount;
-		workQueue.push(std::move(wrapper));
-		waitTask.notify_one();
+		addTask(std::move(wrapper));
+		return res;
 	}
 
-	inline unsigned maxThreadCount() const { return threadNumber; }
-	inline unsigned activeThreadCount() const { return m_activeThreads; }
-	inline unsigned queuedTask() const { return taskCount; }
+	/**
+	 * @brief	How many threads this thread pool created
+	 */
+	[[nodiscard]] inline unsigned maxThreadCount() const { return threadNumber; }
+
+	/**
+	 * @brief	How many threads running task in this moment
+	 */
+	[[nodiscard]] inline unsigned activeThreadCount() const { return m_activeThreads; }
+
+	/**
+	 * @brief	How many task queued in loop
+	 */
+	[[nodiscard]] inline unsigned queuedTask() const { return taskCount; }
 
 	/**
 	 * @brief Block this thread for milliseconds
 	 * 
-	 * @param mSec	pass 0 to block forever until all task is done
+	 * @param mSec	Pass 0 to block forever until all task is done
 	 */
 	void waitForDone(unsigned mSec) const;
 
 private:
 	void workerThread();
 	void runTask();
+	void addTask(TaskType &&task);
 
 	std::atomic_bool m_quit;
 	std::atomic_uint m_activeThreads;
@@ -94,7 +106,7 @@ private:
 	std::mutex m_waitTaskMutex;
 	std::condition_variable waitTask;
 
-	support::ThreadSafeQueue<TaskType> workQueue;
+	std::unique_ptr<ThreadSafeQueue<TaskType>> workQueue;
 	std::vector<std::thread> threads;
 };
 }

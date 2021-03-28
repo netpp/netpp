@@ -37,7 +37,7 @@ public:
 	 * 
 	 * @return A vector of the ready events
 	 */
-	std::vector<EpollEvent *> poll();
+	std::vector<internal::epoll::EpollEvent *>::size_type poll(std::vector<internal::epoll::EpollEvent *> &channels);
 
 	/**
 	 * @brief Add or update epoll watching events
@@ -54,7 +54,7 @@ public:
 	void removeEvent(EpollEvent *channelEvent);
 
 private:
-	int m_epfd;
+	int m_epollFd;
 	std::vector<::epoll_event> m_activeEvents;
 	std::map<int, EpollEvent *> _events;
 };

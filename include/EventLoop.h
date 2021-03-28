@@ -5,9 +5,7 @@
 #ifndef NETPP_EVENTLOOP_H
 #define NETPP_EVENTLOOP_H
 
-#include <unordered_set>
 #include <functional>
-#include <mutex>
 #include <memory>
 
 namespace netpp {
@@ -23,10 +21,10 @@ namespace handlers {
 class RunInLoopHandler;
 }
 }
+class EventLoopImpl;
 class EventLoop {
 public:
 	using Handler = std::shared_ptr<internal::epoll::EventHandler>;
-
 	/**
 	 * @brief Default EventLoop, will not create time wheel
 	 * @throw ResourceLimitException
@@ -69,25 +67,20 @@ public:
 	void removeEventHandlerFromLoop(const Handler& handler);
 
 	/// @brief Get poller object in this loop
-	inline internal::epoll::Epoll *getPoll() { return m_poll.get(); }
+	internal::epoll::Epoll *getPoll();
 
 	/**
 	 * @brief Get time wheel in this loop
 	 * @note It could be nullptr if not time wheel was created
 	 * 
 	 */
-	internal::time::TimeWheel *getTimeWheel() const { return m_kickIdleConnectionWheel.get(); }
+	[[nodiscard]] internal::time::TimeWheel *getTimeWheel() const { return m_kickIdleConnectionWheel.get(); }
 
 	/// @brief Runs method in event loop
 	void runInLoop(std::function<void()> functor);
 
 private:
-	std::atomic_flag m_loopRunning;
-	std::unique_ptr<internal::epoll::Epoll> m_poll;
-
-	std::mutex m_handlersMutex;	// guard m_handlers
-	std::unordered_set<Handler> m_handlers;	// epoll events handlers
-
+	std::unique_ptr<EventLoopImpl> m_impl;
 	std::shared_ptr<internal::handlers::RunInLoopHandler> m_runInLoop;
 	std::unique_ptr<internal::time::TimeWheel> m_kickIdleConnectionWheel;
 };

@@ -8,10 +8,28 @@
 #include "internal/handlers/RunInLoopHandler.h"
 #include "internal/time/TimeWheel.h"
 #include "internal/epoll/Epoll.h"
+#include <mutex>
+#include <unordered_set>
 
 namespace netpp {
+class EventLoopImpl {
+public:
+	EventLoopImpl();
+	void start();
+	void add(const EventLoop::Handler &handler);
+	void remove(const EventLoop::Handler &handler);
+	internal::epoll::Epoll *getPoll() { return m_poll.get(); }
+
+private:
+	std::atomic_flag m_loopRunning;
+	std::unique_ptr<internal::epoll::Epoll> m_poll;
+
+	std::mutex m_handlersMutex;	// guard m_handlers
+	std::unordered_set<EventLoop::Handler> m_handlers;	// epoll events handlers
+};
+
 EventLoop::EventLoop()
-	: m_loopRunning{false}, m_poll{std::make_unique<internal::epoll::Epoll>()}
+	: m_impl{std::make_unique<EventLoopImpl>()}
 {
 	// make runInLoopHandler needs m_poll, it must made after m_poll
 	m_runInLoop = internal::handlers::RunInLoopHandler::makeRunInLoopHandler(this);
@@ -27,6 +45,35 @@ EventLoop::~EventLoop() = default;
 
 void EventLoop::run()
 {
+	m_impl->start();
+}
+
+void EventLoop::addEventHandlerToLoop(const Handler &handler)
+{
+	m_impl->add(handler);
+}
+
+void EventLoop::removeEventHandlerFromLoop(const Handler &handler)
+{
+	m_impl->remove(handler);
+}
+
+void EventLoop::runInLoop(std::function<void()> functor)
+{
+	m_runInLoop->addPendingFunction(std::move(functor));
+}
+
+internal::epoll::Epoll *EventLoop::getPoll()
+{
+	return m_impl->getPoll();
+}
+
+EventLoopImpl::EventLoopImpl()
+	: m_loopRunning{false}, m_poll{std::make_unique<internal::epoll::Epoll>()}
+{}
+
+void EventLoopImpl::start()
+{
 	try
 	{
 		if (m_loopRunning.test_and_set(std::memory_order_consume))
@@ -36,9 +83,13 @@ void EventLoop::run()
 		}
 		while (true)
 		{
-			std::vector<internal::epoll::EpollEvent *> activeChannels = m_poll->poll();
-			for (auto &c : activeChannels)
-				c->handleEvents();
+			std::vector<internal::epoll::EpollEvent *> activeChannels{4};
+			using ChannelSize = std::vector<internal::epoll::EpollEvent *>::size_type;
+			ChannelSize activeCount = m_poll->poll(activeChannels);
+			for (ChannelSize i = 0; i < activeCount; ++i)
+				activeChannels[i]->handleEvents();
+//			for (auto &c : activeChannels)
+//				c->handleEvents();
 			activeChannels.clear();
 		}
 	}
@@ -50,20 +101,15 @@ void EventLoop::run()
 	}
 }
 
-void EventLoop::addEventHandlerToLoop(const Handler &handler)
+void EventLoopImpl::add(const EventLoop::Handler &handler)
 {
 	std::lock_guard lck(m_handlersMutex);
 	m_handlers.insert(handler);
 }
 
-void EventLoop::removeEventHandlerFromLoop(const Handler &handler)
+void EventLoopImpl::remove(const EventLoop::Handler &handler)
 {
 	std::lock_guard lck(m_handlersMutex);
 	m_handlers.erase(handler);
-}
-
-void EventLoop::runInLoop(std::function<void()> functor)
-{
-	m_runInLoop->addPendingFunction(std::move(functor));
 }
 }

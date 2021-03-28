@@ -81,7 +81,8 @@ TEST_F(RunInLoopTest, RunFunctorInLoopTest)
 	ev[0].data.ptr = static_cast<void *>(epollEvent);
 	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
+	std::vector<netpp::internal::epoll::EpollEvent *> activeChannels{4};
+	epoll->poll(activeChannels);
 
 	epollEvent->handleEvents();
 	EXPECT_EQ(runInLoopCount, 1);
@@ -96,7 +97,7 @@ TEST_F(RunInLoopTest, RunFunctorInLoopTest)
 	});
 	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
+	epoll->poll(activeChannels);
 
 	epollEvent->handleEvents();
 	EXPECT_EQ(runInLoopCount, 3);

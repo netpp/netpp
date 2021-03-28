@@ -1,6 +1,6 @@
 #include "support/ThreadPool.hpp"
 #include "internal/support/Log.h"
-#include "support/ThreadBase.hpp"
+#include "support/ThreadSafeQueue.hpp"
 
 namespace netpp::support {
 
@@ -16,7 +16,7 @@ ThreadPool::~ThreadPool()
 }
 
 ThreadPool::ThreadPool(unsigned threadNum)
-	: m_quit{false}, m_activeThreads{0}, taskCount{0}
+	: m_quit{false}, m_activeThreads{0}, taskCount{0}, workQueue{std::make_unique<ThreadSafeQueue<TaskType>>()}
 {
 	if (threadNum <= 0)
 		threadNumber = std::thread::hardware_concurrency();
@@ -44,7 +44,7 @@ void ThreadPool::workerThread()
 {
 	while (!m_quit)
 	{
-		if (workQueue.empty())
+		if (workQueue->empty())
 		{
 			std::unique_lock lck(m_waitTaskMutex);
 			// maybe executing task will ThreadPool is destruction, did not receive notify
@@ -59,7 +59,7 @@ void ThreadPool::runTask()
 	try
 	{
 		TaskType task;
-		if (workQueue.tryPop(task))
+		if (workQueue->tryPop(task))
 		{
 			++m_activeThreads;
 			--taskCount;
@@ -84,5 +84,12 @@ void ThreadPool::waitForDone(unsigned mSec) const
 		while (taskCount != 0 || m_activeThreads != 0)
 			std::this_thread::yield();
 	}
+}
+
+void ThreadPool::addTask(TaskType &&task)
+{
+	++taskCount;
+	workQueue->push(std::move(task));
+	waitTask.notify_one();
 }
 }

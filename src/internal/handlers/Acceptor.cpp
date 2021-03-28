@@ -55,9 +55,9 @@ void Acceptor::handleIn()
 {
 	try
 	{
-		std::unique_ptr<socket::Socket> commingConnection = m_socket->accept();
+		std::unique_ptr<socket::Socket> comingConnection = m_socket->accept();
 		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
-																	std::move(commingConnection),
+																	std::move(comingConnection),
 																	m_events).lock();
 		std::shared_ptr<Channel> channel = connection->getIOChannel();	// connection ptr will not expire here
 		LOG_TRACE("New connection on Socket {}", m_socket->fd());

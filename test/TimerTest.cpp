@@ -227,7 +227,8 @@ TEST_F(TimerTest, TimerTriggerTest)
 	ev[0].data.ptr = static_cast<void *>(timerHandler);
 	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
+	std::vector<netpp::internal::epoll::EpollEvent *> activeChannels{4};
+	epoll->poll(activeChannels);
 
 	EXPECT_CALL(mock, mock_read).WillOnce(testing::Return(1));
 	timerHandler->handleEvents();

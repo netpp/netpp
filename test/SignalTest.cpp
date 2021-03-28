@@ -190,7 +190,8 @@ TEST_F(SignalMockTest, EnableHandleSignalTest)
 	netpp::signal::SignalWatcher::with(&dispatcher, netpp::Events(std::make_shared<SigEvent>()));
 	EXPECT_CALL(mock, mock_epoll_wait(testing::_, testing::_, testing::_, testing::_))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	epoll->poll();
+	std::vector<netpp::internal::epoll::EpollEvent *> activeChannels{4};
+	epoll->poll(activeChannels);
 	EXPECT_CALL(mock, mock_epoll_ctl).Times(1);
 	epollEvent->handleEvents();
 

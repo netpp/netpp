@@ -7,7 +7,7 @@
 
 #include <string>
 
-#ifdef USE_LOG
+#ifdef NETPP_USE_LOG
 #undef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 

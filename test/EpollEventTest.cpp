@@ -141,7 +141,7 @@ TEST_F(EpollEventTest, PollEvent)
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLHUP), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN | EPOLLOUT), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
 	event->active(netpp::internal::epoll::Event::ERR);
-	Handler &h = *handler.get();
+	Handler &h = *handler;
 
 	EXPECT_CALL(h, handleErr).Times(1);
 	EXPECT_CALL(h, handleRdhup).Times(0);
@@ -149,7 +149,8 @@ TEST_F(EpollEventTest, PollEvent)
 	EXPECT_CALL(h, handleOut).Times(0);
 	EXPECT_CALL(h, handlePri).Times(0);
 	EXPECT_CALL(h, handleHup).Times(0);
-	epoll->poll();
+	std::vector<netpp::internal::epoll::EpollEvent *> activeChannels{4};
+	epoll->poll(activeChannels);
 	event->handleEvents();
 
 	EXPECT_CALL(h, handleErr).Times(0);
@@ -158,7 +159,7 @@ TEST_F(EpollEventTest, PollEvent)
 	EXPECT_CALL(h, handleOut).Times(0);
 	EXPECT_CALL(h, handlePri).Times(0);
 	EXPECT_CALL(h, handleHup).Times(0);
-	epoll->poll();
+	epoll->poll(activeChannels);
 	event->handleEvents();
 
 	EXPECT_CALL(h, handleErr).Times(0);
@@ -167,7 +168,7 @@ TEST_F(EpollEventTest, PollEvent)
 	EXPECT_CALL(h, handleOut).Times(0);
 	EXPECT_CALL(h, handlePri).Times(0);
 	EXPECT_CALL(h, handleHup).Times(0);
-	epoll->poll();
+	epoll->poll(activeChannels);
 	event->handleEvents();
 
 	EXPECT_CALL(h, handleErr).Times(0);
@@ -176,7 +177,7 @@ TEST_F(EpollEventTest, PollEvent)
 	EXPECT_CALL(h, handleOut).Times(1);
 	EXPECT_CALL(h, handlePri).Times(0);
 	EXPECT_CALL(h, handleHup).Times(0);
-	epoll->poll();
+	epoll->poll(activeChannels);
 	event->handleEvents();
 
 	EXPECT_CALL(h, handleErr).Times(0);
@@ -185,7 +186,7 @@ TEST_F(EpollEventTest, PollEvent)
 	EXPECT_CALL(h, handleOut).Times(0);
 	EXPECT_CALL(h, handlePri).Times(1);
 	EXPECT_CALL(h, handleHup).Times(0);
-	epoll->poll();
+	epoll->poll(activeChannels);
 	event->handleEvents();
 
 	EXPECT_CALL(h, handleErr).Times(0);
@@ -194,7 +195,7 @@ TEST_F(EpollEventTest, PollEvent)
 	EXPECT_CALL(h, handleOut).Times(0);
 	EXPECT_CALL(h, handlePri).Times(0);
 	EXPECT_CALL(h, handleHup).Times(1);
-	epoll->poll();
+	epoll->poll(activeChannels);
 	event->handleEvents();
 
 	EXPECT_CALL(h, handleErr).Times(0);
@@ -203,7 +204,7 @@ TEST_F(EpollEventTest, PollEvent)
 	EXPECT_CALL(h, handleOut).Times(1);
 	EXPECT_CALL(h, handlePri).Times(0);
 	EXPECT_CALL(h, handleHup).Times(0);
-	epoll->poll();
+	epoll->poll(activeChannels);
 	event->handleEvents();
 }
 

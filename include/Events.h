@@ -43,9 +43,9 @@ ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
 }
 
 /**
- * @brief netpp events, callbacks.
+ * @brief Netpp events, callbacks.
  * 
- * user will define their event handler class to accept comming events,
+ * User will define their event handler class to accept comming events,
  * who's methods should have same signature in this class.
  * 
  * User-defined handler mighit run in different thread, make sure it's 
@@ -68,7 +68,7 @@ public:
 	 * 
 	 * @tparam Impl		The user-defined event handler
 	 * @param impl		shared_ptr to event handler, all event loop will shared same instance, make sure it's thread safe
-	 * @param threads	threads event handler will use, <= 0 will run handler in loop thread
+	 * @param threads	Threads event handler will use, <= 0 will run handler in loop thread
 	 */
 	template<typename Impl>
 	explicit Events(std::shared_ptr<Impl> impl, int threads = 0)
@@ -91,44 +91,44 @@ public:
 	}
 
 	/**
-	 * @brief handle connected event, triggered when a tcp connection just established
+	 * @brief Handle connected event, triggered when a tcp connection just established
 	 * 
-	 * @param channel	provide a way sending data to pear, as connection just established, 
+	 * @param channel	Provide a way sending data to pear, as connection just established,
 	 * 					the buffer should by empty, and not readable
 	 */
 	void onConnected(const std::shared_ptr<netpp::Channel> &channel);
 
 	/**
-	 * @brief handle received message, triggered when pear send some data
+	 * @brief Handle received message, triggered when pear send some data
 	 * 
-	 * @param channel	to read or write connection
+	 * @param channel	To read or write connection
 	 */
 	void onMessageReceived(const std::shared_ptr<netpp::Channel> &channel);
 
 	/**
-	 * @brief triggered all data in buffer has wrote out
+	 * @brief Triggered all data in buffer has wrote out
 	 * 
 	 */
 	void onWriteCompleted();
 
 	/**
-	 * @brief handle disconnected, triggered when a tcp connection has being closed
+	 * @brief Handle disconnected, triggered when a tcp connection has being closed
 	 * 
 	 */
 	void onDisconnect();
 
 	/**
-	 * @brief triggered when some error occurred
+	 * @brief Triggered when some error occurred
 	 * 
-	 * @param code		the error code
+	 * @param code		The error code
 	 */
 	// TODO: define and list what error can be handled here
 	void onError(error::SocketError code);
 
 	/**
-	 * @brief if signal watcher is enabled, watched signals will be handled here
+	 * @brief If signal watcher is enabled, watched signals will be handled here
 	 * 
-	 * @param signal	the signal number
+	 * @param signal	The signal number
 	 */
 	void onSignal(signal::Signals signal);
 

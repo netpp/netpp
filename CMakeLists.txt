@@ -4,18 +4,18 @@ project(netpp)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion")
 
-option(ENABLE_TEST "enable test" ON)
-option(USE_LOG "enable log" ON)
+option(NETPP_ENABLE_TEST "enable test" ON)
+option(NETPP_USE_LOG "enable log" ON)
 
 add_subdirectory(example)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-if(ENABLE_TEST STREQUAL ON)
+if(NETPP_ENABLE_TEST STREQUAL ON)
     message(STATUS "Netpp: testing is enabled, add target test")
     add_subdirectory(test)
 endif()
 
-if(USE_LOG STREQUAL ON)
+if(NETPP_USE_LOG STREQUAL ON)
     message(STATUS "Netpp: logging is enabled")
     add_definitions()
     add_subdirectory(thirdParty/spdlog)
@@ -25,7 +25,7 @@ endif()
 set(netpp_source
 include/internal/epoll/Epoll.h include/internal/epoll/EpollEvent.h include/internal/epoll/EventHandler.h
 include/internal/handlers/Acceptor.h include/internal/handlers/Connector.h include/internal/handlers/TcpConnection.h include/internal/handlers/TimerHandler.h include/internal/handlers/SignalHandler.h include/internal/handlers/RunInLoopHandler.h
-        include/support/ThreadBase.hpp include/internal/support/Log.h
+include/support/ThreadSafeQueue.hpp include/internal/support/Log.h
 include/internal/socket/Socket.h include/internal/socket/SocketIO.h
 include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
 include/internal/time/TimeWheel.h
@@ -45,7 +45,7 @@ src/signal/Signals.cpp src/signal/SignalWatcher.cpp
 src/error/Exception.cpp src/error/SocketError.cpp
 src/support/ThreadPool.cpp
 src/time/Timer.cpp
-src/Address.cpp src/ByteArray.cpp src/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp)
+src/Address.cpp src/ByteArray.cpp src/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp include/support/PooledTask.hpp)
 
 add_library(netpp SHARED ${netpp_source})
 add_library(netpp_static STATIC ${netpp_source})
