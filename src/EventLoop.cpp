@@ -18,11 +18,11 @@ public:
 	void start();
 	void add(const EventLoop::Handler &handler);
 	void remove(const EventLoop::Handler &handler);
-	internal::epoll::Epoll *getPoll() { return m_poll.get(); }
+	internal::epoll::Epoll *getPoll() { return &m_poll; }
 
 private:
 	std::atomic_flag m_loopRunning;
-	std::unique_ptr<internal::epoll::Epoll> m_poll;
+	internal::epoll::Epoll m_poll;
 
 	std::mutex m_handlersMutex;	// guard m_handlers
 	std::unordered_set<EventLoop::Handler> m_handlers;	// epoll events handlers
@@ -69,7 +69,7 @@ internal::epoll::Epoll *EventLoop::getPoll()
 }
 
 EventLoopImpl::EventLoopImpl()
-	: m_loopRunning{false}, m_poll{std::make_unique<internal::epoll::Epoll>()}
+	: m_loopRunning{false}
 {}
 
 void EventLoopImpl::start()
@@ -85,7 +85,7 @@ void EventLoopImpl::start()
 		{
 			std::vector<internal::epoll::EpollEvent *> activeChannels{4};
 			using ChannelSize = std::vector<internal::epoll::EpollEvent *>::size_type;
-			ChannelSize activeCount = m_poll->poll(activeChannels);
+			ChannelSize activeCount = m_poll.poll(activeChannels);
 			for (ChannelSize i = 0; i < activeCount; ++i)
 				activeChannels[i]->handleEvents();
 //			for (auto &c : activeChannels)

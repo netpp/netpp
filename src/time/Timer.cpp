@@ -53,7 +53,7 @@ Timer::Timer(EventLoop *loop)
 
 	m_handler = std::make_shared<internal::handlers::TimerHandler>(this);
 	m_handler->m_epollEvent = make_unique<internal::epoll::EpollEvent>(loop->getPoll(), m_handler, m_impl->timerFd());
-	m_handler->m_epollEvent->active(internal::epoll::Event::IN);
+	m_handler->m_epollEvent->active(internal::epoll::EpollEv::IN);
 	m_handler->_loopThisHandlerLiveIn = loop;
 }
 

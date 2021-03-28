@@ -7,8 +7,6 @@
 #include "internal/support/Log.h"
 extern "C" {
 #include <sys/signalfd.h>
-
-#include <utility>
 }
 
 namespace netpp::internal::handlers {
@@ -63,7 +61,7 @@ std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop,
 
 	loop->runInLoop([signalHandler]{
 		signalHandler->_loopThisHandlerLiveIn->addEventHandlerToLoop(signalHandler);
-		signalHandler->m_epollEvent->active(epoll::Event::IN);
+		signalHandler->m_epollEvent->active(epoll::EpollEv::IN);
 		LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
 	});
 	return signalHandler;

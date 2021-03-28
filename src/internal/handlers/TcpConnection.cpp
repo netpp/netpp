@@ -18,7 +18,7 @@ namespace netpp::internal::handlers {
 /**
  * @brief Time wheel for connection who have not transfer any data in few time,
  * try to close it on timeout
- * 
+ *
  */
 class IdleConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
@@ -44,7 +44,7 @@ private:
 /**
  * @brief Time wheel for connection who's half closed(during Four-Way-Wavehand),
  * have not transfer any data in few time, force close it on timeout
- * 
+ *
  */
 class HalfCloseConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
@@ -104,7 +104,7 @@ void TcpConnection::handleOut()
 		// TODO: handle read/write timeout
 		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))
 		{
-			m_epollEvent->deactive(epoll::Event::OUT);
+			m_epollEvent->deactive(epoll::EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?
 			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
@@ -128,7 +128,7 @@ void TcpConnection::handleOut()
 void TcpConnection::handleErr()
 {
 	LOG_ERROR("Socket {} error", m_socket->fd());
-	m_events.onError(error::SocketError::E_EPOLLERR);
+	m_events.onError(error::SocketError::E_POLLERR);
 }
 
 void TcpConnection::handleRdhup()
@@ -159,7 +159,7 @@ void TcpConnection::sendInLoop()
 		if (connection)
 		{
 			connection->m_isWaitWriting = true;
-			connection->m_epollEvent->active(epoll::Event::OUT);
+			connection->m_epollEvent->active(epoll::EpollEv::OUT);
 		}
 	});
 }
@@ -222,7 +222,7 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	connection->_loopThisHandlerLiveIn = loop;
 	// set up events
 	loop->addEventHandlerToLoop(connection);
-	eventPtr->active({epoll::Event::IN, epoll::Event::ERR, epoll::Event::RDHUP});
+	eventPtr->active({epoll::EpollEv::IN, epoll::EpollEv::ERR, epoll::EpollEv::RDHUP});
 	// set up kick idle connection here
 	auto wheel = loop->getTimeWheel();
 	if (wheel)

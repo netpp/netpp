@@ -66,44 +66,44 @@ TEST_F(EpollEventTest, ActiveAndDeactiveEvent)
 {
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLERR)))
 		.Times(1);
-	event->active(netpp::internal::epoll::Event::ERR);
+	event->active(netpp::internal::epoll::EpollEv::ERR);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP)))
 		.Times(1);
-	event->active(netpp::internal::epoll::Event::HUP);
+	event->active(netpp::internal::epoll::EpollEv::HUP);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN)))
 		.Times(1);
-	event->active(netpp::internal::epoll::Event::IN);
+	event->active(netpp::internal::epoll::EpollEv::IN);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN | EPOLLOUT)))
 		.Times(1);
-	event->active(netpp::internal::epoll::Event::OUT);
+	event->active(netpp::internal::epoll::EpollEv::OUT);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN | EPOLLOUT | EPOLLPRI)))
 		.Times(1);
-	event->active(netpp::internal::epoll::Event::PRI);
+	event->active(netpp::internal::epoll::EpollEv::PRI);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->active(netpp::internal::epoll::Event::RDHUP);
+	event->active(netpp::internal::epoll::EpollEv::RDHUP);
 
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactive(netpp::internal::epoll::Event::ERR);
+	event->deactive(netpp::internal::epoll::EpollEv::ERR);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactive(netpp::internal::epoll::Event::HUP);
+	event->deactive(netpp::internal::epoll::EpollEv::HUP);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactive(netpp::internal::epoll::Event::IN);
+	event->deactive(netpp::internal::epoll::EpollEv::IN);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactive(netpp::internal::epoll::Event::OUT);
+	event->deactive(netpp::internal::epoll::EpollEv::OUT);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLRDHUP)))
 		.Times(1);
-	event->deactive(netpp::internal::epoll::Event::PRI);
+	event->deactive(netpp::internal::epoll::EpollEv::PRI);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(0u)))
 		.Times(1);
-	event->deactive(netpp::internal::epoll::Event::RDHUP);
+	event->deactive(netpp::internal::epoll::EpollEv::RDHUP);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(0u)))
 		.Times(1);
-	event->deactive(netpp::internal::epoll::Event::RDHUP);
+	event->deactive(netpp::internal::epoll::EpollEv::RDHUP);
 }
 
 TEST_F(EpollEventTest, RemoveEvent)
@@ -115,7 +115,7 @@ TEST_F(EpollEventTest, RemoveEvent)
 
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLERR)))
 		.Times(1);
-	event->active(netpp::internal::epoll::Event::ERR);
+	event->active(netpp::internal::epoll::EpollEv::ERR);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
 		.Times(1);
 	event->disable();
@@ -140,7 +140,7 @@ TEST_F(EpollEventTest, PollEvent)
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLPRI), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLHUP), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN | EPOLLOUT), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	event->active(netpp::internal::epoll::Event::ERR);
+	event->active(netpp::internal::epoll::EpollEv::ERR);
 	Handler &h = *handler;
 
 	EXPECT_CALL(h, handleErr).Times(1);

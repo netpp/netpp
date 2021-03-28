@@ -19,7 +19,7 @@ class EventHandler;
  * @brief Supported epoll events
  * 
  */
-enum class Event {
+enum class EpollEv {
 	IN		= 0x01,
 	OUT		= 0x02,
 	RDHUP	= 0x04,
@@ -42,10 +42,10 @@ public:
 	 */
 	void disable();
 
-	void active(Event events) { active({events}); }
-	void deactive(Event events) { deactive({events}); }
-	void active(std::initializer_list<Event> events);
-	void deactive(std::initializer_list<Event> events);
+	void active(EpollEv event) { active({event}); }
+	void deactive(EpollEv event) { deactive({event}); }
+	void active(std::initializer_list<EpollEv> events);
+	void deactive(std::initializer_list<EpollEv> events);
 
 	void handleEvents();
 

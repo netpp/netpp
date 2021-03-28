@@ -7,15 +7,11 @@
 #include "EventLoopDispatcher.h"
 #include <iostream>
 #include "Channel.h"
-#include "EventLoopDispatcher.h"
-#include "support/ThreadPool.hpp"
 
 class Echo {
 public:
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
-		// long-term operation is not allowed in event handler
-		// it will cause event loop block!!
 		std::size_t size = channel->availableRead();
 		std::string data = channel->retrieveString(size);
 		std::cout << "Received size "<< size << " data " << data;

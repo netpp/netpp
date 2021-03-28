@@ -28,7 +28,7 @@ void Acceptor::listen()
 			if (acceptor->m_state == socket::TcpState::Closed)
 			{
 				acceptor->_loopThisHandlerLiveIn->addEventHandlerToLoop(acceptor);
-				acceptor->m_epollEvent->active(epoll::Event::IN);
+				acceptor->m_epollEvent->active(epoll::EpollEv::IN);
 				acceptor->m_socket->listen();
 				acceptor->m_state = socket::TcpState::Established;
 			}

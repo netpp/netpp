@@ -30,7 +30,7 @@ void Connector::connect()
 			{
 				connector->_loopThisHandlerLiveIn->addEventHandlerToLoop(connector);
 				// connect may success immediately, manually enable read
-				connector->m_epollEvent->active(epoll::Event::OUT);
+				connector->m_epollEvent->active(epoll::EpollEv::OUT);
 				connector->m_socket->connect();
 				connector->m_state = socket::TcpState::Connecting;
 			}
@@ -145,7 +145,7 @@ void Connector::setupTimer()
 		auto oldSocket = std::move(m_socket);
 		m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
 		m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), shared_from_this(), m_socket->fd());
-		m_epollEvent->active(epoll::Event::OUT);
+		m_epollEvent->active(epoll::EpollEv::OUT);
 		connect();
 	});
 	m_retryTimer->setSingleShot(false);

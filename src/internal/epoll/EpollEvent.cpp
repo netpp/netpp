@@ -36,35 +36,35 @@ void EpollEvent::handleEvents()
 	}
 }
 
-void EpollEvent::active(std::initializer_list<Event> events)
+void EpollEvent::active(std::initializer_list<EpollEv> events)
 {
 	for (auto event : events)
 	{
 		switch (event)
 		{
-			case Event::IN:		m_watchingEvents.events |= EPOLLIN;		break;
-			case Event::OUT:	m_watchingEvents.events |= EPOLLOUT;	break;
-			case Event::RDHUP:	m_watchingEvents.events |= EPOLLRDHUP;	break;
-			case Event::PRI:	m_watchingEvents.events |= EPOLLPRI;	break;
-			case Event::ERR:	m_watchingEvents.events |= EPOLLERR;	break;
-			case Event::HUP:	m_watchingEvents.events |= EPOLLHUP;	break;
+			case EpollEv::IN: m_watchingEvents.events |= EPOLLIN;		break;
+			case EpollEv::OUT: m_watchingEvents.events |= EPOLLOUT;	break;
+			case EpollEv::RDHUP: m_watchingEvents.events |= EPOLLRDHUP;	break;
+			case EpollEv::PRI: m_watchingEvents.events |= EPOLLPRI;	break;
+			case EpollEv::ERR: m_watchingEvents.events |= EPOLLERR;	break;
+			case EpollEv::HUP: m_watchingEvents.events |= EPOLLHUP;	break;
 		}
 	}
 	_poll->updateEvent(this);
 }
 
-void EpollEvent::deactive(std::initializer_list<Event> events)
+void EpollEvent::deactive(std::initializer_list<EpollEv> events)
 {
 	for (auto event : events)
 	{
 		switch (event)
 		{
-			case Event::IN:		m_watchingEvents.events &= ~EPOLLIN;	break;
-			case Event::OUT:	m_watchingEvents.events &= ~EPOLLOUT;	break;
-			case Event::RDHUP:	m_watchingEvents.events &= ~EPOLLRDHUP;	break;
-			case Event::PRI:	m_watchingEvents.events &= ~EPOLLPRI;	break;
-			case Event::ERR:	m_watchingEvents.events &= ~EPOLLERR;	break;
-			case Event::HUP:	m_watchingEvents.events &= ~EPOLLHUP;	break;
+			case EpollEv::IN: m_watchingEvents.events &= ~EPOLLIN;	break;
+			case EpollEv::OUT: m_watchingEvents.events &= ~EPOLLOUT;	break;
+			case EpollEv::RDHUP: m_watchingEvents.events &= ~EPOLLRDHUP;	break;
+			case EpollEv::PRI: m_watchingEvents.events &= ~EPOLLPRI;	break;
+			case EpollEv::ERR: m_watchingEvents.events &= ~EPOLLERR;	break;
+			case EpollEv::HUP: m_watchingEvents.events &= ~EPOLLHUP;	break;
 		}
 	}
 	_poll->updateEvent(this);

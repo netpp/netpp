@@ -53,7 +53,7 @@ std::shared_ptr<RunInLoopHandler> RunInLoopHandler::makeRunInLoopHandler(EventLo
 	auto handler = std::make_shared<RunInLoopHandler>(loop);
 	handler->m_epollEvent = std::make_unique<epoll::EpollEvent>(loop->getPoll(), handler, handler->m_wakeUpFd);
 	loop->addEventHandlerToLoop(handler);
-	handler->m_epollEvent->active(epoll::Event::IN);
+	handler->m_epollEvent->active(epoll::EpollEv::IN);
 	return handler;
 }
 }

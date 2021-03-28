@@ -1,4 +1,5 @@
 #include "signal/SignalWatcher.h"
+#include "signal/Signals.h"
 #include "Events.h"
 #include "EventLoopDispatcher.h"
 #include <iostream>
