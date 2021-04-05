@@ -75,7 +75,7 @@ void ByteArray::writeDouble(double value)
 	writeRaw(reinterpret_cast<char *>(&value), sizeof(double));
 }
 
-void ByteArray::writeString(std::string value)
+void ByteArray::writeString(const std::string &value)
 {
 	writeRaw(value.data(), sizeof(char) * (value.size()));
 }

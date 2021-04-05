@@ -108,7 +108,7 @@ void TcpConnection::handleOut()
 			// TODO: do we need high/low watermark to notify?
 			m_events.onWriteCompleted();
 			m_isWaitWriting = false;
-			if (m_state == socket::TcpState::Closing)
+			if (m_state.load(std::memory_order_acquire) == socket::TcpState::Closing)
 				closeWrite();
 		}
 	}
@@ -146,7 +146,7 @@ void TcpConnection::handleRdhup()
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
-	m_state = socket::TcpState::Closed;
+	m_state.store(socket::TcpState::Closed, std::memory_order_release);
 }
 
 void TcpConnection::sendInLoop()
@@ -176,7 +176,7 @@ void TcpConnection::closeAfterWriteCompleted()
 		{
 			if (!connection->m_isWaitWriting)
 				connection->closeWrite();
-			connection->m_state = socket::TcpState::Closing;
+			connection->m_state.store(socket::TcpState::Closing, std::memory_order_release);
 		}
 	});
 }

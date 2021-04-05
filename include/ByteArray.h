@@ -68,7 +68,7 @@ public:
 	void writeUInt64(uint64_t value);
 	void writeFloat(float value);
 	void writeDouble(double value);
-	void writeString(std::string value);
+	void writeString(const std::string &value);
 	void writeRaw(const char *data, std::size_t length);
 	// TODO: prepend data
 	// TODO: support read until meet certain value

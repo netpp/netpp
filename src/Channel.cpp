@@ -5,6 +5,7 @@
 #include "Channel.h"
 #include "internal/handlers/TcpConnection.h"
 #include "ByteArray.h"
+#include "internal/socket/SocketEnums.h"
 
 namespace netpp {
 Channel::Channel(std::weak_ptr<internal::handlers::TcpConnection> connection,
@@ -26,41 +27,137 @@ void Channel::close()
 		connection->closeAfterWriteCompleted();
 }
 
-void Channel::writeInt8(int8_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeInt8(value); }
+bool Channel::writeInt8(int8_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeInt8(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeInt16(int16_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeInt16(value); }
+bool Channel::writeInt16(int16_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeInt16(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeInt32(int32_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeInt32(value); }
+bool Channel::writeInt32(int32_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeInt32(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeInt64(int64_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeInt64(value); }
+bool Channel::writeInt64(int64_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeInt64(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeUInt8(uint8_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeUInt8(value); }
+bool Channel::writeUInt8(uint8_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeUInt8(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeUInt16(uint16_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeUInt16(value); }
+bool Channel::writeUInt16(uint16_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeUInt16(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeUInt32(uint32_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeUInt32(value); }
+bool Channel::writeUInt32(uint32_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeUInt32(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeUInt64(uint64_t value)
-{ auto array = _writeArray.lock(); if (array) array->writeUInt64(value); }
+bool Channel::writeUInt64(uint64_t value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeUInt64(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeFloat(float value)
-{ auto array = _writeArray.lock(); if (array) array->writeFloat(value); }
+bool Channel::writeFloat(float value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeFloat(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeDouble(double value)
-{ auto array = _writeArray.lock(); if (array) array->writeDouble(value); }
+bool Channel::writeDouble(double value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeDouble(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeString(std::string value)
-{ auto array = _writeArray.lock(); if (array) array->writeString(std::move(value)); }
+bool Channel::writeString(const std::string &value)
+{
+	auto array = writableArray();
+	if (array)
+	{
+		array->writeString(value);
+		return true;
+	}
+	return false;
+}
 
-void Channel::writeRaw(const char *data, std::size_t length)
-{ auto array = _writeArray.lock(); if (array) array->writeRaw(data, length); }
+bool Channel::writeRaw(const char *data, std::size_t length)
+{
+	auto array = _writeArray.lock();
+	if (array)
+	{
+		array->writeRaw(data, length);
+		return true;
+	}
+	return false;
+}
 
 std::size_t Channel::availableRead() const
 { auto array = _readArray.lock(); if (array) return array->readableBytes(); else return 0; }
@@ -100,4 +197,14 @@ std::string Channel::retrieveString(std::size_t length)
 
 std::size_t Channel::retrieveRaw(char *buffer, std::size_t length)
 { auto array = _readArray.lock(); if (array) return array->retrieveRaw(buffer, length); else return 0; }
+
+std::shared_ptr<ByteArray> Channel::writableArray()
+{
+	auto connection = _connection.lock();
+	if (connection && connection->currentState() == internal::socket::TcpState::Established)
+	{
+		return _writeArray.lock();
+	}
+	return nullptr;
+}
 }

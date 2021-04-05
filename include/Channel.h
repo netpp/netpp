@@ -34,19 +34,21 @@ public:
 	
 	/**
 	 * @brief Write to byte array
+	 * @return true		on write success
+	 * @return false	if the connection is closing or closed
 	 */
-	void writeInt8(int8_t value);
-	void writeInt16(int16_t value);
-	void writeInt32(int32_t value);
-	void writeInt64(int64_t value);
-	void writeUInt8(uint8_t value);
-	void writeUInt16(uint16_t value);
-	void writeUInt32(uint32_t value);
-	void writeUInt64(uint64_t value);
-	void writeFloat(float value);
-	void writeDouble(double value);
-	void writeString(std::string value);
-	void writeRaw(const char *data, std::size_t length);
+	bool writeInt8(int8_t value);
+	bool writeInt16(int16_t value);
+	bool writeInt32(int32_t value);
+	bool writeInt64(int64_t value);
+	bool writeUInt8(uint8_t value);
+	bool writeUInt16(uint16_t value);
+	bool writeUInt32(uint32_t value);
+	bool writeUInt64(uint64_t value);
+	bool writeFloat(float value);
+	bool writeDouble(double value);
+	bool writeString(const std::string &value);
+	bool writeRaw(const char *data, std::size_t length);
 
 	// TODO: support sendfile and mmap
 	
@@ -72,6 +74,13 @@ public:
 	std::size_t retrieveRaw(char *buffer, std::size_t length);
 
 private:
+	/**
+	 * @brief Get write array
+	 * @return _writeArray	if connection is available and connection state is Established
+	 * @return nullptr		on other conditions
+	 */
+	std::shared_ptr<ByteArray> writableArray();
+
 	std::weak_ptr<internal::handlers::TcpConnection> _connection;
 	std::weak_ptr<ByteArray> _writeArray;
 	std::weak_ptr<ByteArray> _readArray;

@@ -4,6 +4,7 @@
 #include <memory>
 #include "internal/epoll/EventHandler.h"
 #include "Events.h"
+#include <atomic>
 
 namespace netpp {
 class EventLoop;
@@ -51,6 +52,8 @@ public:
 	 * @return std::shared_ptr<Channel>	the read/write channel to this connection
 	 */
 	std::shared_ptr<Channel> getIOChannel();
+
+	internal::socket::TcpState currentState() { return m_state.load(std::memory_order_acquire); }
 
 	static std::weak_ptr<TcpConnection> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
 									  Events eventsPrototype);
@@ -106,7 +109,7 @@ private:
 	 * * -> Established -> Closing -> Closed
 	 *  make       closeWrite()  handleClose()
 	 */
-	internal::socket::TcpState m_state;
+	std::atomic<internal::socket::TcpState> m_state;
 
 	/// @brief if any data wait for write, the closing should be done later
 	bool m_isWaitWriting;

@@ -37,7 +37,7 @@ void Socket::listen()
 {
 	const sockaddr_in *inetAddr = m_addr.sockAddrIn();
 	stub::bind(m_socketFd, reinterpret_cast<const sockaddr *>(inetAddr), sizeof(::sockaddr_in));
-	stub::listen(m_socketFd, 10);
+	stub::listen(m_socketFd, SOMAXCONN);
 	LOG_TRACE("Start listen");
 }
 
@@ -83,7 +83,7 @@ error::SocketError Socket::getError() const noexcept
 #ifndef LAST_SOCKET_ERROR_DEF
 #define LAST_SOCKET_ERROR_DEF(code) SOCKET_ERROR_DEF(code)
 #endif
-	error::SocketError socketError = error::SocketError::E_UNKOWN;
+	error::SocketError socketError = error::SocketError::E_NOERROR;
 	int optval;
 	auto optlen = static_cast<socklen_t>(sizeof optval);
 	if (stub::getsockopt(m_socketFd, SOL_SOCKET, SO_ERROR, &optval, &optlen) == 0)
