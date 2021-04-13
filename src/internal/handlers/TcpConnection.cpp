@@ -23,8 +23,9 @@ namespace netpp::internal::handlers {
 class IdleConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
 	explicit IdleConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: internal::time::TimeWheelEntry("idle"), _connection{std::move(connection)}
+			: internal::time::TimeWheelEntry("idle"), _connection{std::move(connection)}
 	{}
+
 	~IdleConnectionWheelEntry() override = default;
 
 	void onTimeout() override
@@ -49,8 +50,9 @@ private:
 class HalfCloseConnectionWheelEntry : public internal::time::TimeWheelEntry {
 public:
 	explicit HalfCloseConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-		: internal::time::TimeWheelEntry("half close"), _connection{std::move(connection)}
+			: internal::time::TimeWheelEntry("half close"), _connection{std::move(connection)}
 	{}
+
 	~HalfCloseConnectionWheelEntry() override = default;
 
 	void onTimeout() override
@@ -59,7 +61,7 @@ public:
 		if (conn)
 		{
 			LOG_INFO("half closed connection timeout, force close");
-			conn->handleRdhup();
+			conn->forceClose();
 		}
 	}
 
@@ -68,9 +70,9 @@ private:
 };
 
 TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket)
-		: m_state{socket::TcpState::Established}, 
-		m_isWaitWriting{false}, m_socket{std::move(socket)}, 
-		m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
+		: m_state{socket::TcpState::Established},
+		  m_isWaitWriting{false}, m_socket{std::move(socket)},
+		  m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
 {}
 
 void TcpConnection::handleIn()
@@ -125,28 +127,20 @@ void TcpConnection::handleOut()
 	}
 }
 
-void TcpConnection::handleErr()
-{
-	LOG_ERROR("Socket {} error", m_socket->fd());
-	m_events.onError(error::SocketError::E_POLLERR);
-}
-
 void TcpConnection::handleRdhup()
 {
-	LOG_TRACE("Socket {} disconnected", m_socket->fd());
-	// no need to remove wheels, they will self destructed after timeout
-	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
-	if (wheel)
-	{
-		wheel->removeFromWheel(_idleConnectionWheel);
-		wheel->removeFromWheel(_halfCloseWheel);
-	}
-	m_events.onDisconnect();
-	m_epollEvent->disable();
-	// extern TcpConnection life after remove
-	volatile auto externLife = shared_from_this();
-	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
-	m_state.store(socket::TcpState::Closed, std::memory_order_release);
+	LOG_TRACE("Socket {} rdhup", m_socket->fd());
+
+	/**
+	 * As close(fd) and shutdown(fd, SHUT_WR) notify as EPOLLIN and EPOLLRDHUP, we can not tell the difference
+	 * 1. If we are active close, the connection state is set to Closing, when pear respond with close or shutdown,
+	 * we will force close this connection
+	 * 2. If we are passive close, wait util transfer done, then close the connection
+	 */
+	if (m_state.load(std::memory_order_acquire) == socket::TcpState::Closing)
+		forceClose();
+	else    // passive close
+		closeAfterWriteCompleted();
 }
 
 void TcpConnection::sendInLoop()
@@ -154,14 +148,15 @@ void TcpConnection::sendInLoop()
 	// Move to event loop thread
 	// capture weak_ptr in case TcpConnection is destructed
 	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
-	_loopThisHandlerLiveIn->runInLoop([connectionWeak]{
-		auto connection = connectionWeak.lock();
-		if (connection)
-		{
-			connection->m_isWaitWriting = true;
-			connection->m_epollEvent->active(epoll::EpollEv::OUT);
-		}
-	});
+	_loopThisHandlerLiveIn->runInLoop([connectionWeak] {
+										  auto connection = connectionWeak.lock();
+										  if (connection)
+										  {
+											  connection->m_isWaitWriting = true;
+											  connection->m_epollEvent->active(epoll::EpollEv::OUT);
+										  }
+									  }
+	);
 }
 
 void TcpConnection::closeAfterWriteCompleted()
@@ -169,16 +164,17 @@ void TcpConnection::closeAfterWriteCompleted()
 	// Move to event loop thread
 	// capture weak_ptr in case TcpConnection is destructed
 	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
-	_loopThisHandlerLiveIn->runInLoop([connectionWeak]{
-		// nothing to write, close directly
-		auto connection = connectionWeak.lock();
-		if (connection)
-		{
-			if (!connection->m_isWaitWriting)
-				connection->closeWrite();
-			connection->m_state.store(socket::TcpState::Closing, std::memory_order_release);
-		}
-	});
+	_loopThisHandlerLiveIn->runInLoop([connectionWeak] {
+										  // nothing to write, close directly
+										  auto connection = connectionWeak.lock();
+										  if (connection)
+										  {
+											  connection->m_state.store(socket::TcpState::Closing, std::memory_order_release);
+											  if (!connection->m_isWaitWriting)
+												  connection->closeWrite();
+										  }
+									  }
+	);
 }
 
 std::shared_ptr<Channel> TcpConnection::getIOChannel()
@@ -211,8 +207,26 @@ void TcpConnection::closeWrite()
 	}
 }
 
+void TcpConnection::forceClose()
+{
+	LOG_TRACE("Force close socket {}", m_socket->fd());
+	// no need to remove wheels, they will self destructed after timeout
+	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
+	if (wheel)
+	{
+		wheel->removeFromWheel(_idleConnectionWheel);
+		wheel->removeFromWheel(_halfCloseWheel);
+	}
+	m_events.onDisconnect();
+	m_epollEvent->disable();
+	// extern TcpConnection life after remove
+	volatile auto externLife = shared_from_this();
+	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
+	m_state.store(socket::TcpState::Closed, std::memory_order_release);
+}
+
 std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-												 Events eventsPrototype)
+															  Events eventsPrototype)
 {
 	auto connection = std::make_shared<TcpConnection>(std::move(socket));
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
@@ -222,7 +236,7 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	connection->_loopThisHandlerLiveIn = loop;
 	// set up events
 	loop->addEventHandlerToLoop(connection);
-	eventPtr->active({epoll::EpollEv::IN, epoll::EpollEv::ERR, epoll::EpollEv::RDHUP});
+	eventPtr->active({epoll::EpollEv::IN, epoll::EpollEv::RDHUP});
 	// set up kick idle connection here
 	auto wheel = loop->getTimeWheel();
 	if (wheel)

@@ -9,6 +9,7 @@
 #include "Address.h"
 #include "internal/time/TimeWheel.h"
 #include "internal/handlers/RunInLoopHandler.h"
+#include "internal/socket/SocketEnums.h"
 #undef private
 #undef protected
 extern "C" {
@@ -61,7 +62,7 @@ public:
 TEST_F(ConnectionTest, CreateConnectionTest)
 {
 	netpp::EventLoop loop;
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLIN | EPOLLRDHUP)))
 		.Times(1);
 	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
 		&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(std::make_shared<MockHandler>())).lock();
@@ -114,8 +115,12 @@ TEST_F(ConnectionTest, ConnectionBrokeTest)
 	auto handler = std::make_shared<MockHandler>();
 	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
 			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
+	EXPECT_EQ(netpp::internal::socket::TcpState::Established, connection->currentState());
+	connection->handleRdhup();
+	loop.m_runInLoop->handleIn();
+	EXPECT_EQ(netpp::internal::socket::TcpState::Closing, connection->currentState());
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
-		.Times(1);
+			.Times(1);
 	connection->handleRdhup();
 	EXPECT_EQ(ConnectionTest::onDisconnectCount, 1);
 
@@ -136,7 +141,9 @@ TEST_F(ConnectionTest, ReadInBrokenConnectionTest)
 	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
 			.Times(1);
 	loop.m_runInLoop->handleIn();
+	EXPECT_EQ(netpp::internal::socket::TcpState::Closing, connection->currentState());
 	connection->handleRdhup();
+	EXPECT_EQ(netpp::internal::socket::TcpState::Closed, connection->currentState());
 	EXPECT_EQ(ConnectionTest::onDisconnectCount, 1);
 
 	// destruction
@@ -156,7 +163,9 @@ TEST_F(ConnectionTest, WriteToBrokenConnectionTest)
 	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
 			.Times(1);
 	loop.m_runInLoop->handleIn();
+	EXPECT_EQ(netpp::internal::socket::TcpState::Closing, connection->currentState());
 	connection->handleRdhup();
+	EXPECT_EQ(netpp::internal::socket::TcpState::Closed, connection->currentState());
 	EXPECT_EQ(ConnectionTest::onDisconnectCount, 1);
 
 	// destruction
@@ -186,7 +195,7 @@ TEST_F(ConnectionTest, DelayCloseTest)
 	connection->sendInLoop();
 	connection->closeAfterWriteCompleted();
 	testing::Sequence s;
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLOUT)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLRDHUP | EPOLLOUT)))
 			.Times(1)
 			.InSequence(s);
 	EXPECT_CALL(mock, mock_shutdown)
@@ -198,7 +207,7 @@ TEST_F(ConnectionTest, DelayCloseTest)
 	EXPECT_CALL(mock, mock_sendmsg)
 			.Times(1)
 			.InSequence(s);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLRDHUP)))
 			.Times(1)
 			.InSequence(s);
 	EXPECT_CALL(mock, mock_shutdown(testing::_, SHUT_WR))
@@ -218,13 +227,13 @@ TEST_F(ConnectionTest, SendTest)
 	auto connection = netpp::internal::handlers::TcpConnection::makeTcpConnection(
 			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()), netpp::Events(handler)).lock();
 	connection->sendInLoop();
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLOUT)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLRDHUP | EPOLLOUT)))
 		.Times(1);
 	loop.m_runInLoop->handleIn();
 	// write completed, remove EPOLLOUT
 	EXPECT_CALL(mock, mock_sendmsg(testing::_, testing::_, MSG_NOSIGNAL))
 		.WillOnce(testing::DoAll(testing::Return(0)));
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLRDHUP)))
 			.Times(1);
 	connection->handleOut();
 	EXPECT_EQ(ConnectionTest::onWriteCompletedCount, 1);
@@ -234,7 +243,7 @@ TEST_F(ConnectionTest, SendTest)
 	EXPECT_CALL(mock, mock_sendmsg(testing::_, testing::_, MSG_NOSIGNAL))
 			.WillOnce(testing::DoAll(testing::Return(-1)))
 			.WillOnce(testing::DoAll(testing::Return(0)));
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLERR | EPOLLRDHUP)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLRDHUP)))
 			.Times(1);
 	connection->handleOut();
 	connection->handleOut();

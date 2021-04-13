@@ -75,31 +75,32 @@ protected:
 
 	/**
 	 * @brief handle error events on connection, triggered when
-	 * 1.
-	 * @note handlers will run only in EventLoop, NOT thread safe
-	 */
-	void handleErr() override;
-
-	/**
-	 * @brief handle error events on connection, triggered when
-	 * 1.side close this connection
+	 * 1.side close/shutdown write on this connection
 	 * @note handlers will run only in EventLoop, NOT thread safe
 	 */
 	void handleRdhup() override;
 
 private:
 	/**
-	 * @brief refresh time wheel when received any data, prevent closed by
+	 * @brief Refresh time wheel when received any data, prevent closed by
 	 * time wheel
+	 * Not thread safe
 	 */
 	void renewWheel();
 
 	/**
-	 * @brief close write on this side, enter tcp four-way-wavehand step,
+	 * @brief Close write on this side, enter tcp four-way-wavehand step,
 	 * if side not close connection and no data transferred, the connection
 	 * will be force closed
+	 * Not thread safe
 	 */
 	void closeWrite();
+
+	/**
+	 * @brief Force close current connection
+	 * Not thread safe
+	 */
+	void forceClose();
 
 	/**
 	 * @brief The state for TcpConnection

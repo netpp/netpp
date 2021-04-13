@@ -7,21 +7,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion")
 option(NETPP_ENABLE_TEST "enable test" ON)
 option(NETPP_USE_LOG "enable log" ON)
 
-add_subdirectory(example)
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
-if(NETPP_ENABLE_TEST STREQUAL ON)
-    message(STATUS "Netpp: testing is enabled, add target test")
-    add_subdirectory(test)
-endif()
-
-if(NETPP_USE_LOG STREQUAL ON)
-    message(STATUS "Netpp: logging is enabled")
-    add_definitions()
-    add_subdirectory(thirdParty/spdlog)
-    include_directories(${PROJECT_SOURCE_DIR}/thirdParty/spdlog/include)
-endif()
-
 set(netpp_source
 include/internal/epoll/Epoll.h include/internal/epoll/EpollEvent.h include/internal/epoll/EventHandler.h
 include/internal/handlers/Acceptor.h include/internal/handlers/Connector.h include/internal/handlers/TcpConnection.h include/internal/handlers/TimerHandler.h include/internal/handlers/SignalHandler.h include/internal/handlers/RunInLoopHandler.h
@@ -46,6 +31,21 @@ src/error/Exception.cpp src/error/SocketError.cpp
 src/support/ThreadPool.cpp
 src/time/Timer.cpp
 src/Address.cpp src/ByteArray.cpp src/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp include/support/PooledTask.hpp)
+
+add_subdirectory(example)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+if(NETPP_ENABLE_TEST STREQUAL ON)
+    message(STATUS "Netpp: testing is enabled, add target test")
+    add_subdirectory(test)
+endif()
+
+if(NETPP_USE_LOG STREQUAL ON)
+    message(STATUS "Netpp: logging is enabled")
+    add_definitions()
+    add_subdirectory(thirdParty/spdlog)
+    include_directories(${PROJECT_SOURCE_DIR}/thirdParty/spdlog/include)
+endif()
 
 add_library(netpp SHARED ${netpp_source})
 add_library(netpp_static STATIC ${netpp_source})
