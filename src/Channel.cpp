@@ -207,4 +207,13 @@ std::shared_ptr<ByteArray> Channel::writableArray()
 	}
 	return nullptr;
 }
+
+int Channel::channelId()
+{
+	auto connection = _connection.lock();
+	if (connection)
+		return connection->connectionId();
+	else
+		return -1;
+}
 }

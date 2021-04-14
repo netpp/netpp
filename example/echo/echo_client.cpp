@@ -27,12 +27,12 @@ public:
 		channel->send();
 	}
 
-	void onWriteCompleted()
+	void onWriteCompleted([[maybe_unused]] std::shared_ptr<netpp::Channel> channel)
 	{
 		std::cout << "Write completed";
 	}
 
-	void onDisconnect()
+	void onDisconnect([[maybe_unused]] std::shared_ptr<netpp::Channel> channel)
 	{
 		std::cout << "Disconnected from server, exit";
 		exit(0);

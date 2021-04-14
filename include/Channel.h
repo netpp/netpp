@@ -73,6 +73,12 @@ public:
 	std::string retrieveString(std::size_t length);
 	std::size_t retrieveRaw(char *buffer, std::size_t length);
 
+	/**
+	 * @brief Get unique id for this channel
+	 * @return -1 if the connection is closed
+	 */
+	int channelId();
+
 private:
 	/**
 	 * @brief Get write array

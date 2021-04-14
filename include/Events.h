@@ -36,8 +36,8 @@ public:								\
 };
 ASSERT_HAS_EVENT_METHOD(Connected, std::shared_ptr<netpp::Channel>)
 ASSERT_HAS_EVENT_METHOD(MessageReceived, std::shared_ptr<netpp::Channel>)
-ASSERT_HAS_EVENT_METHOD(WriteCompleted)
-ASSERT_HAS_EVENT_METHOD(Disconnect)
+ASSERT_HAS_EVENT_METHOD(WriteCompleted, std::shared_ptr<netpp::Channel>)
+ASSERT_HAS_EVENT_METHOD(Disconnect, std::shared_ptr<netpp::Channel>)
 ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
 ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
 }
@@ -80,9 +80,9 @@ public:
 		if constexpr (internal::hasMessageReceived<Impl>::value)
 			m_receiveMsgCb = std::bind(&Impl::onMessageReceived, implPtr, std::placeholders::_1);
 		if constexpr (internal::hasWriteCompleted<Impl>::value)
-			m_writeCompletedCb = std::bind(&Impl::onWriteCompleted, implPtr);
+			m_writeCompletedCb = std::bind(&Impl::onWriteCompleted, implPtr, std::placeholders::_1);
 		if constexpr (internal::hasDisconnect<Impl>::value)
-			m_disconnectCb = std::bind(&Impl::onDisconnect, implPtr);
+			m_disconnectCb = std::bind(&Impl::onDisconnect, implPtr, std::placeholders::_1);
 		if constexpr (internal::hasError<Impl>::value)
 			m_errorCb = std::bind(&Impl::onError, implPtr, std::placeholders::_1);
 		if constexpr (internal::hasSignal<Impl>::value)
@@ -109,13 +109,13 @@ public:
 	 * @brief Triggered all data in buffer has wrote out
 	 * 
 	 */
-	void onWriteCompleted();
+	void onWriteCompleted(const std::shared_ptr<netpp::Channel> &channel);
 
 	/**
 	 * @brief Handle disconnected, triggered when a tcp connection has being closed
 	 * 
 	 */
-	void onDisconnect();
+	void onDisconnect(const std::shared_ptr<netpp::Channel> &channel);
 
 	/**
 	 * @brief Triggered when some error occurred
@@ -140,8 +140,8 @@ private:
 
 	std::function<void(std::shared_ptr<netpp::Channel>)> m_connectedCb;
 	std::function<void(std::shared_ptr<netpp::Channel>)> m_receiveMsgCb;
-	std::function<void()> m_writeCompletedCb;
-	std::function<void()> m_disconnectCb;
+	std::function<void(std::shared_ptr<netpp::Channel>)> m_writeCompletedCb;
+	std::function<void(std::shared_ptr<netpp::Channel>)> m_disconnectCb;
 	std::function<void(error::SocketError)> m_errorCb;
 	std::function<void(signal::Signals)> m_signalCb;
 

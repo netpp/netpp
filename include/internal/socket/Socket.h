@@ -42,6 +42,10 @@ public:
 	Socket &operator=(Socket &rh) = delete;
 	~Socket();
 
+	/**
+	 * @brief Get socket fd, will not change once constructed
+	 * @return
+	 */
 	[[nodiscard]] inline int fd() const noexcept { return m_socketFd; }
 
 	/**

@@ -108,7 +108,7 @@ void TcpConnection::handleOut()
 		{
 			m_epollEvent->deactive(epoll::EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?
-			m_events.onWriteCompleted();
+			m_events.onWriteCompleted(getIOChannel());
 			m_isWaitWriting = false;
 			if (m_state.load(std::memory_order_acquire) == socket::TcpState::Closing)
 				closeWrite();
@@ -217,12 +217,17 @@ void TcpConnection::forceClose()
 		wheel->removeFromWheel(_idleConnectionWheel);
 		wheel->removeFromWheel(_halfCloseWheel);
 	}
-	m_events.onDisconnect();
+	m_events.onDisconnect(getIOChannel());
 	m_epollEvent->disable();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
 	m_state.store(socket::TcpState::Closed, std::memory_order_release);
+}
+
+int TcpConnection::connectionId()
+{
+	return m_socket->fd();
 }
 
 std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,

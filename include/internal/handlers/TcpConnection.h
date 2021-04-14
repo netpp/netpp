@@ -55,6 +55,11 @@ public:
 
 	internal::socket::TcpState currentState() { return m_state.load(std::memory_order_acquire); }
 
+	/**
+	 * @brief Get the unique connection id
+	 */
+	int connectionId();
+
 	static std::weak_ptr<TcpConnection> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
 									  Events eventsPrototype);
 

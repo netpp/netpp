@@ -31,25 +31,25 @@ void Events::onMessageReceived(const std::shared_ptr<netpp::Channel> &channel)
 	}
 }
 
-void Events::onWriteCompleted()
+void Events::onWriteCompleted(const std::shared_ptr<netpp::Channel> &channel)
 {
 	if (m_writeCompletedCb)
 	{
 		if (m_eventsPool)
-			m_eventsPool->run(m_writeCompletedCb);
+			m_eventsPool->run(m_writeCompletedCb, channel);
 		else
-			m_writeCompletedCb();
+			m_writeCompletedCb(channel);
 	}
 }
 
-void Events::onDisconnect()
+void Events::onDisconnect(const std::shared_ptr<netpp::Channel> &channel)
 {
 	if (m_disconnectCb)
 	{
 		if (m_eventsPool)
-			m_eventsPool->run(m_disconnectCb);
+			m_eventsPool->run(m_disconnectCb, channel);
 		else
-			m_disconnectCb();
+			m_disconnectCb(channel);
 	}
 }
 
