@@ -15,7 +15,6 @@ class TcpConnection;
 
 /**
  * @brief A Channel represent a bridge to read/write TcpConnection's buffer.
- * 
  */
 class Channel {
 public:

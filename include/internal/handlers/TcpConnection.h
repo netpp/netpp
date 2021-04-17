@@ -22,6 +22,7 @@ namespace netpp::internal::handlers {
 /**
  * @brief The TcpConnection represent a connection, with read/write @see ByteArray,
  * use a @see Channel to perform read/write to buffer.
+ * @note This class lives in event loop, only public methods are thread safe
  * 
  */
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
@@ -57,6 +58,7 @@ public:
 
 	/**
 	 * @brief Get the unique connection id
+	 * thread safe
 	 */
 	int connectionId();
 
@@ -67,21 +69,21 @@ protected:
 	/**
 	 * @brief handle read events on connection, triggered when
 	 * 1.socket has pending read data
-	 * @note handlers will run only in EventLoop, NOT thread safe
+	 * @note NOT thread safe, handlers will run only in EventLoop
 	 */
 	void handleIn() override;
 
 	/**
 	 * @brief handle write events on connection, triggered when
 	 * 1.socket is ready to write
-	 * @note handlers will run only in EventLoop, NOT thread safe
+	 * @note NOT thread safe, handlers will run only in EventLoop
 	 */
 	void handleOut() override;
 
 	/**
 	 * @brief handle error events on connection, triggered when
 	 * 1.side close/shutdown write on this connection
-	 * @note handlers will run only in EventLoop, NOT thread safe
+	 * @note NOT thread safe, handlers will run only in EventLoop
 	 */
 	void handleRdhup() override;
 
@@ -89,41 +91,44 @@ private:
 	/**
 	 * @brief Refresh time wheel when received any data, prevent closed by
 	 * time wheel
-	 * Not thread safe
+	 * @note Not thread safe
 	 */
 	void renewWheel();
 
 	/**
-	 * @brief Close write on this side, enter tcp four-way-wavehand step,
-	 * if side not close connection and no data transferred, the connection
-	 * will be force closed
-	 * Not thread safe
-	 */
-	void closeWrite();
-
-	/**
-	 * @brief Force close current connection
-	 * Not thread safe
+	 * @brief Force close this connection
+	 * @note Not thread safe
 	 */
 	void forceClose();
 
 	/**
-	 * @brief The state for TcpConnection
-	 *              idle      halfCloseTimeout
-	 *           +---->----+    +-->---+
-	 *           |         |    |      |
-	 * * -> Established -> Closing -> Closed
-	 *  make       closeWrite()  handleClose()
+	 * @brief The state transition of TcpConnection
+	 *
+	 *                               (something wrong)
+	 *         +------------------------------>-----------------------------+
+	 *         |                                                            |
+	 *         |            (idle)                  (halfCloseTimeout)      |
+	 *         |  +------------>------------+    +----------->-----------+  |
+	 *         |  |                         |    |                       |  |
+	 * * -> Established --------->--------- Closing ---------->-------- Closed
+	 *  (make) |  | (active close/shutdown) |    |   (write completed)   |  |
+	 *         |  |                         |    |                       |  |
+	 *         |  |  (pear close/shutdown)  |    +------------>----------+  |
+	 *         |  +------------->-----------+    (write failed, pear close) |
+	 *         |                                                            |
+	 *         |         (pear close/shutdown and we are not writing)       |
+	 *         +------------------------------>-----------------------------+
 	 */
 	std::atomic<internal::socket::TcpState> m_state;
 
-	/// @brief if any data wait for write, the closing should be done later
+	/// @brief If any data wait for writing, close operation should be done later
 	bool m_isWaitWriting;
 	std::unique_ptr<socket::Socket> m_socket;
-	/// @brief pending write data
+	/// @brief Buffer for pending write data
 	std::shared_ptr<ByteArray> m_writeBuffer;
-	/// @brief received data
+	/// @brief Buffer for received data
 	std::shared_ptr<ByteArray> m_receiveBuffer;
+	/// @brief User-defined event handler
 	Events m_events;
 
 	/// @brief if connection is idle, closed by this time wheel

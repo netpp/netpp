@@ -89,7 +89,7 @@ void TcpConnection::handleIn()
 	{
 		// connection refused or not connected
 		m_events.onError(se.getErrorCode());
-		closeAfterWriteCompleted();
+		forceClose();
 	}
 	catch (error::ResourceLimitException &rle)
 	{
@@ -110,8 +110,9 @@ void TcpConnection::handleOut()
 			// TODO: do we need high/low watermark to notify?
 			m_events.onWriteCompleted(getIOChannel());
 			m_isWaitWriting = false;
+			// if write completed and we are half-closing, force close this connection
 			if (m_state.load(std::memory_order_acquire) == socket::TcpState::Closing)
-				closeWrite();
+				forceClose();
 		}
 	}
 	catch (error::SocketException &se)
@@ -119,7 +120,8 @@ void TcpConnection::handleOut()
 		// connection reset or not connect or connect shutdown
 		m_events.onError(se.getErrorCode());
 		m_isWaitWriting = false;
-		closeAfterWriteCompleted();
+		// if something wrong on this socket, force close
+		forceClose();
 	}
 	catch (error::ResourceLimitException &rle)
 	{
@@ -131,22 +133,23 @@ void TcpConnection::handleRdhup()
 {
 	LOG_TRACE("Socket {} rdhup", m_socket->fd());
 
-	/**
-	 * As close(fd) and shutdown(fd, SHUT_WR) notify as EPOLLIN and EPOLLRDHUP, we can not tell the difference
-	 * 1. If we are active close, the connection state is set to Closing, when pear respond with close or shutdown,
-	 * we will force close this connection
-	 * 2. If we are passive close, wait util transfer done, then close the connection
-	 */
-	if (m_state.load(std::memory_order_acquire) == socket::TcpState::Closing)
-		forceClose();
-	else    // passive close
-		closeAfterWriteCompleted();
+	// disable RDHUP and IN
+	m_epollEvent->deactive(epoll::EpollEv::RDHUP);
+	m_epollEvent->deactive(epoll::EpollEv::IN);
+	socket::TcpState establishedState = socket::TcpState::Established;
+	// transform state: Established->Closing
+	if (m_state.compare_exchange_strong(establishedState, socket::TcpState::Closing, std::memory_order_acq_rel))
+	{
+		// if state changed to Closing, and no data to write, close immediately
+		if (!m_isWaitWriting)
+			forceClose();
+	}
 }
 
 void TcpConnection::sendInLoop()
 {
 	// Move to event loop thread
-	// capture weak_ptr in case TcpConnection is destructed
+	// capture weak_ptr in case TcpConnection destructed
 	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([connectionWeak] {
 										  auto connection = connectionWeak.lock();
@@ -162,19 +165,34 @@ void TcpConnection::sendInLoop()
 void TcpConnection::closeAfterWriteCompleted()
 {
 	// Move to event loop thread
-	// capture weak_ptr in case TcpConnection is destructed
+	// capture weak_ptr in case TcpConnection destructed
 	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([connectionWeak] {
-										  // nothing to write, close directly
-										  auto connection = connectionWeak.lock();
-										  if (connection)
-										  {
-											  connection->m_state.store(socket::TcpState::Closing, std::memory_order_release);
-											  if (!connection->m_isWaitWriting)
-												  connection->closeWrite();
-										  }
-									  }
-	);
+		// nothing to write, close directly
+		auto connection = connectionWeak.lock();
+		if (connection)
+		{
+			// Established->ActiveClosing
+			socket::TcpState onlyChangeInEstablished = socket::TcpState::Established;
+			if (connection->m_state.compare_exchange_strong(
+					onlyChangeInEstablished,
+					socket::TcpState::Closing,
+					std::memory_order_acq_rel) && !connection->m_isWaitWriting)
+			{
+				connection->m_socket->shutdownWrite();
+				// disable RDHUP, shutdown write will wake up epoll_wait with EPOLLRDHUP and EPOLLIN
+				connection->m_epollEvent->deactive(epoll::EpollEv::RDHUP);
+				// force close connection in wheel
+				auto wheel = connection->_loopThisHandlerLiveIn->getTimeWheel();
+				if (wheel)
+				{
+					auto halfCloseWheel = std::make_shared<HalfCloseConnectionWheelEntry>(connection);
+					connection->_halfCloseWheel = halfCloseWheel;
+					wheel->addToWheel(halfCloseWheel);
+				}
+			}
+		}
+	});
 }
 
 std::shared_ptr<Channel> TcpConnection::getIOChannel()
@@ -191,19 +209,6 @@ void TcpConnection::renewWheel()
 			wheel->renew(_idleConnectionWheel.lock());
 		if (!_halfCloseWheel.expired())
 			wheel->renew(_idleConnectionWheel.lock());
-	}
-}
-
-void TcpConnection::closeWrite()
-{
-	m_socket->shutdownWrite();
-	// force close connection in wheel
-	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
-	if (wheel)
-	{
-		auto halfCloseWheel = std::make_shared<HalfCloseConnectionWheelEntry>(shared_from_this());
-		_halfCloseWheel = halfCloseWheel;
-		wheel->addToWheel(halfCloseWheel);
 	}
 }
 
