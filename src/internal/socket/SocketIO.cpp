@@ -8,70 +8,58 @@ extern "C" {
 }
 
 namespace netpp::internal::socket {
-ByteArray2Msghdr::ByteArray2Msghdr()
-	: msg{nullptr}, _buffer{nullptr}
+ByteArray2IOVec::ByteArray2IOVec()
+	: m_vec{nullptr}, m_vecLen{0}, _buffer{nullptr}
 {
-	msg = new ::msghdr;
-	std::memset(msg, 0, sizeof(::msghdr));
 }
 
-ByteArray2Msghdr::~ByteArray2Msghdr()
+ByteArray2IOVec::~ByteArray2IOVec()
 {
-	if (msg->msg_iovlen != 0)
-		delete [] msg->msg_iov;
-	delete msg;
+	delete [] m_vec;
 }
 
-ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buffer)
+ByteArrayIOVecReaderWithLock::ByteArrayIOVecReaderWithLock(std::shared_ptr<ByteArray> buffer)
 {
 	_buffer = std::move(buffer);
 	_buffer->m_bufferMutex.lock();
 	unsigned nodes = _buffer->m_nodeCount;
+	m_vecLen = 0;
+	auto *vecNodes = new ::iovec[nodes];
 	if (nodes > 0)
 	{
-		auto *vec = new ::iovec[nodes];
 		std::shared_ptr<ByteArray::BufferNode> node = _buffer->_currentReadBufferNode.lock();
 		std::shared_ptr<ByteArray::BufferNode> endNode = _buffer->_currentWriteBufferNode.lock()->next;
-		std::size_t vecIndex = 0;
 		// has node
 		// current node is not empty
 		while (node != endNode && (node->end - node->start != 0))
 		{
-			vec[vecIndex].iov_base = node->buffer + node->start;
-			vec[vecIndex].iov_len = node->end - node->start;
+			vecNodes[m_vecLen].iov_base = node->buffer + node->start;
+			vecNodes[m_vecLen].iov_len = node->end - node->start;
 			node = node->next;
-			++vecIndex;
-		}
-		if (vecIndex != 0)
-		{
-			msg->msg_iov = vec;
-			msg->msg_iovlen = vecIndex;
-		}
-		else
-		{
-			// if not assign to msg->msg_iov, the destructor will not delete vec
-			delete [] vec;
+			++m_vecLen;
 		}
 	}
+	if (m_vecLen != 0)
+		m_vec = vecNodes;
 }
 
-ByteArrayReaderWithLock::~ByteArrayReaderWithLock()
+ByteArrayIOVecReaderWithLock::~ByteArrayIOVecReaderWithLock()
 {
 	_buffer->m_bufferMutex.unlock();
 }
 
-void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
+void ByteArrayIOVecReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 {
 	// move read node
 	std::shared_ptr<ByteArray::BufferNode> node = _buffer->_currentReadBufferNode.lock();
 	_buffer->m_availableSizeToRead -= size;
 	while (size > 0)
 	{
-		if (size >= (ByteArray::BufferNode::BufferSize - node->start))
+		if (size >= (ByteArray::BufferNodeSize - node->start))
 		{
-			size -= (ByteArray::BufferNode::BufferSize - node->start);
-			node->start = ByteArray::BufferNode::BufferSize;
-			node->end = ByteArray::BufferNode::BufferSize;
+			size -= (ByteArray::BufferNodeSize - node->start);
+			node->start = ByteArray::BufferNodeSize;
+			node->end = ByteArray::BufferNodeSize;
 		}
 		else
 		{
@@ -85,43 +73,41 @@ void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 	_buffer->unlockedMoveBufferHead();
 }
 
-ByteArray::LengthType ByteArrayReaderWithLock::availableBytes()
+ByteArray::LengthType ByteArrayIOVecReaderWithLock::availableBytes()
 {
 	// not use ByteArray::readableBytes(), lock acquired here
 	return _buffer->m_availableSizeToRead;
 }
 
-ByteArrayWriterWithLock::ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer)
+ByteArrayIOVecWriterWithLock::ByteArrayIOVecWriterWithLock(std::shared_ptr<ByteArray> buffer)
 {
 	_buffer = std::move(buffer);
 	_buffer->m_bufferMutex.lock();
 	uint64_t bytes = _buffer->m_availableSizeToWrite;
-	::size_t vecCount = bytes / ByteArray::BufferNode::BufferSize;
-	if (bytes % ByteArray::BufferNode::BufferSize != 0)
-		++vecCount;
-	if (vecCount > 0)
+	m_vecLen = bytes / ByteArray::BufferNodeSize;
+	if (bytes % ByteArray::BufferNodeSize != 0)
+		++m_vecLen;
+	if (m_vecLen > 0)
 	{
-		auto *vec = new ::iovec[vecCount];
+		m_vec = new ::iovec[m_vecLen];
 		std::shared_ptr<ByteArray::BufferNode> node = _buffer->_currentWriteBufferNode.lock();
 		int i = 0;
 		while (node)
 		{
-			vec[i].iov_base = node->buffer + node->end;
-			vec[i].iov_len = ByteArray::BufferNode::BufferSize - node->end;
+			m_vec[i].iov_base = node->buffer + node->end;
+			m_vec[i].iov_len = ByteArray::BufferNodeSize - node->end;
 			node = node->next;
 			++i;
 		}
-		msg->msg_iov = vec;
-		msg->msg_iovlen = vecCount;
 	}
 }
 
-ByteArrayWriterWithLock::~ByteArrayWriterWithLock()
+ByteArrayIOVecWriterWithLock::~ByteArrayIOVecWriterWithLock()
 {
 	_buffer->m_bufferMutex.unlock();
 }
 
-void ByteArrayWriterWithLock::adjustByteArray(ByteArray::LengthType size)
+void ByteArrayIOVecWriterWithLock::adjustByteArray(ByteArray::LengthType size)
 {
 	// if need to alloc more
 	if (_buffer->m_availableSizeToWrite <= size)
@@ -132,10 +118,10 @@ void ByteArrayWriterWithLock::adjustByteArray(ByteArray::LengthType size)
 	_buffer->m_availableSizeToRead += size;
 	while (size > 0)
 	{
-		if (size >= (ByteArray::BufferNode::BufferSize - node->end))
+		if (size >= (ByteArray::BufferNodeSize - node->end))
 		{
-			size -= (ByteArray::BufferNode::BufferSize - node->end);
-			node->end = ByteArray::BufferNode::BufferSize;
+			size -= (ByteArray::BufferNodeSize - node->end);
+			node->end = ByteArray::BufferNodeSize;
 			_buffer->_currentWriteBufferNode = node;
 			node = node->next;
 		}
@@ -147,7 +133,7 @@ void ByteArrayWriterWithLock::adjustByteArray(ByteArray::LengthType size)
 	}
 }
 
-ByteArray::LengthType ByteArrayWriterWithLock::availableBytes()
+ByteArray::LengthType ByteArrayIOVecWriterWithLock::availableBytes()
 {
 	// not use ByteArray::writeableBytes(), lock acquired here
 	return _buffer->m_availableSizeToWrite;
@@ -156,25 +142,31 @@ ByteArray::LengthType ByteArrayWriterWithLock::availableBytes()
 // SocketIO
 void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
-	ByteArrayWriterWithLock writer(std::move(buffer));
-	::msghdr *msg = writer.msghdr();
+	ByteArrayIOVecWriterWithLock writer(std::move(buffer));
+	::msghdr msg{};
+	std::memset(&msg, 0, sizeof(::msghdr));
+	msg.msg_iov = writer.iovec();
+	msg.msg_iovlen = writer.iovenLength();
 	// TODO: use ioctl(fd, FIONREAD, &n) to get pending read data on socket
-	::ssize_t num = stub::recvmsg(socket->fd(), msg, 0);
+	::ssize_t num = stub::recvmsg(socket->fd(), &msg, 0);
 	if (num != -1)
 		writer.adjustByteArray(static_cast<std::size_t>(num));
 }
 
 bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
 {
-	ByteArrayReaderWithLock vec(std::move(buffer));
-	std::size_t expectSize = vec.availableBytes();
-	::msghdr *msg = vec.msghdr();
-	::ssize_t actualSend = stub::sendmsg(socket->fd(), msg, MSG_NOSIGNAL);
+	ByteArrayIOVecReaderWithLock reader(std::move(buffer));
+	std::size_t expectWriteSize = reader.availableBytes();
+	::msghdr msg{};
+	std::memset(&msg, 0, sizeof(::msghdr));
+	msg.msg_iov = reader.iovec();
+	msg.msg_iovlen = reader.iovenLength();
+	::ssize_t actualSend = stub::sendmsg(socket->fd(), &msg, MSG_NOSIGNAL);
 	if (actualSend != -1)
 	{
 		auto sendSize = static_cast<std::size_t>(actualSend);
-		vec.adjustByteArray(sendSize);
-		return (sendSize <= expectSize);
+		reader.adjustByteArray(sendSize);
+		return (sendSize <= expectWriteSize);
 	}
 	else
 	{

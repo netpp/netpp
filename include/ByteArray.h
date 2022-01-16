@@ -9,8 +9,8 @@
 
 namespace netpp {
 namespace internal::socket {
-class ByteArrayReaderWithLock;
-class ByteArrayWriterWithLock;
+class ByteArrayIOVecReaderWithLock;
+class ByteArrayIOVecWriterWithLock;
 }
 /**
  * @brief ByteArray has a list of buffer nodes, saved in network ending(big ending), 
@@ -52,10 +52,11 @@ class ByteArrayWriterWithLock;
 class ByteArray {
 	// access buffer directly
 	/// @note public methods are guarded by mutex, do NOT use with ByteArrayIOVector*WithLock, it will lead to dead lock
-	friend class internal::socket::ByteArrayReaderWithLock;
-	friend class internal::socket::ByteArrayWriterWithLock;
+	friend class internal::socket::ByteArrayIOVecReaderWithLock;
+	friend class internal::socket::ByteArrayIOVecWriterWithLock;
 public:
 	using LengthType = std::uint64_t;
+	constexpr static LengthType BufferNodeSize = 1024;
 	ByteArray();
 
 	void writeInt8(int8_t value);
@@ -139,12 +140,11 @@ private:
 	// FIXME: remove unused buffer node
 	struct BufferNode {
 		BufferNode();
-		constexpr static LengthType BufferSize = 1024;
 		// constexpr static int maxTimeToLive = 10;
 		LengthType start;	// the offset of buffer read
 		LengthType end;	// the offset of buffer write
 		// int timeToLive;
-		char buffer[BufferSize];	// buffer
+		char buffer[BufferNodeSize];	// buffer
 		std::shared_ptr<BufferNode> next;	// next buffer node
 	};
 	mutable std::mutex m_bufferMutex;

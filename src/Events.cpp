@@ -75,7 +75,6 @@ void Events::onSignal(signal::Signals signal)
 	}
 }
 
-
 void Events::initThread(int threadsCount)
 {
 	if (threadsCount > 0)	// if thread number is less than 0, not run handler in thread

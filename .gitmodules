@@ -4,3 +4,6 @@
 [submodule "thirdParty/googletest"]
 	path = thirdParty/googletest
 	url = https://github.com/google/googletest.git
+[submodule "thirdParty/llhttp"]
+	path = thirdParty/llhttp
+	url = https://github.com/nodejs/llhttp.git

@@ -4,7 +4,7 @@
 #include <memory>
 #include "ByteArray.h"
 
-struct msghdr;
+struct iovec;
 
 namespace netpp::internal::socket {
 class Socket;
@@ -36,27 +36,27 @@ namespace SocketIO {
 	bool write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
 };
 
-// TODO: just contain ::iovec in ByteArray for better performance??
 /**
- * @brief Convert ByteArray to ::msghdr, adapt to readv()/writev(), used by SocketIO
+ * @brief Convert ByteArray to ::iovec, adapt to readv()/writev(), used by SocketIO
  */
-class ByteArray2Msghdr {
+class ByteArray2IOVec {
 public:
-	ByteArray2Msghdr();
-	virtual ~ByteArray2Msghdr();
+	ByteArray2IOVec();
+	virtual ~ByteArray2IOVec();
 
-	// TODO: return ::iovec *, provide more scalability
-	::msghdr *msghdr() { return msg; }
+	::iovec *iovec() { return m_vec; }
+	[[nodiscard]] std::size_t iovenLength() const { return m_vecLen; }
 	virtual void adjustByteArray(ByteArray::LengthType size) = 0;
 	virtual ByteArray::LengthType availableBytes() = 0;
 
-	ByteArray2Msghdr(ByteArray2Msghdr &) = delete;
-	ByteArray2Msghdr(ByteArray2Msghdr &&) = delete;
-	ByteArray2Msghdr &operator =(ByteArray2Msghdr &) = delete;
-	ByteArray2Msghdr &operator =(ByteArray2Msghdr &&) = delete;
+	ByteArray2IOVec(ByteArray2IOVec &) = delete;
+	ByteArray2IOVec(ByteArray2IOVec &&) = delete;
+	ByteArray2IOVec &operator =(ByteArray2IOVec &) = delete;
+	ByteArray2IOVec &operator =(ByteArray2IOVec &&) = delete;
 
 protected:
-	::msghdr *msg;
+	::iovec *m_vec;
+	std::size_t m_vecLen;
 	std::shared_ptr<ByteArray> _buffer;	// byte array
 };
 
@@ -65,10 +65,10 @@ protected:
  * @note ByteArray's lock is acquired until destruction
  * 
  */
-class ByteArrayReaderWithLock : public ByteArray2Msghdr {
+class ByteArrayIOVecReaderWithLock : public ByteArray2IOVec {
 public:
-	explicit ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buffer);
-	~ByteArrayReaderWithLock() override;
+	explicit ByteArrayIOVecReaderWithLock(std::shared_ptr<ByteArray> buffer);
+	~ByteArrayIOVecReaderWithLock() override;
 
 	/**
 	 * @brief Write n bytes into ByteArray
@@ -89,10 +89,10 @@ public:
  * @note ByteArray's lock is acquired until destruction
  * 
  */
-class ByteArrayWriterWithLock : public ByteArray2Msghdr {
+class ByteArrayIOVecWriterWithLock : public ByteArray2IOVec {
 public:
-	explicit ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer);
-	~ByteArrayWriterWithLock() override;
+	explicit ByteArrayIOVecWriterWithLock(std::shared_ptr<ByteArray> buffer);
+	~ByteArrayIOVecWriterWithLock() override;
 
 	/**
 	 * @brief Read n bytes from ByteArray

@@ -5,7 +5,7 @@
 
 namespace netpp {
 ByteArray::ByteArray()
-	: m_availableSizeToRead{0}, m_availableSizeToWrite{BufferNode::BufferSize},
+	: m_availableSizeToRead{0}, m_availableSizeToWrite{BufferNodeSize},
 	m_nodeCount{1}, 
 	m_bufferHead{std::make_shared<BufferNode>()}
 {
@@ -23,19 +23,19 @@ void ByteArray::writeInt8(int8_t value)
 #pragma GCC diagnostic ignored "-Wconversion"
 void ByteArray::writeInt16(int16_t value)
 {
-	int16_t v = ::htobe16(value);
+	uint16_t v = ::htobe16(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(int16_t));
 }
 
 void ByteArray::writeInt32(int32_t value)
 {
-	int32_t v = ::htobe32(value);
+	uint32_t v = ::htobe32(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(int32_t));
 }
 
 void ByteArray::writeInt64(int64_t value)
 {
-	int64_t v = ::htobe64(value);
+	uint64_t v = ::htobe64(value);
 	writeRaw(reinterpret_cast<char *>(&v), sizeof(int64_t));
 }
 #pragma GCC diagnostic pop
@@ -86,7 +86,7 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 
 	std::lock_guard lck(m_bufferMutex);
 	std::shared_ptr<BufferNode> node = _currentWriteBufferNode.lock();
-	std::size_t availableSize = BufferNode::BufferSize - node->end;
+	std::size_t availableSize = BufferNodeSize - node->end;
 	if (availableSize <= length)
 		unlockedAllocIfNotEnough(length);
 	
@@ -102,10 +102,10 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		node = node->next;
 		// has more to write
 		// this node is full
-		if (node && (length != 0 || node->end == BufferNode::BufferSize))
+		if (node && (length != 0 || node->end == BufferNodeSize))
 		{
 			_currentWriteBufferNode = node;
-			availableSize = BufferNode::BufferSize;
+			availableSize = BufferNodeSize;
 			bytesToWrite = (availableSize < length) ? availableSize : length;
 		}
 	}
@@ -123,29 +123,26 @@ int8_t ByteArray::retrieveInt8()
 #pragma GCC diagnostic ignored "-Wconversion"
 int16_t ByteArray::retrieveInt16()
 {
-	int16_t v;
+	uint16_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(int16_t)) != sizeof(int16_t))
 		return 0;
-	v = ::be16toh(v);
-	return v;
+	return static_cast<int16_t>(::be16toh(v));
 }
 
 int32_t ByteArray::retrieveInt32()
 {
-	int32_t v;
+	uint32_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(int32_t)) != sizeof(int32_t))
 		return 0;
-	v = ::be32toh(v);
-	return v;
+	return static_cast<int32_t>(::be32toh(v));
 }
 
 int64_t ByteArray::retrieveInt64()
 {
-	int64_t v;
+	uint64_t v;
 	if (retrieveRaw(reinterpret_cast<char *>(&v), sizeof(int64_t)) != sizeof(int64_t))
 		return 0;
-	v = ::be64toh(v);
-	return v;
+	return static_cast<int64_t>(::be64toh(v));
 }
 #pragma GCC diagnostic pop
 
@@ -227,7 +224,7 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 		length -= bytesToCopy;
 		m_availableSizeToRead -= bytesToCopy;
 		// is current node empty(start pointer point reach max size)
-		bool readOut = (node->start == BufferNode::BufferSize);
+		bool readOut = (node->start == BufferNodeSize);
 		// if read node moved, move write node also
 		bool mayBeMoveWriteNode = (node == _currentWriteBufferNode.lock());
 		node = node->next;
@@ -261,7 +258,7 @@ void ByteArray::unlockedAllocIfNotEnough(std::size_t size)
 		{
 			for (unsigned i = m_nodeCount; i < m_nodeCount * 2; ++i, tail = tail->next)
 				tail->next = std::make_shared<BufferNode>();
-			m_availableSizeToWrite += m_nodeCount * BufferNode::BufferSize;
+			m_availableSizeToWrite += m_nodeCount * BufferNodeSize;
 			m_nodeCount *= 2;
 		}
 		_bufferTail = tail;
@@ -278,7 +275,7 @@ void ByteArray::unlockedMoveBufferHead()
 	std::shared_ptr<BufferNode> lastNode = m_bufferHead;
 	while (node && node != readNode)
 	{
-		m_availableSizeToWrite += BufferNode::BufferSize;
+		m_availableSizeToWrite += BufferNodeSize;
 		node->start = 0;
 		node->end = 0;
 		lastNode = node;

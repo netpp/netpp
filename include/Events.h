@@ -44,11 +44,14 @@ ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
 
 /**
  * @brief Netpp events, callbacks.
+ * FIXME: It is not a good way to call user-defined method by matching exactly params. If the method's
+ *        name or params changed, but user did not aware of it, the user-defined handler will never be called!
+ *        However, virtual functions are not ideal, bringing poor binary compatibility.
  * 
- * User will define their event handler class to accept comming events,
+ * User will define their event handler class to accept coming events,
  * who's methods should have same signature in this class.
  * 
- * User-defined handler mighit run in different thread, make sure it's 
+ * User-defined handler might run in different thread, make sure it's
  * thread safe.
  * 
  * @section Events you can handle
@@ -72,7 +75,7 @@ public:
 	 */
 	template<typename Impl>
 	explicit Events(std::shared_ptr<Impl> impl, int threads = 0)
-	: m_impl{impl}
+	: m_eventsPool{nullptr}, m_impl{impl}
 	{
 		Impl *implPtr = static_cast<Impl *>(m_impl.get());
 		if constexpr (internal::hasConnected<Impl>::value)
