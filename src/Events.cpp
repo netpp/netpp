@@ -3,12 +3,44 @@
 //
 
 #include "Events.h"
+
+#include <utility>
 #include "support/ThreadPool.hpp"
 #include "Channel.h"
 #include "error/SocketError.h"
 #include "signal/Signals.h"
 
 namespace netpp {
+void Events::bindConnectedCallback(ConnectedCallBack cb)
+{
+	m_connectedCb = std::move(cb);
+}
+
+void Events::bindMessageReceivedCallback(MessageReceivedCallBack cb)
+{
+	m_receiveMsgCb = std::move(cb);
+}
+
+void Events::bindWriteCompletedCallback(WriteCompletedCallBack cb)
+{
+	m_writeCompletedCb = std::move(cb);
+}
+
+void Events::bindDisconnectedCallback(DisconnectedCallBack cb)
+{
+	m_disconnectCb = std::move(cb);
+}
+
+void Events::bindErrorCallback(ErrorCallBack cb)
+{
+	m_errorCb = std::move(cb);
+}
+
+void Events::bindSignalCallback(SignalCallBack cb)
+{
+	m_signalCb = std::move(cb);
+}
+
 void Events::onConnected(const std::shared_ptr<netpp::Channel> &channel)
 {
 	if (m_connectedCb)

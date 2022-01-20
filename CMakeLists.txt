@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion")
 
 option(NETPP_ENABLE_TEST "enable test" ON)
 option(NETPP_USE_LOG "enable log" ON)
+option(NETPP_SUPPORT_HTTP "enable http" OFF)
 
 set(netpp_source
 include/internal/epoll/Epoll.h include/internal/epoll/EpollEvent.h include/internal/epoll/EventHandler.h
@@ -49,9 +50,13 @@ if(NETPP_USE_LOG STREQUAL ON)
     include_directories(${PROJECT_SOURCE_DIR}/thirdParty/spdlog/include)
 endif()
 
+if(NETPP_SUPPORT_HTTP STREQUAL ON)
+    set(netpp_source ${netpp_source} ${netpp_http_source})
+endif()
+
 add_subdirectory(thirdParty/llhttp)
 include_directories(${PROJECT_SOURCE_DIR}/thirdParty/llhttp/include)
 
-add_library(netpp SHARED ${netpp_source} ${netpp_http_source})
-add_library(netpp_static STATIC ${netpp_source} ${netpp_http_source})
+add_library(netpp SHARED ${netpp_source})
+add_library(netpp_static STATIC ${netpp_source})
 SET_TARGET_PROPERTIES(netpp_static PROPERTIES OUTPUT_NAME "netpp")

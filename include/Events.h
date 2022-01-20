@@ -20,33 +20,40 @@ namespace support {
 class ThreadPool;
 }
 namespace internal {
-/**
- * @brief test if class has method, only for Events
- * @param METHOD method name
- * @param ARG... method argument
- */
-#define ASSERT_HAS_EVENT_METHOD(METHOD, ARG...)		\
-template<typename T>				\
-class has##METHOD {					\
-public:								\
-	template<typename U, void(U::*)(ARG) = &U::on##METHOD>			\
-	static constexpr bool assert_has(U*) { return true; }			\
-	static constexpr bool assert_has(...) { return false; }			\
-	static constexpr bool value = assert_has(static_cast<T*>(0));	\
+#define NETPP_ASSERT_HAS_EVENT_METHOD(METHOD, ARG...)    \
+template<typename T>                    \
+class namingMatch##METHOD {                \
+public:                                    \
+    template<typename U, typename M = decltype(&U::on##METHOD)>                    \
+    static constexpr std::true_type assert_has(U*) { return std::true_type(); }    \
+    static constexpr std::false_type assert_has(...) { return std::false_type(); }    \
+    static constexpr bool value = assert_has(static_cast<T*>(0));                \
+};                                    \
+template<typename T>                \
+class fullMatch##METHOD {            \
+public:                                \
+    template<typename U, void(U::*)(ARG) = &U::on##METHOD>            \
+    static constexpr std::true_type assert_has(U*) { return std::true_type(); }        \
+    static constexpr std::false_type assert_has(...) { return std::false_type(); }    \
+    static constexpr bool value = assert_has(static_cast<T*>(0));    \
 };
-ASSERT_HAS_EVENT_METHOD(Connected, std::shared_ptr<netpp::Channel>)
-ASSERT_HAS_EVENT_METHOD(MessageReceived, std::shared_ptr<netpp::Channel>)
-ASSERT_HAS_EVENT_METHOD(WriteCompleted, std::shared_ptr<netpp::Channel>)
-ASSERT_HAS_EVENT_METHOD(Disconnect, std::shared_ptr<netpp::Channel>)
-ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
-ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
+
+NETPP_ASSERT_HAS_EVENT_METHOD(Connected, std::shared_ptr<netpp::Channel>)
+NETPP_ASSERT_HAS_EVENT_METHOD(MessageReceived, std::shared_ptr<netpp::Channel>)
+NETPP_ASSERT_HAS_EVENT_METHOD(WriteCompleted, std::shared_ptr<netpp::Channel>)
+NETPP_ASSERT_HAS_EVENT_METHOD(Disconnect, std::shared_ptr<netpp::Channel>)
+NETPP_ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
+NETPP_ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
+
+#define NETPP_BIND_METHOD(METHOD, Impl, functor, binder)			\
+if constexpr (internal::namingMatch##METHOD<Impl>::value) {	\
+	static_assert(internal::fullMatch##METHOD<Impl>::value, "on"#METHOD"() method was defined, but mismatch params, try check your arguments");	\
+	(functor) = (binder);	\
+}
 }
 
 /**
  * @brief Netpp events, callbacks.
- * FIXME: It is not a good way to call user-defined method by matching exactly params. If the method's
- *        name or params changed, but user did not aware of it, the user-defined handler will never be called!
- *        However, virtual functions are not ideal, bringing poor binary compatibility.
  * 
  * User will define their event handler class to accept coming events,
  * who's methods should have same signature in this class.
@@ -64,6 +71,14 @@ ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
  */
 class Events final {
 public:
+	using ConnectedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	using MessageReceivedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	using WriteCompletedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	using DisconnectedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	using ErrorCallBack = std::function<void(error::SocketError)>;
+	using SignalCallBack = std::function<void(signal::Signals)>;
+
+public:
 	Events() : m_eventsPool{nullptr}, m_impl{nullptr} {}
 
 	/**
@@ -78,20 +93,21 @@ public:
 	: m_eventsPool{nullptr}, m_impl{impl}
 	{
 		Impl *implPtr = static_cast<Impl *>(m_impl.get());
-		if constexpr (internal::hasConnected<Impl>::value)
-			m_connectedCb = std::bind(&Impl::onConnected, implPtr, std::placeholders::_1);
-		if constexpr (internal::hasMessageReceived<Impl>::value)
-			m_receiveMsgCb = std::bind(&Impl::onMessageReceived, implPtr, std::placeholders::_1);
-		if constexpr (internal::hasWriteCompleted<Impl>::value)
-			m_writeCompletedCb = std::bind(&Impl::onWriteCompleted, implPtr, std::placeholders::_1);
-		if constexpr (internal::hasDisconnect<Impl>::value)
-			m_disconnectCb = std::bind(&Impl::onDisconnect, implPtr, std::placeholders::_1);
-		if constexpr (internal::hasError<Impl>::value)
-			m_errorCb = std::bind(&Impl::onError, implPtr, std::placeholders::_1);
-		if constexpr (internal::hasSignal<Impl>::value)
-			m_signalCb = std::bind(&Impl::onSignal, implPtr, std::placeholders::_1);
+		NETPP_BIND_METHOD(Connected, Impl, m_connectedCb, std::bind(&Impl::onConnected, implPtr, std::placeholders::_1))
+		NETPP_BIND_METHOD(MessageReceived, Impl, m_receiveMsgCb, std::bind(&Impl::onMessageReceived, implPtr, std::placeholders::_1))
+		NETPP_BIND_METHOD(WriteCompleted, Impl, m_writeCompletedCb, std::bind(&Impl::onWriteCompleted, implPtr, std::placeholders::_1))
+		NETPP_BIND_METHOD(Disconnect, Impl, m_disconnectCb, std::bind(&Impl::onDisconnect, implPtr, std::placeholders::_1))
+		NETPP_BIND_METHOD(Error, Impl, m_errorCb, std::bind(&Impl::onError, implPtr, std::placeholders::_1))
+		NETPP_BIND_METHOD(Signal, Impl, m_signalCb, std::bind(&Impl::onSignal, implPtr, std::placeholders::_1))
 		initThread(threads);
 	}
+
+	void bindConnectedCallback(ConnectedCallBack cb);
+	void bindMessageReceivedCallback(MessageReceivedCallBack cb);
+	void bindWriteCompletedCallback(WriteCompletedCallBack cb);
+	void bindDisconnectedCallback(DisconnectedCallBack cb);
+	void bindErrorCallback(ErrorCallBack cb);
+	void bindSignalCallback(SignalCallBack cb);
 
 	/**
 	 * @brief Handle connected event, triggered when a tcp connection just established

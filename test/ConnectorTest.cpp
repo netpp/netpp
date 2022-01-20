@@ -51,7 +51,7 @@ int ConnectorTest::onConnectedCount;
 
 class EmptyHandler {
 public:
-	void onConnected([[maybe_unused]] std::shared_ptr<netpp::Channel> channel)
+	void onConnected(std::shared_ptr<netpp::Channel>)
 	{
 		++ConnectorTest::onConnectedCount;
 	}

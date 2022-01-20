@@ -54,9 +54,9 @@ int ConnectionTest::onDisconnectCount;
 
 class MockHandler {
 public:
-	void onMessageReceived([[maybe_unused]] std::shared_ptr<netpp::Channel> channel) { ++ConnectionTest::onMessageReceivedCount; }
-	void onWriteCompleted() { ++ConnectionTest::onWriteCompletedCount; }
-	void onDisconnect() { ++ConnectionTest::onDisconnectCount; }
+	void onMessageReceived(std::shared_ptr<netpp::Channel>) { ++ConnectionTest::onMessageReceivedCount; }
+	void onWriteCompleted(std::shared_ptr<netpp::Channel>) { ++ConnectionTest::onWriteCompletedCount; }
+	void onDisconnect(std::shared_ptr<netpp::Channel>) { ++ConnectionTest::onDisconnectCount; }
 };
 
 TEST_F(ConnectionTest, CreateConnectionTest)

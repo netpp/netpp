@@ -17,16 +17,16 @@ extern "C" {
 #include <unistd.h>
 }
 
-class SignalHandler {
+class CustomSignalHandler {
 public:
-	void onSignal([[maybe_unused]] netpp::signal::Signals signal)
+	void onSignal(netpp::signal::Signals)
 	{}
 };
 
 void killSelf()
 {
 	netpp::EventLoopDispatcher dispatcher;
-	netpp::Events event(std::make_shared<SignalHandler>());
+	netpp::Events event(std::make_shared<CustomSignalHandler>());
 	auto loop = dispatcher.dispatchEventLoop();
 	netpp::time::Timer timer(loop);
 	timer.setOnTimeout([]{
@@ -42,7 +42,7 @@ void killSelfWithSignalWatcher()
 	netpp::signal::SignalWatcher::enableWatchSignal();
 
 	netpp::EventLoopDispatcher dispatcher;
-	netpp::Events event(std::make_shared<SignalHandler>());
+	netpp::Events event(std::make_shared<CustomSignalHandler>());
 	netpp::signal::SignalWatcher::with(&dispatcher, std::move(event))
 								.watch(netpp::signal::Signals::E_ALRM);
 
