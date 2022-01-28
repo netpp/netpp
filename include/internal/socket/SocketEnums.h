@@ -12,7 +12,7 @@ enum class TcpState {
 	Listen,			// is listening
 	Connecting,		// is connecting
 	Established,	// connection established
-	Closing			// is closing connection
+	HalfClose			// is closing connection
 };
 
 /**

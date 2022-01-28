@@ -111,7 +111,7 @@ void TcpConnection::handleOut()
 			m_events.onWriteCompleted(getIOChannel());
 			m_isWaitWriting = false;
 			// if write completed and we are half-closing, force close this connection
-			if (m_state.load(std::memory_order_acquire) == socket::TcpState::Closing)
+			if (m_state.load(std::memory_order_acquire) == socket::TcpState::HalfClose)
 				forceClose();
 		}
 	}
@@ -137,10 +137,10 @@ void TcpConnection::handleRdhup()
 	m_epollEvent->deactive(epoll::EpollEv::RDHUP);
 	m_epollEvent->deactive(epoll::EpollEv::IN);
 	socket::TcpState establishedState = socket::TcpState::Established;
-	// transform state: Established->Closing
-	if (m_state.compare_exchange_strong(establishedState, socket::TcpState::Closing, std::memory_order_acq_rel))
+	// transform state: Established->HalfClose
+	if (m_state.compare_exchange_strong(establishedState, socket::TcpState::HalfClose, std::memory_order_acq_rel))
 	{
-		// if state changed to Closing, and no data to write, close immediately
+		// if state changed to HalfClose, and no data to write, close immediately
 		if (!m_isWaitWriting)
 			forceClose();
 	}
@@ -176,7 +176,7 @@ void TcpConnection::closeAfterWriteCompleted()
 			socket::TcpState onlyChangeInEstablished = socket::TcpState::Established;
 			if (connection->m_state.compare_exchange_strong(
 					onlyChangeInEstablished,
-					socket::TcpState::Closing,
+					socket::TcpState::HalfClose,
 					std::memory_order_acq_rel) && !connection->m_isWaitWriting)
 			{
 				connection->m_socket->shutdownWrite();

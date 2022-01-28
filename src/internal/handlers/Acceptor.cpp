@@ -30,7 +30,7 @@ void Acceptor::listen()
 				acceptor->_loopThisHandlerLiveIn->addEventHandlerToLoop(acceptor);
 				acceptor->m_epollEvent->active(epoll::EpollEv::IN);
 				acceptor->m_socket->listen();
-				acceptor->m_state = socket::TcpState::Established;
+				acceptor->m_state = socket::TcpState::Listen;
 			}
 		}
 		catch (error::SocketException &se)
@@ -97,6 +97,6 @@ std::shared_ptr<Acceptor> Acceptor::makeAcceptor(EventLoopDispatcher *dispatcher
 	{
 		eventsPrototype.onError(rle.getSocketErrorCode());
 	}
-	return std::shared_ptr<Acceptor>();
+	return {};
 }
 }

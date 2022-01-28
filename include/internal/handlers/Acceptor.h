@@ -65,11 +65,11 @@ private:
 	/**
 	 * @brief The state of acceptor
 	 * 
-	 *             stop()
-	 *         +-----<-----+
-	 *         |           |
-	 * * -> Closed -> Established
-	 *  make     listen()     
+	 *                 (stop)
+	 *             +-----<-----+
+	 *             |           |
+	 * * -----> Closed -----> Listen
+	 *  (construct)   (listen)
 	 */
 	socket::TcpState m_state;
 };

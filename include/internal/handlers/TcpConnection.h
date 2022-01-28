@@ -20,8 +20,8 @@ class TimeWheelEntry;
 
 namespace netpp::internal::handlers {
 /**
- * @brief The TcpConnection represent a connection, with read/write @see ByteArray,
- * use a @see Channel to perform read/write to buffer.
+ * @brief The TcpConnection class represent a connection, using @see ByteArray as buffer,
+ * provide an io @see Channel to read/write.
  * @note This class lives in event loop, only public methods are thread safe
  * 
  */
@@ -104,20 +104,17 @@ private:
 	/**
 	 * @brief The state transition of TcpConnection
 	 *
-	 *                               (something wrong)
-	 *         +------------------------------>-----------------------------+
-	 *         |                                                            |
-	 *         |            (idle)                  (halfCloseTimeout)      |
-	 *         |  +------------>------------+    +----------->-----------+  |
-	 *         |  |                         |    |                       |  |
-	 * * -> Established --------->--------- Closing ---------->-------- Closed
-	 *  (make) |  | (active close/shutdown) |    |   (write completed)   |  |
-	 *         |  |                         |    |                       |  |
-	 *         |  |  (pear close/shutdown)  |    +------------>----------+  |
-	 *         |  +------------->-----------+    (write failed, pear close) |
-	 *         |                                                            |
-	 *         |         (pear close/shutdown and we are not writing)       |
-	 *         +------------------------------>-----------------------------+
+	 *                      +------------>------------+    +------------>------------+
+	 *                      |         (idle)          |    |   (half close timeout)  |
+	 *                      |                         |    |                         |
+	 * * -------> Established ---------->---------- HalfClose ----------->--------- Closed --> *
+	 * (construct)        | |    (active shutdown)    |    |   (write completed)     |
+	 *                    | |                         |    |                         |
+	 *                    | +------------->-----------+    |                         |
+	 *                    |      (pear shutdown)           |                         |
+	 *                    |                                |                         |
+	 *                    +----------------------------->--+-------------------------+
+	 *                                              (io error)
 	 */
 	std::atomic<internal::socket::TcpState> m_state;
 
