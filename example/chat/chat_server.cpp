@@ -14,14 +14,13 @@ class ChatServer {
 public:
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
 	{
-		std::lock_guard lck(mutex);
 		for (auto &member : m_room)
 		{
 			if (member != channel)
 			{
+				auto writer = member->writer();
 				std::string hello{"hello!\n"};
-				member->writeUInt16(static_cast<uint16_t>(hello.length()));
-				member->writeString(hello);
+				writer.writeUInt16(static_cast<uint16_t>(hello.length())).writeString(hello);
 				member->send();
 			}
 		}
@@ -30,15 +29,15 @@ public:
 
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
-		uint16_t length = channel->retrieveUInt16();
-		std::string message = channel->retrieveString(length);
-		std::lock_guard lck(mutex);
+		auto reader = channel->reader();
+		uint16_t length = reader.retrieveUInt16().value();
+		std::string message = reader.retrieveString(length).value();
 		for (auto &member : m_room)
 		{
 			if (member->channelId() != channel->channelId())
 			{
-				member->writeUInt16(length);
-				member->writeString(message);
+				auto writer = member->writer();
+				writer.writeUInt16(length).writeString(message);
 				member->send();
 			}
 		}
@@ -46,7 +45,6 @@ public:
 
 	void onDisconnect(std::shared_ptr<netpp::Channel> channel)
 	{
-		std::lock_guard lck(mutex);
 		auto it = m_room.begin();
 		while (it != m_room.end())
 		{
@@ -58,8 +56,9 @@ public:
 			{
 				std::string hello{"good bye!\n"};
 				std::shared_ptr<netpp::Channel> &onlineChannel = (*it);
-				onlineChannel->writeUInt16(static_cast<uint16_t>(hello.length()));
-				onlineChannel->writeString(hello);
+				auto writer = onlineChannel->writer();
+				writer.writeUInt16(static_cast<uint16_t>(hello.length())).writeString(hello);
+				onlineChannel->send();
 				++it;
 			}
 		}
@@ -71,7 +70,6 @@ public:
 	}
 
 private:
-	std::mutex mutex;
 	std::list<std::shared_ptr<netpp::Channel>> m_room;
 };
 

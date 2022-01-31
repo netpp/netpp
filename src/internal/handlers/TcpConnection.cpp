@@ -72,6 +72,7 @@ private:
 TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket)
 		: m_state{socket::TcpState::Established},
 		  m_isWaitWriting{false}, m_socket{std::move(socket)},
+		  m_prependBuffer{make_shared<ByteArray>()},
 		  m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
 {}
 
@@ -82,7 +83,7 @@ void TcpConnection::handleIn()
 		renewWheel();
 		socket::SocketIO::read(m_socket.get(), m_receiveBuffer);
 		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
-		auto channel = make_shared<Channel>(shared_from_this(), m_writeBuffer, m_receiveBuffer);
+		auto channel = getIOChannel();
 		m_events.onMessageReceived(channel);
 	}
 	catch (error::SocketException &se)
@@ -102,7 +103,7 @@ void TcpConnection::handleOut()
 	try
 	{
 		renewWheel();
-		// may not write all data
+		// may not write all data this round, keep OUT event on and wait for next round
 		// TODO: handle read/write timeout
 		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))
 		{
@@ -110,7 +111,7 @@ void TcpConnection::handleOut()
 			// TODO: do we need high/low watermark to notify?
 			m_events.onWriteCompleted(getIOChannel());
 			m_isWaitWriting = false;
-			// if write completed and we are half-closing, force close this connection
+			// if write completed, and we are half-closing, force close this connection
 			if (m_state.load(std::memory_order_acquire) == socket::TcpState::HalfClose)
 				forceClose();
 		}
@@ -197,7 +198,7 @@ void TcpConnection::closeAfterWriteCompleted()
 
 std::shared_ptr<Channel> TcpConnection::getIOChannel()
 {
-	return make_shared<Channel>(shared_from_this(), m_writeBuffer, m_receiveBuffer);
+	return make_shared<Channel>(shared_from_this(), m_prependBuffer, m_writeBuffer, m_receiveBuffer);
 }
 
 void TcpConnection::renewWheel()

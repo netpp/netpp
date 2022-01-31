@@ -121,6 +121,8 @@ private:
 	/// @brief If any data wait for writing, close operation should be done later
 	bool m_isWaitWriting;
 	std::unique_ptr<socket::Socket> m_socket;
+	/// @brief Buffer for prepend write data
+	std::shared_ptr<ByteArray> m_prependBuffer;
 	/// @brief Buffer for pending write data
 	std::shared_ptr<ByteArray> m_writeBuffer;
 	/// @brief Buffer for received data

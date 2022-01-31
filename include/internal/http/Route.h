@@ -10,7 +10,7 @@
 #include <map>
 #include <mutex>
 
-namespace netpp::http {
+namespace netpp::internal::http {
 class Httprequest;
 class Route {
 	using RouteHandler = std::function<void(Httprequest)>;

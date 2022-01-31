@@ -5,6 +5,8 @@
 #ifndef NETPP_HTTPCODE_H
 #define NETPP_HTTPCODE_H
 
+#include <string_view>
+
 #define NETPP_HTTP_PROTOCOL_VERSION(XX) \
 	XX(Http1_0, 1, 0)	\
 	XX(Http1_1, 1, 1)	\
@@ -115,7 +117,7 @@ enum class RequestMethod {
 };
 
 #define NETPP_HTTP_HEADER_DEFINE(header, as_string) header,
-enum class RequestHeader {
+enum class KnownHeader {
 	NETPP_HTTP_HEADER(NETPP_HTTP_HEADER_DEFINE)
 };
 
@@ -123,7 +125,7 @@ enum class RequestHeader {
 enum class StatusCode {
 	NETPP_HTTP_STATUS_CODE(NETPP_HTTP_STATUS_CODE_DEFINE)
 };
-
+const std::string_view &getHeader(KnownHeader header);
 ProtocolVersion getHttpVersion(int major, int minor);
 }
 

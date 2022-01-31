@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(signal_handle)
+project(example_signal_handle)
 
-add_executable(signal_handle signal_handle.cpp)
-target_link_libraries(signal_handle netpp pthread)
+add_executable(example_signal_handle signal_handle.cpp)
+target_link_libraries(example_signal_handle netpp pthread)

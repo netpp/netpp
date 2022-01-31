@@ -5,6 +5,25 @@
 #include "http/HttpCode.h"
 
 namespace netpp::http {
+const std::string_view &getHeader(KnownHeader header)
+{
+	// avoid construct
+#define NETPP_HTTP_HEADER_TO_STRING_STATIC_VAR(header, as_string) \
+	static constexpr std::string_view h##header{as_string};
+
+	NETPP_HTTP_HEADER(NETPP_HTTP_HEADER_TO_STRING_STATIC_VAR);
+	static constexpr std::string_view hUnknown;
+
+#define NETPP_HTTP_HEADER_TO_STRING(header, as_string) \
+	case KnownHeader::header: return h##header;
+
+	switch (header)
+	{
+		NETPP_HTTP_HEADER(NETPP_HTTP_HEADER_TO_STRING)
+	}
+	return hUnknown;
+}
+
 ProtocolVersion getHttpVersion(int major, int minor)
 {
 	switch (major * 10 + minor)

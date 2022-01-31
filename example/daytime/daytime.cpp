@@ -12,7 +12,8 @@ public:
 		std::time_t time;
 		std::time(&time);
 		std::string timeStr = std::ctime(&time);
-		channel->writeString(timeStr + "\r\n");
+		auto writer = channel->writer();
+		writer.writeString(timeStr + "\r\n");
 		channel->send();
 		channel->close();
 	}

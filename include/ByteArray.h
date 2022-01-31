@@ -71,7 +71,7 @@ public:
 	void writeDouble(double value);
 	void writeString(const std::string &value);
 	void writeRaw(const char *data, std::size_t length);
-	// TODO: prepend data
+
 	// TODO: support read until meet certain value
 
 	int8_t retrieveInt8();
@@ -102,7 +102,8 @@ public:
 
 	/** 
 	 * @brief The writeable bytes in buffer.
-	 * The 'writeable' means the length from WriteNode's end to last node's end.
+	 * The 'writeable' means the length from WriteNode's end to last node's end,
+	 * the ByteArray length will be automatically increased, if can not store pending data.
 	 * 
 	 * WriteNode
 	 *     |

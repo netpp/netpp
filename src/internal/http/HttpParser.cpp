@@ -2,22 +2,26 @@
 // Created by gaojian on 2021/12/19.
 //
 
-#include "http/Parser.h"
+#include "internal/http/HttpParser.h"
 #include "llhttp.h"
 #include "internal/socket/SocketIO.h"
 #include <cstring>
 #include <ranges>
 #include "internal/support/Log.h"
+#include "http/HttpRequest.h"
+#include "http/HttpResponse.h"
 extern "C" {
 #include <sys/socket.h>
 }
+
+using namespace netpp::http;
 
 #define D_C(parser) \
 	DecoderImpl *d = reinterpret_cast<DecoderImpl *>(parser);
 
 #define NETPP_UNUSED(x)	(void)(x)
 
-namespace netpp::http {
+namespace netpp::internal::http {
 class DecoderImpl {
 public:
 	DecoderImpl();
@@ -72,14 +76,11 @@ constexpr llhttp_settings_t cb_setting = {
 	nullptr
 };
 
-Parser::Parser()
-	: m_impl{std::make_unique<DecoderImpl>()}
-{
-}
+HttpParser::HttpParser() : m_impl{std::make_unique<DecoderImpl>()} {}
 
-Parser::~Parser() = default;
+HttpParser::~HttpParser() = default;
 
-std::optional<HttpRequest> Parser::decodeRequest(std::weak_ptr<ByteArray> byteArray)
+std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> byteArray)
 {
 	if (m_impl->prase(byteArray))
 	{
@@ -89,7 +90,7 @@ std::optional<HttpRequest> Parser::decodeRequest(std::weak_ptr<ByteArray> byteAr
 		return std::nullopt;
 }
 
-std::optional<HttpResponse> Parser::decodeResponse(std::weak_ptr<ByteArray> byteArray)
+std::optional<HttpResponse> HttpParser::decodeResponse(std::weak_ptr<ByteArray> byteArray)
 {
 	if (m_impl->prase(byteArray))
 	{
@@ -99,7 +100,7 @@ std::optional<HttpResponse> Parser::decodeResponse(std::weak_ptr<ByteArray> byte
 		return std::nullopt;
 }
 
-void Parser::encode(std::weak_ptr<ByteArray> byteArray, const HttpResponse &response)
+void HttpParser::encode(std::weak_ptr<ByteArray> byteArray, const HttpResponse &response)
 {}
 
 DecoderImpl::DecoderImpl()

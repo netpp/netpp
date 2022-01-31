@@ -4,7 +4,7 @@
 
 #include "internal/support/Log.h"
 
-#ifdef NETPP_USE_LOG
+#ifdef NETPP_LOG_SUPPORT
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/async.h"

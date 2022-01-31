@@ -8,9 +8,193 @@
 #include "internal/socket/SocketEnums.h"
 
 namespace netpp {
+
+ChannelWriter::ChannelWriter(std::shared_ptr<ByteArray> &&writeBuffer)
+	: m_writeBuffer{std::move(writeBuffer)}
+{}
+
+ChannelWriter &ChannelWriter::writeInt8(int8_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeInt8(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeInt16(int16_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeInt16(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeInt32(int32_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeInt32(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeInt64(int64_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeInt64(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeUInt8(uint8_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeUInt8(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeUInt16(uint16_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeUInt16(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeUInt32(uint32_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeUInt32(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeUInt64(uint64_t value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeUInt64(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeFloat(float value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeFloat(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeDouble(double value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeDouble(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeString(const std::string &value)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeString(value);
+	return *this;
+}
+
+ChannelWriter &ChannelWriter::writeRaw(const char *data, std::size_t length)
+{
+	if (m_writeBuffer)
+		m_writeBuffer->writeRaw(data, length);
+	return *this;
+}
+
+ChannelReader::ChannelReader(std::shared_ptr<ByteArray> &&readBuffer)
+	: m_readBuffer{std::move(readBuffer)}
+{}
+
+std::optional<int8_t> ChannelReader::retrieveInt8()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(int8_t))
+		return m_readBuffer->retrieveInt8();
+	return std::nullopt;
+}
+
+std::optional<int16_t> ChannelReader::retrieveInt16()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(int16_t))
+		return m_readBuffer->retrieveInt16();
+	return std::nullopt;
+}
+
+std::optional<int32_t> ChannelReader::retrieveInt32()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(int32_t))
+		return m_readBuffer->retrieveInt32();
+	return std::nullopt;
+}
+
+std::optional<int64_t> ChannelReader::retrieveInt64()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(int64_t))
+		return m_readBuffer->retrieveInt64();
+	return std::nullopt;
+}
+
+std::optional<uint8_t> ChannelReader::retrieveUInt8()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(uint8_t))
+		return m_readBuffer->retrieveUInt8();
+	return std::nullopt;
+}
+
+std::optional<uint16_t> ChannelReader::retrieveUInt16()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(uint16_t))
+		return m_readBuffer->retrieveUInt16();
+	return std::nullopt;
+}
+
+std::optional<uint32_t> ChannelReader::retrieveUInt32()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(uint32_t))
+		return m_readBuffer->retrieveUInt32();
+	return std::nullopt;
+}
+
+std::optional<uint64_t> ChannelReader::retrieveUInt64()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(uint64_t))
+		return m_readBuffer->retrieveUInt64();
+	return std::nullopt;
+}
+
+std::optional<float> ChannelReader::retrieveFloat()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(float))
+		return m_readBuffer->retrieveFloat();
+	return std::nullopt;
+}
+
+std::optional<double> ChannelReader::retrieveDouble()
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= sizeof(double))
+		return m_readBuffer->retrieveDouble();
+	return std::nullopt;
+}
+
+std::optional<std::string> ChannelReader::retrieveString(std::size_t length)
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= length)
+		return m_readBuffer->retrieveString(length);
+	return std::nullopt;
+}
+
+std::optional<std::size_t> ChannelReader::retrieveRaw(char *buffer, std::size_t length)
+{
+	if (m_readBuffer && m_readBuffer->readableBytes() >= length)
+		return m_readBuffer->retrieveRaw(buffer, length);
+	return std::nullopt;
+}
+
+std::size_t ChannelReader::readableBytes() const
+{
+	if (m_readBuffer)
+		return m_readBuffer->readableBytes();
+	return 0;
+}
+
 Channel::Channel(std::weak_ptr<internal::handlers::TcpConnection> connection,
-				 std::weak_ptr<ByteArray> writeByteArray, std::weak_ptr<ByteArray> readByteArray)
-		: _connection{std::move(connection)}, _writeArray{std::move(writeByteArray)},
+				 std::weak_ptr<ByteArray> prependByteArray, std::weak_ptr<ByteArray> writeByteArray, std::weak_ptr<ByteArray> readByteArray)
+		: _connection{std::move(connection)}, _prependArray{std::move(prependByteArray)}, _writeArray{std::move(writeByteArray)},
 		  _readArray{std::move(readByteArray)}
 {}
 
@@ -28,263 +212,26 @@ void Channel::close()
 		connection->closeAfterWriteCompleted();
 }
 
-bool Channel::writeInt8(int8_t value)
+ChannelWriter Channel::prependWriter()
 {
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeInt8(value);
-		return true;
-	}
-	return false;
+	return ChannelWriter(_prependArray.lock());
 }
 
-bool Channel::writeInt16(int16_t value)
+ChannelWriter Channel::writer()
 {
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeInt16(value);
-		return true;
-	}
-	return false;
+	return ChannelWriter(_writeArray.lock());
 }
 
-bool Channel::writeInt32(int32_t value)
+ChannelReader Channel::reader()
 {
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeInt32(value);
-		return true;
-	}
-	return false;
+	return ChannelReader(_readArray.lock());
 }
 
-bool Channel::writeInt64(int64_t value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeInt64(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeUInt8(uint8_t value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeUInt8(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeUInt16(uint16_t value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeUInt16(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeUInt32(uint32_t value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeUInt32(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeUInt64(uint64_t value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeUInt64(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeFloat(float value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeFloat(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeDouble(double value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeDouble(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeString(const std::string &value)
-{
-	auto array = writableArray();
-	if (array)
-	{
-		array->writeString(value);
-		return true;
-	}
-	return false;
-}
-
-bool Channel::writeRaw(const char *data, std::size_t length)
-{
-	auto array = _writeArray.lock();
-	if (array)
-	{
-		array->writeRaw(data, length);
-		return true;
-	}
-	return false;
-}
-
-std::size_t Channel::availableRead() const
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->readableBytes();
-	else
-		return 0;
-}
-
-int8_t Channel::retrieveInt8()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveInt8();
-	else
-		return 0;
-}
-
-int16_t Channel::retrieveInt16()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveInt16();
-	else
-		return 0;
-}
-
-int32_t Channel::retrieveInt32()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveInt32();
-	else return 0;
-}
-
-int64_t Channel::retrieveInt64()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveInt64();
-	else
-		return 0;
-}
-
-uint8_t Channel::retrieveUInt8()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveUInt8();
-	else
-		return 0;
-}
-
-uint16_t Channel::retrieveUInt16()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveUInt16();
-	else
-		return 0;
-}
-
-uint32_t Channel::retrieveUInt32()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveUInt32();
-	else
-		return 0;
-}
-
-uint64_t Channel::retrieveUInt64()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveUInt64();
-	else
-		return 0;
-}
-
-float Channel::retrieveFloat()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveFloat();
-	else
-		return 0;
-}
-
-double Channel::retrieveDouble()
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveDouble();
-	else
-		return 0;
-}
-
-std::string Channel::retrieveString(std::size_t length)
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveString(length);
-	else
-		return "";
-}
-
-std::size_t Channel::retrieveRaw(char *buffer, std::size_t length)
-{
-	auto array = _readArray.lock();
-	if (array)
-		return array->retrieveRaw(buffer, length);
-	else
-		return 0;
-}
-
-std::shared_ptr<ByteArray> Channel::writableArray()
+bool Channel::channelActive() const
 {
 	// writing to a connection only available when state is Established
 	auto connection = _connection.lock();
-	if (connection && connection->currentState() == internal::socket::TcpState::Established)
-	{
-		return _writeArray.lock();
-	}
-	return nullptr;
+	return (connection) && (connection->currentState() == internal::socket::TcpState::Established);
 }
 
 int Channel::channelId()

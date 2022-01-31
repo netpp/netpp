@@ -12,18 +12,21 @@ class Echo {
 public:
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
-		std::size_t size = channel->availableRead();
-		std::string data = channel->retrieveString(size);
+		auto reader = channel->reader();
+		std::size_t size = reader.readableBytes();
+		std::string data = reader.retrieveString(size).value();
 		std::cout << "Received size "<< size << " data " << data;
 		std::string str;
 		std::cin >> str;
-		channel->writeString(str);
+		auto writer = channel->writer();
+		writer.writeString(str);
 		channel->send();
 	}
 
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
 	{
-		channel->writeString("hello netpp");
+		auto writer = channel->writer();
+		writer.writeString("hello netpp");
 		channel->send();
 	}
 
