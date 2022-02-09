@@ -9,8 +9,9 @@
 
 namespace netpp {
 namespace internal::socket {
-class ByteArrayIOVecReaderWithLock;
-class ByteArrayIOVecWriterWithLock;
+class ByteArrayReaderWithLock;
+class ByteArrayWriterWithLock;
+class SequentialByteArrayReaderWithLock;
 }
 /**
  * @brief ByteArray has a list of buffer nodes, saved in network ending(big ending), 
@@ -52,8 +53,9 @@ class ByteArrayIOVecWriterWithLock;
 class ByteArray {
 	// access buffer directly
 	/// @note public methods are guarded by mutex, do NOT use with ByteArrayIOVector*WithLock, it will lead to dead lock
-	friend class internal::socket::ByteArrayIOVecReaderWithLock;
-	friend class internal::socket::ByteArrayIOVecWriterWithLock;
+	friend class internal::socket::ByteArrayReaderWithLock;
+	friend class internal::socket::ByteArrayWriterWithLock;
+	friend class internal::socket::SequentialByteArrayReaderWithLock;
 public:
 	using LengthType = std::uint64_t;
 	constexpr static LengthType BufferNodeSize = 1024;
