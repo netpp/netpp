@@ -169,10 +169,10 @@ SequentialByteArrayReaderWithLock::SequentialByteArrayReaderWithLock(std::vector
 
 	m_vecLen = 0;
 	auto *vecNodes = new ::iovec[nodeCount];
-	for (unsigned i = 0; i < nodeCount; ++i)
+	for (auto &b : m_buffers)
 	{
-		std::shared_ptr<ByteArray::BufferNode> node = m_buffers[i]->_currentReadBufferNode.lock();
-		std::shared_ptr<ByteArray::BufferNode> endNode = m_buffers[i]->_currentWriteBufferNode.lock()->next;
+		std::shared_ptr<ByteArray::BufferNode> node = b->_currentReadBufferNode.lock();
+		std::shared_ptr<ByteArray::BufferNode> endNode = b->_currentWriteBufferNode.lock()->next;
 		// has node
 		// current node is not empty
 		while (node != endNode && (node->end - node->start != 0))

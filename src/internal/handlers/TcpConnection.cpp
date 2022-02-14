@@ -104,8 +104,13 @@ void TcpConnection::handleOut()
 	{
 		renewWheel();
 		// may not write all data this round, keep OUT event on and wait for next round
+		bool writeCompleted;
 		// TODO: handle read/write timeout
-		if (socket::SocketIO::write(m_socket.get(), m_writeBuffer))
+		if (m_prependBuffer->readableBytes() != 0)
+			writeCompleted = socket::SocketIO::write(m_socket.get(), {m_prependBuffer, m_writeBuffer});
+		else
+			writeCompleted = socket::SocketIO::write(m_socket.get(), m_writeBuffer);
+		if (writeCompleted)
 		{
 			m_epollEvent->deactive(epoll::EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?
