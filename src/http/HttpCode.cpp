@@ -31,7 +31,7 @@ ProtocolVersion getHttpVersion(int major, int minor)
 		case 10:	return ProtocolVersion::Http1_0;
 		case 11:	return ProtocolVersion::Http1_1;
 		case 20:	return ProtocolVersion::Http2_0;
-		default:	return ProtocolVersion::Http1_0;
+		default:	return ProtocolVersion::UnkownProtocol;
 	}
 }
 }

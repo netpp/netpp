@@ -5,6 +5,20 @@
 #include "http/HttpRequest.h"
 
 namespace netpp::http {
+HttpRequest::HttpRequest()
+	: m_method{RequestMethod::Get}, m_version{ProtocolVersion::Http2_0}
+{}
+
+void HttpRequest::setHeader(std::map<std::string, std::string> header)
+{
+	m_header = std::move(header);
+}
+
+void HttpRequest::setHeader(std::map<std::string, std::string> &&header)
+{
+	m_header = std::move(header);
+}
+
 void HttpRequest::addHeader(KnownHeader header, const std::string &value)
 {
 	const std::string_view &headerString = getHeader(header);

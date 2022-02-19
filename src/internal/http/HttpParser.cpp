@@ -25,7 +25,7 @@ namespace netpp::internal::http {
 class DecoderImpl {
 public:
 	DecoderImpl();
-	bool prase(std::weak_ptr<ByteArray> &byteArray);
+	bool parse(std::weak_ptr<ByteArray> &byteArray);
 	HttpResponse decodedResponse();
 	HttpRequest decodedRequest();
 
@@ -46,7 +46,8 @@ public:
 	static int onHeaderValueComplete(llhttp_t *parser);*/
 
 private:
-	void setByteArrayLength(internal::socket::ByteArrayIOVecReaderWithLock &reader, const char *start, ByteArray::LengthType length) const;
+	void setByteArrayLength(internal::socket::ByteArrayReaderWithLock &reader, const char *start, ByteArray::LengthType length) const;
+	void getCodeAndProtocolVersion();
 
 private:
 	::llhttp_t m_parser;
@@ -82,7 +83,7 @@ HttpParser::~HttpParser() = default;
 
 std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> byteArray)
 {
-	if (m_impl->prase(byteArray))
+	if (m_impl->parse(byteArray))
 	{
 		return m_impl->decodedRequest();
 	}
@@ -92,7 +93,7 @@ std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> by
 
 std::optional<HttpResponse> HttpParser::decodeResponse(std::weak_ptr<ByteArray> byteArray)
 {
-	if (m_impl->prase(byteArray))
+	if (m_impl->parse(byteArray))
 	{
 		return m_impl->decodedResponse();
 	}
@@ -109,12 +110,13 @@ DecoderImpl::DecoderImpl()
 	::llhttp_init(&m_parser, HTTP_BOTH, &cb_setting);
 }
 
-bool DecoderImpl::prase(std::weak_ptr<ByteArray> &byteArray)
+bool DecoderImpl::parse(std::weak_ptr<ByteArray> &byteArray)
 {
-	internal::socket::ByteArrayIOVecReaderWithLock reader(byteArray.lock());
+	internal::socket::ByteArrayReaderWithLock reader(byteArray.lock());
 	::iovec *vec = reader.iovec();
 	std::size_t nodeSize = reader.iovenLength();
 
+	bool parseSuccess = false;
 	if (nodeSize > 0)
 	{
 		::llhttp_errno placementErr = ::llhttp_execute(&m_parser, static_cast<char *>(vec[0].iov_base),
@@ -122,9 +124,12 @@ bool DecoderImpl::prase(std::weak_ptr<ByteArray> &byteArray)
 		);
 		switch (placementErr)
 		{
-			case HPE_PAUSED_UPGRADE:	// only manually pause parse means the header is completed
+			case HPE_OK:
+			case HPE_PAUSED_UPGRADE:	// the header is completed
+				getCodeAndProtocolVersion();
 				setByteArrayLength(reader, static_cast<char *>(vec[0].iov_base), vec[0].iov_len);
-				return true;
+				parseSuccess = true;
+				break;
 			case HPE_INVALID_METHOD:	// syntax error
 			case HPE_INVALID_URL:
 			case HPE_INVALID_CONSTANT:
@@ -136,7 +141,8 @@ bool DecoderImpl::prase(std::weak_ptr<ByteArray> &byteArray)
 			case HPE_INVALID_EOF_STATE:
 			case HPE_INVALID_TRANSFER_ENCODING:
 				LOG_INFO("Syntax error {}:{}", ::llhttp_errno_name(placementErr), m_parser.reason);
-				return false;
+				parseSuccess = false;
+				break;
 			default:					// header not completed, copy nodes and restart
 				// TODO: we should implement http parse method, copy nodes is not efficient
 				for (std::size_t i = 0; i <= nodeSize; i *= 2)
@@ -145,31 +151,39 @@ bool DecoderImpl::prase(std::weak_ptr<ByteArray> &byteArray)
 						i = nodeSize;
 					char *buffer = new char[ByteArray::BufferNodeSize * i];
 					ByteArray::LengthType byteArrayLength = 0;
-					for (std::size_t j : std::ranges::iota_view(static_cast<std::size_t>(0), i))
+					for (std::size_t j = 0; j < i; ++j)
 					{
 						std::memcpy(buffer + byteArrayLength, vec[j].iov_base, vec[j].iov_len);
 						byteArrayLength += vec[j].iov_len;
 					}
 					::llhttp_reset(&m_parser);
 					::llhttp_errno copyErr = ::llhttp_execute(&m_parser, buffer, byteArrayLength);
-					delete []buffer;
 					if (copyErr == HPE_PAUSED_UPGRADE)
 					{
+						getCodeAndProtocolVersion();
 						setByteArrayLength(reader, buffer, byteArrayLength);
-						return true;
+						parseSuccess = true;
 					}
+					delete []buffer;
 				}
-				return false;
+				break;
 		}
 	}
-	return false;
+	return parseSuccess;
 }
 
 HttpResponse DecoderImpl::decodedResponse()
 {}
 
 HttpRequest DecoderImpl::decodedRequest()
-{}
+{
+	HttpRequest request;
+	request.setMethod(method);
+	request.setUrl(url);
+	request.setHttpVersion(version);
+	request.setHeader(header);
+	return request;
+}
 
 int DecoderImpl::onMessageBegin(llhttp_t *parser)
 {
@@ -208,58 +222,7 @@ int DecoderImpl::onHeaderValue(llhttp_t *parser, const char *at, size_t length)
 
 int DecoderImpl::onHeadersComplete(llhttp_t *parser)
 {
-	D_C(parser)
-	d->statusCode = static_cast<StatusCode>(parser->status_code);
-	d->version = getHttpVersion(parser->http_major, parser->http_minor);
-	switch (static_cast<llhttp_method>(parser->method))
-	{
-		case HTTP_DELETE:	d->method = RequestMethod::Delete;	break;
-		case HTTP_GET:	d->method = RequestMethod::Get;	break;
-		case HTTP_HEAD:	d->method = RequestMethod::Head;	break;
-		case HTTP_POST:	d->method = RequestMethod::Post;	break;
-		case HTTP_PUT:	d->method = RequestMethod::Put;	break;
-		case HTTP_CONNECT:	d->method = RequestMethod::Connect;	break;
-		case HTTP_OPTIONS:	d->method = RequestMethod::Options;	break;
-		case HTTP_TRACE:	d->method = RequestMethod::Trace;	break;
-		case HTTP_COPY:break;
-		case HTTP_LOCK:break;
-		case HTTP_MKCOL:break;
-		case HTTP_MOVE:break;
-		case HTTP_PROPFIND:break;
-		case HTTP_PROPPATCH:break;
-		case HTTP_SEARCH:break;
-		case HTTP_UNLOCK:break;
-		case HTTP_BIND:break;
-		case HTTP_REBIND:break;
-		case HTTP_UNBIND:break;
-		case HTTP_ACL:break;
-		case HTTP_REPORT:break;
-		case HTTP_MKACTIVITY:break;
-		case HTTP_CHECKOUT:break;
-		case HTTP_MERGE:break;
-		case HTTP_MSEARCH:break;
-		case HTTP_NOTIFY:break;
-		case HTTP_SUBSCRIBE:break;
-		case HTTP_UNSUBSCRIBE:break;
-		case HTTP_PATCH:	d->method = RequestMethod::Patch;	break;
-		case HTTP_PURGE:break;
-		case HTTP_MKCALENDAR:break;
-		case HTTP_LINK:break;
-		case HTTP_UNLINK:break;
-		case HTTP_SOURCE:break;
-		case HTTP_PRI:break;
-		case HTTP_DESCRIBE:break;
-		case HTTP_ANNOUNCE:break;
-		case HTTP_SETUP:break;
-		case HTTP_PLAY:break;
-		case HTTP_PAUSE:break;
-		case HTTP_TEARDOWN:break;
-		case HTTP_GET_PARAMETER:break;
-		case HTTP_SET_PARAMETER:break;
-		case HTTP_REDIRECT:break;
-		case HTTP_RECORD:break;
-		case HTTP_FLUSH:break;
-	}
+	NETPP_UNUSED(parser);
 	// parse was done after header completed
 	return 2;
 }
@@ -304,7 +267,7 @@ int DecoderImpl::onHeaderValueComplete([[maybe_unused]] llhttp_t *parser)
 	return 0;
 }*/
 
-void DecoderImpl::setByteArrayLength(internal::socket::ByteArrayIOVecReaderWithLock &reader, const char *start, ByteArray::LengthType length) const
+void DecoderImpl::setByteArrayLength(internal::socket::ByteArrayReaderWithLock &reader, const char *start, ByteArray::LengthType length) const
 {
 	long parsedLength = m_parser.error_pos - start;
 	if (parsedLength > 0 && static_cast<ByteArray::LengthType>(parsedLength) < length)
@@ -314,6 +277,61 @@ void DecoderImpl::setByteArrayLength(internal::socket::ByteArrayIOVecReaderWithL
 	else
 	{
 		LOG_ERROR("Unknown error while parsing http, unexpected pointer");
+	}
+}
+
+void DecoderImpl::getCodeAndProtocolVersion()
+{
+	statusCode = static_cast<StatusCode>(m_parser.status_code);
+	version = getHttpVersion(m_parser.http_major, m_parser.http_minor);
+	switch (static_cast<llhttp_method>(m_parser.method))
+	{
+		case HTTP_DELETE:	method = RequestMethod::Delete;	break;
+		case HTTP_GET:	method = RequestMethod::Get;	break;
+		case HTTP_HEAD:	method = RequestMethod::Head;	break;
+		case HTTP_POST:	method = RequestMethod::Post;	break;
+		case HTTP_PUT:	method = RequestMethod::Put;	break;
+		case HTTP_CONNECT:	method = RequestMethod::Connect;	break;
+		case HTTP_OPTIONS:	method = RequestMethod::Options;	break;
+		case HTTP_TRACE:	method = RequestMethod::Trace;	break;
+		case HTTP_COPY:break;
+		case HTTP_LOCK:break;
+		case HTTP_MKCOL:break;
+		case HTTP_MOVE:break;
+		case HTTP_PROPFIND:break;
+		case HTTP_PROPPATCH:break;
+		case HTTP_SEARCH:break;
+		case HTTP_UNLOCK:break;
+		case HTTP_BIND:break;
+		case HTTP_REBIND:break;
+		case HTTP_UNBIND:break;
+		case HTTP_ACL:break;
+		case HTTP_REPORT:break;
+		case HTTP_MKACTIVITY:break;
+		case HTTP_CHECKOUT:break;
+		case HTTP_MERGE:break;
+		case HTTP_MSEARCH:break;
+		case HTTP_NOTIFY:break;
+		case HTTP_SUBSCRIBE:break;
+		case HTTP_UNSUBSCRIBE:break;
+		case HTTP_PATCH:	method = RequestMethod::Patch;	break;
+		case HTTP_PURGE:break;
+		case HTTP_MKCALENDAR:break;
+		case HTTP_LINK:break;
+		case HTTP_UNLINK:break;
+		case HTTP_SOURCE:break;
+		case HTTP_PRI:break;
+		case HTTP_DESCRIBE:break;
+		case HTTP_ANNOUNCE:break;
+		case HTTP_SETUP:break;
+		case HTTP_PLAY:break;
+		case HTTP_PAUSE:break;
+		case HTTP_TEARDOWN:break;
+		case HTTP_GET_PARAMETER:break;
+		case HTTP_SET_PARAMETER:break;
+		case HTTP_REDIRECT:break;
+		case HTTP_RECORD:break;
+		case HTTP_FLUSH:break;
 	}
 }
 }

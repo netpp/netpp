@@ -11,6 +11,9 @@
 
 namespace netpp::http {
 class HttpRequest {
+public:
+	HttpRequest();
+
 	/**
 	 * @brief Set request method
 	 * @param method
@@ -37,6 +40,8 @@ class HttpRequest {
 	 */
 	[[nodiscard]] ProtocolVersion httpVersion() const { return m_version; }
 
+	void setHeader(std::map<std::string, std::string> header);
+	void setHeader(std::map<std::string, std::string> &&header);
 	void addHeader(KnownHeader header, const std::string &value);
 	void addHeader(KnownHeader header, std::string &&value);
 	void addHeader(KnownHeader header, const char *value, std::size_t length);

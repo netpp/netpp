@@ -8,11 +8,13 @@
 #include <string_view>
 
 #define NETPP_HTTP_PROTOCOL_VERSION(XX) \
+    XX(UnkownProtocol, 0, 0)	\
 	XX(Http1_0, 1, 0)	\
 	XX(Http1_1, 1, 1)	\
 	XX(Http2_0, 2, 0)
 
-#define NETPP_HTTP_METHOD(XX)	\
+#define NETPP_HTTP_METHOD(XX) \
+    XX(UnknownHeader, "UNKNOWN_HEADER")	\
 	XX(Get, "GET")			\
 	XX(Head, "HEAD")		\
 	XX(Post, "POST")		\
