@@ -136,6 +136,7 @@ void Timer::stop()
 }
 
 TimerImpl::TimerImpl()
+	: m_timerSpec{}
 {
 	m_timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 	std::memset(&m_timerSpec, 0, sizeof(::itimerspec));
@@ -176,7 +177,7 @@ void TimerImpl::runRepeatedly(unsigned int intervalInMSec)
 void TimerImpl::setAndRun(unsigned int intervalInMSec, bool repeat)
 {
 	// get first trigger time
-	::timespec now;
+	::timespec now{};
 	// can ignore clock_gettime failed
 	::clock_gettime(CLOCK_MONOTONIC, &now);
 	::time_t sec = now.tv_sec + intervalInMSec / 1000;

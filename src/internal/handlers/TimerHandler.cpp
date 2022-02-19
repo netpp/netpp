@@ -4,7 +4,6 @@
 
 #include "internal/handlers/TimerHandler.h"
 #include "time/Timer.h"
-#include "internal/support/Log.h"
 #include "EventLoop.h"
 #include "internal/stub/IO.h"
 

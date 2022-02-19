@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 project(example_chat_server)
 
 add_executable(example_chat_server chat_server.cpp)

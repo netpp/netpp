@@ -203,8 +203,10 @@ std::string ByteArray::retrieveString(std::size_t length)
 {
 	std::string buffer;
 	buffer.resize(length);
-	retrieveRaw(buffer.data(), length);
-	return buffer;
+	if (retrieveRaw(buffer.data(), length) != 0)
+		return buffer;
+	else
+		return "";
 }
 
 std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)

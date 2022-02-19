@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 project(example_signal_handle)
 
 add_executable(example_signal_handle signal_handle.cpp)
