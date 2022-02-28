@@ -1,11 +1,12 @@
 #ifndef NETPP_BYTEARRAY_H
 #define NETPP_BYTEARRAY_H
 
-#include <cstddef>
 #include <string>
 #include <memory>
 #include <mutex>
-#include <atomic>
+#include <vector>
+#include "internal/buffer/BufferNode.h"
+#include "internal/buffer/CowLink.hpp"
 
 namespace netpp {
 namespace internal::socket {
@@ -14,14 +15,14 @@ class ByteArrayWriterWithLock;
 class SequentialByteArrayReaderWithLock;
 }
 /**
- * @brief ByteArray has a list of buffer nodes, saved in network ending(big ending), 
+ * @brief ByteArray has a list of buffer m_nodes, saved in network ending(big ending),
  * it's thread safe.
  * 
  * @section ReadNode
  * The ReadNode point to node where data begins, while reading, the node's start 
  * indicator moves, if reached the end indicator, all data in this node has read, 
  * ReadNode will try to move to next node(if any), the movement of ReadNode makes
- * nodes between head and ReadNode out of usage, these nodes will be moved later.
+ * m_nodes between head and ReadNode out of usage, these m_nodes will be moved later.
  * ReadNode should never cross WriteNode.
  * 
  * @section WriteNode
@@ -30,10 +31,10 @@ class SequentialByteArrayReaderWithLock;
  * of node's buffer, WriteNode will to move to next node.
  * Before any data wrote, the writeable bytes will be checked, if the pending length
  * is not satisfied, the head movement or memory allocation will applied.
- * The 'head movement' target at move 'writeable' nodes(as I said before, the movement 
- * of ReadNode, lead nodes between head and ReadNode out of usage) to tail, avoid 
+ * The 'head movement' target at move 'writeable' m_nodes(as I said before, the movement
+ * of ReadNode, lead m_nodes between head and ReadNode out of usage) to tail, avoid
  * memory allocation.
- * If still not enough space for pending data after move, allocate nodes twice than
+ * If still not enough space for pending data after move, allocate m_nodes twice than
  * current every time util data can be stored.
  * 
  * @section node graphic
@@ -57,9 +58,16 @@ class ByteArray {
 	friend class internal::socket::ByteArrayWriterWithLock;
 	friend class internal::socket::SequentialByteArrayReaderWithLock;
 public:
-	using LengthType = std::uint64_t;
-	constexpr static LengthType BufferNodeSize = 1024;
+	using LengthType = internal::buffer::BufferNode::LengthType;
+	static constexpr LengthType BufferNodeSize = internal::buffer::BufferNode::BufferNodeSize;
+
 	ByteArray();
+	/**
+	 * Copy from other ByteArray is COW(copy on write)
+	 * @param other an other ByteArray
+	 */
+	ByteArray(const ByteArray &other);
+	ByteArray(ByteArray &&other) noexcept;
 
 	void writeInt8(int8_t value);
 	void writeInt16(int16_t value);
@@ -100,7 +108,11 @@ public:
 	 * @brief The readable bytes in buffer.
 	 * From ReadNode's start to WriteNode's end.
 	 */
-	inline LengthType readableBytes() const { std::lock_guard lck(m_bufferMutex); return m_availableSizeToRead; }
+	LengthType readableBytes() const
+	{
+		std::lock_guard lck(m_bufferMutex);
+		return m_availableSizeToRead;
+	}
 
 	/** 
 	 * @brief The writeable bytes in buffer.
@@ -119,13 +131,19 @@ public:
 	 *    end|                |
 	 *       |----writeable---|
 	 */
-	inline LengthType writeableBytes() const { std::lock_guard lck(m_bufferMutex); return m_availableSizeToWrite; }
+	LengthType writeableBytes() const
+	{
+		std::lock_guard lck(m_bufferMutex);
+		return m_availableSizeToWrite;
+	}
 
 private:
+	using CowBuffer = internal::buffer::CowLink<internal::buffer::BufferNode>;
+
 	/**
 	 * @brief Alloc more buffer
 	 * 1. move unused buffer node from head to tail
-	 * 2. if available writeable buffer size is still less than size, alloc double size of nodes than current
+	 * 2. if available writeable buffer size is still less than size, alloc double size of m_nodes than current
 	 * @param size	At lease n bytes available
 	 * @note This method will not acquire lock
 	 */
@@ -137,28 +155,15 @@ private:
 	 */
 	void unlockedMoveBufferHead();
 
-	/**
-	 * @brief The node of buffer
-	 */
-	// FIXME: remove unused buffer node
-	struct BufferNode {
-		BufferNode();
-		// constexpr static int maxTimeToLive = 10;
-		LengthType start;	// the offset of buffer read
-		LengthType end;	// the offset of buffer write
-		// int timeToLive;
-		char buffer[BufferNodeSize];	// buffer
-		std::shared_ptr<BufferNode> next;	// next buffer node
-	};
+	CowBuffer::NodeContainerIndexer endOfReadNode() const;
+
 	mutable std::mutex m_bufferMutex;
 	LengthType m_availableSizeToRead;
 	LengthType m_availableSizeToWrite;
-	unsigned m_nodeCount;						// node number
-	// TODO: use unique_ptr here
-	std::shared_ptr<BufferNode> m_bufferHead;	// the head of buffer node
-	std::weak_ptr<BufferNode> _bufferTail;		// the tail of buffer node
-	std::weak_ptr<BufferNode> _currentReadBufferNode;	// start read buffer from
-	std::weak_ptr<BufferNode> _currentWriteBufferNode;	// start write buffer from
+
+	CowBuffer::NodeContainerIndexer m_readNode;
+	CowBuffer::NodeContainerIndexer m_writeNode;
+	std::unique_ptr<CowBuffer> m_nodes;
 };
 }
 

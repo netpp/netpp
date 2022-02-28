@@ -19,12 +19,11 @@ class ByteArraySequentialReaderTest : public testing::Test {
 protected:
 	void SetUp() override {}
 	void TearDown() override {}
-
-	static constexpr int byteArrayCount = 4;
 };
 
 TEST_F(ByteArraySequentialReaderTest, SomeEmptyByteArray)
 {
+	static constexpr int byteArrayCount = 4;
 	int fillByteArray = (1 << byteArrayCount) - 1;
 	for (int i = 0; i <= fillByteArray; ++i)
 	{
@@ -38,10 +37,10 @@ TEST_F(ByteArraySequentialReaderTest, SomeEmptyByteArray)
 				byteArray->writeInt8(2);
 				++byteArrayHasValue;
 			}
-			byteArrays.emplace_back(byteArray);
+			byteArrays.emplace_back(std::move(byteArray));
 		}
 		{
-			std::vector<std::shared_ptr<ByteArray>> tmp(byteArrays);
+			std::vector<std::shared_ptr<ByteArray>> tmp = byteArrays;
 			internal::socket::SequentialByteArrayReaderWithLock readVec(std::move(tmp));
 			EXPECT_EQ(readVec.iovenLength(), byteArrayHasValue);
 			for (auto j = 0; j < byteArrayHasValue; ++j)

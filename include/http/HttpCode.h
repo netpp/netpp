@@ -127,7 +127,7 @@ enum class KnownHeader {
 enum class StatusCode {
 	NETPP_HTTP_STATUS_CODE(NETPP_HTTP_STATUS_CODE_DEFINE)
 };
-const std::string_view &getHeader(KnownHeader header);
+const std::string_view &getHeaderAsString(KnownHeader header);
 ProtocolVersion getHttpVersion(int major, int minor);
 }
 

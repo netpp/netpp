@@ -26,6 +26,7 @@ class DecoderImpl {
 public:
 	DecoderImpl();
 	bool parse(std::weak_ptr<ByteArray> &byteArray);
+	void resetParse();
 	HttpResponse decodedResponse();
 	HttpRequest decodedRequest();
 
@@ -85,7 +86,12 @@ std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> by
 {
 	if (m_impl->parse(byteArray))
 	{
-		return m_impl->decodedRequest();
+		HttpRequest request = m_impl->decodedRequest();
+		if (request.hasHeader(KnownHeader::ContentLength))
+		{
+			request.setBody(byteArray.lock());
+		}
+		return request;
 	}
 	else
 		return std::nullopt;
@@ -105,7 +111,7 @@ void HttpParser::encode(std::weak_ptr<ByteArray> byteArray, const HttpResponse &
 {}
 
 DecoderImpl::DecoderImpl()
-		: m_parser{}
+		: m_parser{}, method{RequestMethod::UnknownHeader}, statusCode{StatusCode::OK}, version{ProtocolVersion::UnkownProtocol}
 {
 	::llhttp_init(&m_parser, HTTP_BOTH, &cb_setting);
 }
@@ -119,9 +125,7 @@ bool DecoderImpl::parse(std::weak_ptr<ByteArray> &byteArray)
 	bool parseSuccess = false;
 	if (nodeSize > 0)
 	{
-		::llhttp_errno placementErr = ::llhttp_execute(&m_parser, static_cast<char *>(vec[0].iov_base),
-											  vec[0].iov_len
-		);
+		::llhttp_errno placementErr = ::llhttp_execute(&m_parser, static_cast<char *>(vec[0].iov_base), vec[0].iov_len);
 		switch (placementErr)
 		{
 			case HPE_OK:
@@ -143,8 +147,8 @@ bool DecoderImpl::parse(std::weak_ptr<ByteArray> &byteArray)
 				LOG_INFO("Syntax error {}:{}", ::llhttp_errno_name(placementErr), m_parser.reason);
 				parseSuccess = false;
 				break;
-			default:					// header not completed, copy nodes and restart
-				// TODO: we should implement http parse method, copy nodes is not efficient
+			default:					// header not completed, copy m_nodes and restart
+				// TODO: we should implement http parse method, copy m_nodes is not efficient
 				for (std::size_t i = 0; i <= nodeSize; i *= 2)
 				{
 					if (i - nodeSize < i * 2)
@@ -170,6 +174,16 @@ bool DecoderImpl::parse(std::weak_ptr<ByteArray> &byteArray)
 		}
 	}
 	return parseSuccess;
+}
+
+void DecoderImpl::resetParse()
+{
+	headerField = "";
+	method = RequestMethod::UnknownHeader;
+	statusCode = StatusCode::OK;
+	url = "";
+	version = ProtocolVersion::UnkownProtocol;
+	header = {};
 }
 
 HttpResponse DecoderImpl::decodedResponse()

@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <mutex>
 #include "ByteArray.h"
 
 struct iovec;
@@ -86,6 +87,7 @@ public:
 
 private:
 	std::shared_ptr<ByteArray> m_buffer;
+	std::lock_guard<decltype(ByteArray::m_bufferMutex)> m_lck;
 };
 
 /**
@@ -96,7 +98,7 @@ private:
 class SequentialByteArrayReaderWithLock : public ByteArray2IOVec {
 public:
 	explicit SequentialByteArrayReaderWithLock(std::vector<std::shared_ptr<ByteArray>> &&buffers);
-	~SequentialByteArrayReaderWithLock() noexcept override;
+	~SequentialByteArrayReaderWithLock() override;
 
 	/**
 	 * @brief After read 'size' data from ByteArray, move read node backwards
@@ -112,7 +114,9 @@ public:
 	ByteArray::LengthType availableBytes() override;
 
 private:
+	using ByteArrayMutex = decltype(ByteArray::m_bufferMutex);
 	std::vector<std::shared_ptr<ByteArray>> m_buffers;
+	std::vector<std::unique_ptr<std::lock_guard<ByteArrayMutex>>> m_lck;
 };
 
 /**
@@ -140,6 +144,7 @@ public:
 
 private:
 	std::shared_ptr<ByteArray> m_buffer;
+	std::lock_guard<decltype(ByteArray::m_bufferMutex)> m_lck;
 };
 }
 

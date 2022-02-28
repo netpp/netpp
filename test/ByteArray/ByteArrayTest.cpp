@@ -1,6 +1,4 @@
 #include <gtest/gtest.h>
-#include "ByteArray.h"
-#include "internal/socket/SocketIO.h"
 #include <cstring>
 extern "C" {
 #include <sys/socket.h>
@@ -8,6 +6,12 @@ extern "C" {
 #include <endian.h>
 #include <sys/uio.h>
 }
+#define private public
+#define protected public
+#include "ByteArray.h"
+#include "internal/socket/SocketIO.h"
+#undef private
+#undef protected
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wconversion"
@@ -236,18 +240,26 @@ TEST_F(ByteArrayTest, MoveBufferNode)
 	byteArray.writeRaw(raw, ByteArray::BufferNodeSize);	// alloc new node
 	EXPECT_EQ(byteArray.readableBytes(), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
+	EXPECT_EQ(byteArray.m_readNode, 0);
+	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, ByteArray::BufferNodeSize), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
+	EXPECT_EQ(byteArray.m_readNode, 1);
+	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	byteArray.writeRaw(raw, ByteArray::BufferNodeSize);	// head node will move to tail
 	EXPECT_EQ(byteArray.readableBytes(), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
+	EXPECT_EQ(byteArray.m_readNode, 0);
+	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, ByteArray::BufferNodeSize), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
+	EXPECT_EQ(byteArray.m_readNode, 1);
+	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	byteArray.writeInt8(1);
 	EXPECT_EQ(byteArray.readableBytes(), 1);
@@ -262,7 +274,7 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteBigEntry)
 {
 	ByteArray byteArray;
 	char raw[ByteArray::BufferNodeSize * 10] = {'\0'};
-	byteArray.writeRaw(raw, ByteArray::BufferNodeSize * 10);	// 16 nodes, last 6 is usable
+	byteArray.writeRaw(raw, ByteArray::BufferNodeSize * 10);	// 16 m_nodes, last 6 is usable
 	EXPECT_EQ(byteArray.readableBytes(), ByteArray::BufferNodeSize * 10);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize * 6);
 	EXPECT_EQ(byteArray.retrieveRaw(raw, ByteArray::BufferNodeSize * 10), ByteArray::BufferNodeSize * 10);

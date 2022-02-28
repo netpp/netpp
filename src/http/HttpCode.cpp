@@ -5,7 +5,7 @@
 #include "http/HttpCode.h"
 
 namespace netpp::http {
-const std::string_view &getHeader(KnownHeader header)
+const std::string_view &getHeaderAsString(KnownHeader header)
 {
 	// avoid construct
 #define NETPP_HTTP_HEADER_TO_STRING_STATIC_VAR(header, as_string) \

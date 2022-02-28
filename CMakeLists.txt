@@ -16,6 +16,7 @@ include/support/ThreadSafeQueue.hpp include/internal/support/Log.h
 include/internal/socket/Socket.h include/internal/socket/SocketIO.h
 include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
 include/internal/time/TimeWheel.h
+        include/internal/buffer/CowLink.hpp include/internal/buffer/BufferNode.h
 include/signal/Signals.h include/signal/SignalWatcher.h
 include/error/Exception.h include/error/SocketError.h
 include/support/ThreadPool.hpp
@@ -27,6 +28,7 @@ src/internal/support/Log.cpp
 src/internal/socket/Socket.cpp src/internal/socket/SocketIO.cpp
 src/internal/stub/IO.cpp src/internal/stub/Socket.cpp src/internal/stub/Epoll.cpp
 src/internal/time/TimeWheel.cpp
+        src/internal/buffer/BufferNode.cpp
 src/signal/Signals.cpp src/signal/SignalWatcher.cpp
 src/error/Exception.cpp src/error/SocketError.cpp
 src/support/ThreadPool.cpp

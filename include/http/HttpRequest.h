@@ -8,6 +8,11 @@
 #include "HttpCode.h"
 #include <string>
 #include <map>
+#include <memory>
+
+namespace netpp {
+class ByteArray;
+}
 
 namespace netpp::http {
 class HttpRequest {
@@ -44,30 +49,33 @@ public:
 	void setHeader(std::map<std::string, std::string> &&header);
 	void addHeader(KnownHeader header, const std::string &value);
 	void addHeader(KnownHeader header, std::string &&value);
-	void addHeader(KnownHeader header, const char *value, std::size_t length);
 	void addRawHeader(const std::string &header, const std::string &value);
 	void addRawHeader(const std::string &header, std::string &&value);
-	void addRawHeader(const std::string &header, const char *value, std::size_t length);
 	void addRawHeader(std::string &&header, const std::string &value);
 	void addRawHeader(std::string &&header, std::string &&value);
-	void addRawHeader(std::string &&header, const char *value, std::size_t length);
 	/**
 	 * @brief Get request headers in key-value
 	 * @return headers
 	 */
 	[[nodiscard]] std::map<std::string, std::string> headers() const { return m_header; }
 
+	bool hasHeader(KnownHeader header);
+	bool hasHeader(const std::string &header);
+	bool hasHeader(std::string &&header);
+
+	void setBody(std::shared_ptr<ByteArray> body);
 	/**
 	 * @brief Read http message body
 	 * @return message body
 	 */
-	[[nodiscard]] std::string body() const;
+	[[nodiscard]] std::shared_ptr<ByteArray> body() const;
 
 private:
 	RequestMethod m_method;
 	std::string m_url;
 	ProtocolVersion m_version;
 	std::map<std::string, std::string> m_header;
+	std::shared_ptr<ByteArray> m_bodyBuffer;
 };
 }
 

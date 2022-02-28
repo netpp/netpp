@@ -42,23 +42,18 @@ ByteArray2IOVec::~ByteArray2IOVec()
 }
 
 ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buffer)
-	: m_buffer{std::move(buffer)}
+	: m_buffer{std::move(buffer)}, m_lck{m_buffer->m_bufferMutex}
 {
-	m_buffer->m_bufferMutex.lock();
-	unsigned nodes = m_buffer->m_nodeCount;
+	ByteArray::CowBuffer::NodeContainerIndexer endOfRead = m_buffer->endOfReadNode();
 	m_vecLen = 0;
-	auto *vecNodes = new ::iovec[nodes];
-	if (nodes > 0)
+	auto *vecNodes = new ::iovec[endOfRead - m_buffer->m_readNode];
+
+	for (auto it = m_buffer->m_nodes->cowBegin(m_buffer->m_readNode); (it <=> m_buffer->m_nodes->cowEnd(endOfRead)) < 0; ++it)
 	{
-		std::shared_ptr<ByteArray::BufferNode> node = m_buffer->_currentReadBufferNode.lock();
-		std::shared_ptr<ByteArray::BufferNode> endNode = m_buffer->_currentWriteBufferNode.lock()->next;
-		// has node
-		// current node is not empty
-		while (node != endNode && (node->end - node->start != 0))
+		if (it->end - it->start != 0)		// this node is empty
 		{
-			vecNodes[m_vecLen].iov_base = node->buffer + node->start;
-			vecNodes[m_vecLen].iov_len = node->end - node->start;
-			node = node->next;
+			vecNodes[m_vecLen].iov_base = it->buffer + it->start;
+			vecNodes[m_vecLen].iov_len = it->end - it->start;
 			++m_vecLen;
 		}
 	}
@@ -66,29 +61,24 @@ ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr<ByteArray> buff
 		m_vec = vecNodes;
 }
 
-ByteArrayReaderWithLock::~ByteArrayReaderWithLock()
-{
-	m_buffer->m_bufferMutex.unlock();
-}
+ByteArrayReaderWithLock::~ByteArrayReaderWithLock() = default;
 
 void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 {
 	if (size >= m_buffer->m_availableSizeToRead)	// if size is larger than this ByteArray, just read node to end
 	{
+		m_buffer->m_readNode = m_buffer->m_writeNode;
 		m_buffer->m_availableSizeToRead = 0;
-		m_buffer->_currentReadBufferNode = m_buffer->_currentWriteBufferNode;
-		auto node = m_buffer->_currentReadBufferNode.lock();
-		node->start = node->end;
+		auto it = m_buffer->m_nodes->cowBegin(m_buffer->m_readNode);
+		it->start = it->end;
 	}
 	else
 	{
 		m_buffer->m_availableSizeToRead -= size;
-		ByteArray::LengthType forwardNodes = size / ByteArray::BufferNodeSize;
-		std::shared_ptr<ByteArray::BufferNode> node = m_buffer->_currentReadBufferNode.lock();
-		for (ByteArray::LengthType i = 0; i < forwardNodes; ++i)
-			node = node->next;
-		node->start = node->end;
-		m_buffer->_currentReadBufferNode = node;
+		ByteArray::CowBuffer::NodeContainerIndexer moveForward = size / ByteArray::BufferNodeSize + ((size % ByteArray::BufferNodeSize) != 0);
+		m_buffer->m_readNode += moveForward;
+		auto it = m_buffer->m_nodes->cowBegin(m_buffer->m_readNode);
+		it->start = it->end;
 	}
 	m_buffer->unlockedMoveBufferHead();
 }
@@ -99,56 +89,39 @@ ByteArray::LengthType ByteArrayReaderWithLock::availableBytes()
 }
 
 ByteArrayWriterWithLock::ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer)
-	: m_buffer(std::move(buffer))
+	: m_buffer(std::move(buffer)), m_lck{m_buffer->m_bufferMutex}
 {
-	m_buffer->m_bufferMutex.lock();
 	uint64_t bytes = m_buffer->m_availableSizeToWrite;
-	m_vecLen = bytes / ByteArray::BufferNodeSize;
-	if (bytes % ByteArray::BufferNodeSize != 0)
-		++m_vecLen;
+	m_vecLen = bytes / ByteArray::BufferNodeSize + (bytes % ByteArray::BufferNodeSize != 0);
 	if (m_vecLen > 0)
 	{
 		m_vec = new ::iovec[m_vecLen];
-		std::shared_ptr<ByteArray::BufferNode> node = m_buffer->_currentWriteBufferNode.lock();
 		int i = 0;
-		while (node)
+		for (auto it = m_buffer->m_nodes->cowBegin(m_buffer->m_writeNode); (it <=> m_buffer->m_nodes->cowEnd(m_buffer->m_nodes->size())) < 0; ++it)
 		{
-			m_vec[i].iov_base = node->buffer + node->end;
-			m_vec[i].iov_len = ByteArray::BufferNodeSize - node->end;
-			node = node->next;
+			m_vec[i].iov_base = it->buffer + it->end;
+			m_vec[i].iov_len = ByteArray::BufferNodeSize - it->end;
 			++i;
 		}
 	}
 }
 
-ByteArrayWriterWithLock::~ByteArrayWriterWithLock()
-{
-	m_buffer->m_bufferMutex.unlock();
-}
+ByteArrayWriterWithLock::~ByteArrayWriterWithLock() = default;
 
 void ByteArrayWriterWithLock::adjustByteArray(ByteArray::LengthType size)
 {
 	// if need to alloc more
 	if (m_buffer->m_availableSizeToWrite <= size)
 		m_buffer->unlockedAllocIfNotEnough(size);
-	// move write node
-	std::shared_ptr<ByteArray::BufferNode> node = m_buffer->_currentWriteBufferNode.lock();
 	m_buffer->m_availableSizeToWrite -= size;
 	m_buffer->m_availableSizeToRead += size;
-	while (size > 0)
+
+	for (auto it = m_buffer->m_nodes->cowBegin(m_buffer->m_writeNode); (it <=> m_buffer->m_nodes->cowEnd(m_buffer->m_nodes->size())) < 0; ++it)
 	{
-		if (size >= (ByteArray::BufferNodeSize - node->end))
-		{
-			size -= (ByteArray::BufferNodeSize - node->end);
-			node->end = ByteArray::BufferNodeSize;
-			m_buffer->_currentWriteBufferNode = node;
-			node = node->next;
-		}
-		else
-		{
-			node->end += size;
-			size = 0;
-		}
+		it->end = (it->end + size >= ByteArray::BufferNodeSize) ? ByteArray::BufferNodeSize : (it->end + size);
+		size -= (ByteArray::BufferNodeSize - it->end);
+		if (m_buffer->m_writeNode + 1 < m_buffer->m_nodes->size())
+			++m_buffer->m_writeNode;
 	}
 }
 
@@ -160,38 +133,38 @@ ByteArray::LengthType ByteArrayWriterWithLock::availableBytes()
 SequentialByteArrayReaderWithLock::SequentialByteArrayReaderWithLock(std::vector<std::shared_ptr<ByteArray>> &&buffers)
 	: m_buffers(std::move(buffers))
 {
-	unsigned nodeCount = 0;
+	ByteArray::CowBuffer::NodeContainerIndexer nodeCount = 0;
 	for (auto &b : m_buffers)
 	{
-		b->m_bufferMutex.lock();
-		nodeCount += b->m_nodeCount;
+		m_lck.emplace_back(std::make_unique<std::lock_guard<ByteArrayMutex>>(b->m_bufferMutex));
+		ByteArray::CowBuffer::NodeContainerIndexer size = b->m_nodes->size();
+		if (size > 0)
+			nodeCount += size;
 	}
 
-	m_vecLen = 0;
-	auto *vecNodes = new ::iovec[nodeCount];
-	for (auto &b : m_buffers)
+	if (nodeCount != 0)
 	{
-		std::shared_ptr<ByteArray::BufferNode> node = b->_currentReadBufferNode.lock();
-		std::shared_ptr<ByteArray::BufferNode> endNode = b->_currentWriteBufferNode.lock()->next;
-		// has node
-		// current node is not empty
-		while (node != endNode && (node->end - node->start != 0))
+		m_vecLen = 0;
+		auto *vecNodes = new ::iovec[nodeCount];
+		for (auto &b: m_buffers)
 		{
-			vecNodes[m_vecLen].iov_base = node->buffer + node->start;
-			vecNodes[m_vecLen].iov_len = node->end - node->start;
-			node = node->next;
-			++m_vecLen;
+			ByteArray::CowBuffer::NodeContainerIndexer endOfRead = b->endOfReadNode();
+			for (auto it = b->m_nodes->cowBegin(b->m_readNode); (it <=> b->m_nodes->cowEnd(endOfRead)) < 0; ++it)
+			{
+				if (it->end - it->start != 0)        // this node is empty
+				{
+					vecNodes[m_vecLen].iov_base = it->buffer + it->start;
+					vecNodes[m_vecLen].iov_len = it->end - it->start;
+					++m_vecLen;
+				}
+			}
 		}
-	}
 	if (m_vecLen != 0)
 		m_vec = vecNodes;
+	}
 }
 
-SequentialByteArrayReaderWithLock::~SequentialByteArrayReaderWithLock() noexcept
-{
-	for (auto &b : m_buffers)
-		b->m_bufferMutex.unlock();
-}
+SequentialByteArrayReaderWithLock::~SequentialByteArrayReaderWithLock() = default;
 
 void SequentialByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 {
@@ -199,22 +172,18 @@ void SequentialByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType si
 	{
 		if (size >= b->m_availableSizeToRead)	// if size is larger than this ByteArray, just read node to end
 		{
-			size -= b->m_availableSizeToRead;
+			b->m_readNode = b->m_writeNode;
 			b->m_availableSizeToRead = 0;
-			b->_currentReadBufferNode = b->_currentWriteBufferNode;
-			auto node = b->_currentReadBufferNode.lock();
-			node->start = node->end;
+			auto it = b->m_nodes->cowBegin(b->m_readNode);
+			it->start = it->end;
 		}
 		else
 		{
 			b->m_availableSizeToRead -= size;
-			size = 0;
-			ByteArray::LengthType forwardNodes = size / ByteArray::BufferNodeSize;
-			std::shared_ptr<ByteArray::BufferNode> node = b->_currentReadBufferNode.lock();
-			for (ByteArray::LengthType i = 0; i < forwardNodes; ++i)
-				node = node->next;
-			node->start = node->end;
-			b->_currentReadBufferNode = node;
+			ByteArray::CowBuffer::NodeContainerIndexer moveForward = size / ByteArray::BufferNodeSize + ((size % ByteArray::BufferNodeSize) != 0);
+			b->m_readNode += moveForward;
+			auto it = b->m_nodes->cowBegin(b->m_readNode);
+			it->start = it->end;
 		}
 		b->unlockedMoveBufferHead();
 		if (size <= 0)

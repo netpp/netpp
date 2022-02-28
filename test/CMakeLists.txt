@@ -17,7 +17,7 @@ add_executable(test ${netpp_http_test_source}
 main.cpp
 MockSysCallEnvironment.h MockSysCallEnvironment.cpp
 ByteArray/ByteArrayReaderTest.cpp ByteArray/ByteArraySequentialReaderTest.cpp ByteArray/ByteArrayTest.cpp ByteArray/ByteArrayWriterTest.cpp 
-SocketAndAddressTest.cpp ThreadPoolTest.cpp EpollEventTest.cpp SignalTest.cpp TimerTest.cpp StubTest.cpp AcceptorTest.cpp RunInLoopTest.cpp ConnectorTest.cpp ConnectionTest.cpp)
+SocketAndAddressTest.cpp ThreadPoolTest.cpp EpollEventTest.cpp SignalTest.cpp TimerTest.cpp StubTest.cpp AcceptorTest.cpp RunInLoopTest.cpp ConnectorTest.cpp ConnectionTest.cpp ByteArray/CowLinkTest.cpp)
 
 #add_custom_command(TARGET ${PROJECT_NAME}
 #        POST_BUILD

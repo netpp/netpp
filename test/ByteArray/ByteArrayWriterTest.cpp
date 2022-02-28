@@ -54,7 +54,7 @@ TEST_F(ByteArrayWriterTest, WriteOutOfRange)
 		EXPECT_EQ(writeVec.iovec()[0].iov_len, ByteArray::BufferNodeSize);
 		writeVec.adjustByteArray(ByteArray::BufferNodeSize + 1);
 	}
-	EXPECT_EQ(byteArray->m_nodeCount, 2);
+	EXPECT_EQ(byteArray->m_nodes->size(), 2);
 	EXPECT_EQ(byteArray->readableBytes(), ByteArray::BufferNodeSize + 1);
 	EXPECT_EQ(byteArray->writeableBytes(), ByteArray::BufferNodeSize - 1);
 }

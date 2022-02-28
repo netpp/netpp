@@ -2,7 +2,7 @@
 [中文](https://github.com/netpp/netpp/blob/master/README_CN.md) English  
 ## What is netpp
 netpp is an event based, modern c++ TCP network library, based on reactor pattern and epoll, on Linux only, supporting features:  
-* linked buffer node
+* linked, cow buffer node
 * none virtual user interface
 * one loop per thread
 * handle signal
@@ -12,8 +12,8 @@ netpp is an event based, modern c++ TCP network library, based on reactor patter
 * Testing [gtest](https://github.com/google/googletest)
 ## How to compile
 ### Requires
-* cmake >= 3.16.0
-* c++17 supports
+* cmake >= 3.18.0
+* c++20 supports
 ### Build with cmake
 ```
 git clone https://github.com/netpp/netpp.git
