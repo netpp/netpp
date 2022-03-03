@@ -13,7 +13,7 @@
 
 using namespace netpp;
 
-/*class HttpRequestParseTest : public testing::Test {
+class HttpRequestParseTest : public testing::Test {
 public:
 protected:
 	void SetUp() override
@@ -32,7 +32,6 @@ TEST_F(HttpRequestParseTest, DefaultRequestTest)
 
 TEST_F(HttpRequestParseTest, SetRequestTest)
 {
-
 }
 
 TEST_F(HttpRequestParseTest, RequestVersionTest)
@@ -99,4 +98,3 @@ TEST_F(HttpRequestParseTest, RequestWithOutHeaderTest)
 		}
 	}
 }
-*/

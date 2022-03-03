@@ -16,7 +16,7 @@ include/support/ThreadSafeQueue.hpp include/internal/support/Log.h
 include/internal/socket/Socket.h include/internal/socket/SocketIO.h
 include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
 include/internal/time/TimeWheel.h
-        include/internal/buffer/CowLink.hpp include/internal/buffer/BufferNode.h
+include/internal/buffer/CowLink.hpp include/internal/buffer/BufferNode.h
 include/signal/Signals.h include/signal/SignalWatcher.h
 include/error/Exception.h include/error/SocketError.h
 include/support/ThreadPool.hpp
@@ -28,7 +28,7 @@ src/internal/support/Log.cpp
 src/internal/socket/Socket.cpp src/internal/socket/SocketIO.cpp
 src/internal/stub/IO.cpp src/internal/stub/Socket.cpp src/internal/stub/Epoll.cpp
 src/internal/time/TimeWheel.cpp
-        src/internal/buffer/BufferNode.cpp
+src/internal/buffer/BufferNode.cpp
 src/signal/Signals.cpp src/signal/SignalWatcher.cpp
 src/error/Exception.cpp src/error/SocketError.cpp
 src/support/ThreadPool.cpp
@@ -54,7 +54,7 @@ if(NETPP_HTTP_SUPPORT)
     # not use llhttp's cmake, avoid link library
     set(netpp_http_source
             thirdParty/llhttp/include/llhttp.h thirdParty/llhttp/src/api.c thirdParty/llhttp/src/http.c thirdParty/llhttp/src/llhttp.c
-            include/http/HttpCode.h src/http/HttpRequest.cpp include/http/HttpRequest.h src/http/HttpResponse.cpp include/http/HttpResponse.h src/http/HttpClient.cpp include/http/HttpClient.h src/http/HttpServer.cpp include/http/HttpServer.h src/http/HttpCode.cpp
+            include/http/HttpCode.h src/http/HttpRequest.cpp include/http/HttpRequest.h src/http/HttpClient.cpp include/http/HttpClient.h src/http/HttpServer.cpp include/http/HttpServer.h src/http/HttpCode.cpp
             src/internal/http/Route.cpp include/internal/http/Route.h src/internal/http/HttpParser.cpp include/internal/http/HttpParser.h)
     set(netpp_source ${netpp_source} ${netpp_http_source})
     set(netpp_http_test_source http/HttpRequestParseTest.cpp)

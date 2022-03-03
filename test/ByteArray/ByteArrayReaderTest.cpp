@@ -61,6 +61,20 @@ TEST_F(ByteArrayReaderTest, ReadInt64)
 	EXPECT_EQ(byteArray->readableBytes(), 0);
 }
 
+TEST_F(ByteArrayReaderTest, ReadInt8FromInt64)
+{
+	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
+	byteArray->writeInt64(2);
+	{
+		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		EXPECT_EQ(readVec.iovenLength(), 1);
+		EXPECT_NE(readVec.iovec(), nullptr);
+		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
+		readVec.adjustByteArray(sizeof(int8_t));
+	}
+	EXPECT_EQ(byteArray->readableBytes(), sizeof(int64_t) - sizeof(int8_t));
+}
+
 TEST_F(ByteArrayReaderTest, ReadString)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();

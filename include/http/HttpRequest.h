@@ -15,9 +15,10 @@ class ByteArray;
 }
 
 namespace netpp::http {
-class HttpRequest {
+class HttpBaseRequest {
 public:
-	HttpRequest();
+	HttpBaseRequest();
+	virtual ~HttpBaseRequest() = default;
 
 	/**
 	 * @brief Set request method
@@ -29,14 +30,6 @@ public:
 	 * @return method
 	 */
 	[[nodiscard]] RequestMethod method() const { return m_method; }
-
-	void setUrl(const std::string &url) { m_url = url; }
-	void setUrl(std::string &&url) { m_url = std::move(url); }
-	/**
-	 * @brief Get request url
-	 * @return url
-	 */
-	[[nodiscard]] std::string url() const { return m_url; }
 
 	void setHttpVersion(const ProtocolVersion &version) { m_version = version; }
 	/**
@@ -72,10 +65,35 @@ public:
 
 private:
 	RequestMethod m_method;
-	std::string m_url;
 	ProtocolVersion m_version;
 	std::map<std::string, std::string> m_header;
 	std::shared_ptr<ByteArray> m_bodyBuffer;
+};
+
+class HttpRequest : public HttpBaseRequest {
+public:
+	HttpRequest() = default;
+	~HttpRequest() override = default;
+
+	void setUrl(const std::string &url) { m_url = url; }
+	void setUrl(std::string &&url) { m_url = std::move(url); }
+	/**
+	 * @brief Get request url
+	 * @return url
+	 */
+	[[nodiscard]] std::string url() const { return m_url; }
+
+private:
+	std::string m_url;
+};
+
+class HttpResponse : public HttpBaseRequest {
+public:
+	HttpResponse();
+	~HttpResponse() override = default;
+private:
+	StatusCode m_statusCode;
+	std::string m_status;
 };
 }
 

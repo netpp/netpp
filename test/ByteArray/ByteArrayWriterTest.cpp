@@ -93,6 +93,23 @@ TEST_F(ByteArrayWriterTest, WriteInt64)
 	EXPECT_EQ(byteArray->retrieveInt64(), 2);
 }
 
+TEST_F(ByteArrayWriterTest, WriteInt64WithLength)
+{
+	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
+	{
+		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		::iovec *vec = writeVec.iovec();
+		EXPECT_EQ(writeVec.iovenLength(), 1);
+		EXPECT_NE(vec, nullptr);
+		EXPECT_EQ(vec[0].iov_len, ByteArray::BufferNodeSize);
+		auto value = static_cast<int64_t>(::htobe64(2));
+		writeToIOVec(writeVec.iovec(), 0, &value, sizeof(int64_t));
+		writeVec.adjustByteArray(sizeof(int8_t));
+	}
+	EXPECT_EQ(byteArray->readableBytes(), sizeof(int8_t));
+	EXPECT_EQ(byteArray->retrieveInt64(), 0);
+}
+
 TEST_F(ByteArrayWriterTest, WriteNegativeInt64)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();

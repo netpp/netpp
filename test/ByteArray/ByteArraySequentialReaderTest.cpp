@@ -75,6 +75,42 @@ TEST_F(ByteArraySequentialReaderTest, ReadInt64)
 	EXPECT_EQ(byteArray2->readableBytes(), 0);
 }
 
+TEST_F(ByteArraySequentialReaderTest, ReadInt64FromTwoInt64)
+{
+	std::shared_ptr<ByteArray> byteArray1 = std::make_shared<ByteArray>();
+	std::shared_ptr<ByteArray> byteArray2 = std::make_shared<ByteArray>();
+	byteArray1->writeInt64(2);
+	byteArray2->writeInt64(3);
+	{
+		internal::socket::SequentialByteArrayReaderWithLock readVec({byteArray1, byteArray2});
+		EXPECT_EQ(readVec.iovenLength(), 2);
+		EXPECT_NE(readVec.iovec(), nullptr);
+		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
+		EXPECT_EQ(readVec.iovec()[1].iov_len, sizeof(int64_t));
+		readVec.adjustByteArray(sizeof(int64_t));
+	}
+	EXPECT_EQ(byteArray1->readableBytes(), 0);
+	EXPECT_EQ(byteArray2->readableBytes(), sizeof(int64_t));
+}
+
+TEST_F(ByteArraySequentialReaderTest, ReadInt8FromInt64)
+{
+	std::shared_ptr<ByteArray> byteArray1 = std::make_shared<ByteArray>();
+	std::shared_ptr<ByteArray> byteArray2 = std::make_shared<ByteArray>();
+	byteArray1->writeInt64(2);
+	byteArray2->writeInt64(3);
+	{
+		internal::socket::SequentialByteArrayReaderWithLock readVec({byteArray1, byteArray2});
+		EXPECT_EQ(readVec.iovenLength(), 2);
+		EXPECT_NE(readVec.iovec(), nullptr);
+		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
+		EXPECT_EQ(readVec.iovec()[1].iov_len, sizeof(int64_t));
+		readVec.adjustByteArray(sizeof(int8_t));
+	}
+	EXPECT_EQ(byteArray1->readableBytes(), sizeof(int64_t) - sizeof(int8_t));
+	EXPECT_EQ(byteArray2->readableBytes(), sizeof(int64_t));
+}
+
 TEST_F(ByteArraySequentialReaderTest, ReadTwice)
 {
 	std::shared_ptr<ByteArray> byteArray1 = std::make_shared<ByteArray>();

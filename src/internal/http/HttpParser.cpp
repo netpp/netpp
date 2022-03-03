@@ -9,7 +9,6 @@
 #include <ranges>
 #include "internal/support/Log.h"
 #include "http/HttpRequest.h"
-#include "http/HttpResponse.h"
 extern "C" {
 #include <sys/socket.h>
 }

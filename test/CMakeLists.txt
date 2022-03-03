@@ -7,10 +7,16 @@ include_directories(${PROJECT_SOURCE_DIR}/../include)
 include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/googletest/googletest/include)
 include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/googletest/googlemock/include)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/http_request_v1_0 ${CMAKE_CURRENT_BINARY_DIR}/requests COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/http_request_v1_1 ${CMAKE_CURRENT_BINARY_DIR}/requests COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/http_request_v1_4 ${CMAKE_CURRENT_BINARY_DIR}/requests COPYONLY)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/http_request_v2_0 ${CMAKE_CURRENT_BINARY_DIR}/requests COPYONLY)
+set(request_test
+        http_request_v1_0
+        http_request_v1_1
+        http_request_v1_4
+        http_request_v2_0
+        http_request_without_header
+        )
+foreach(rq ${request_test})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/${rq} ${CMAKE_CURRENT_BINARY_DIR}/requests/${rq} COPYONLY)
+endforeach()
 
 link_libraries(gtest gmock pthread dl netpp)
 add_executable(test ${netpp_http_test_source}
@@ -18,11 +24,3 @@ main.cpp
 MockSysCallEnvironment.h MockSysCallEnvironment.cpp
 ByteArray/ByteArrayReaderTest.cpp ByteArray/ByteArraySequentialReaderTest.cpp ByteArray/ByteArrayTest.cpp ByteArray/ByteArrayWriterTest.cpp 
 SocketAndAddressTest.cpp ThreadPoolTest.cpp EpollEventTest.cpp SignalTest.cpp TimerTest.cpp StubTest.cpp AcceptorTest.cpp RunInLoopTest.cpp ConnectorTest.cpp ConnectionTest.cpp ByteArray/CowLinkTest.cpp)
-
-#add_custom_command(TARGET ${PROJECT_NAME}
-#        POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E
-#        copy_if_different
-#        "${PROJECT_SOURCE_DIR}/requests"
-#        "${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/Plugins/org_test_plugins/"
-#        )
