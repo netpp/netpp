@@ -52,6 +52,10 @@ public:
 	 */
 	[[nodiscard]] std::map<std::string, std::string> headers() const { return m_header; }
 
+	std::string getHeader(KnownHeader header);
+	std::string getHeader(const std::string &header);
+	std::string getHeader(std::string &&header);
+
 	bool hasHeader(KnownHeader header);
 	bool hasHeader(const std::string &header);
 	bool hasHeader(std::string &&header);

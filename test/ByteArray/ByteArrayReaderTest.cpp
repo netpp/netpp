@@ -73,6 +73,10 @@ TEST_F(ByteArrayReaderTest, ReadInt8FromInt64)
 		readVec.adjustByteArray(sizeof(int8_t));
 	}
 	EXPECT_EQ(byteArray->readableBytes(), sizeof(int64_t) - sizeof(int8_t));
+	EXPECT_EQ(byteArray->retrieveInt8(), 0);
+	EXPECT_EQ(byteArray->retrieveInt8(), 0);
+	EXPECT_EQ(byteArray->retrieveInt8(), 0);
+	EXPECT_EQ(byteArray->retrieveInt32(), 2);
 }
 
 TEST_F(ByteArrayReaderTest, ReadString)

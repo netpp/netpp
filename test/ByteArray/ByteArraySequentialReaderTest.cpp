@@ -109,6 +109,11 @@ TEST_F(ByteArraySequentialReaderTest, ReadInt8FromInt64)
 	}
 	EXPECT_EQ(byteArray1->readableBytes(), sizeof(int64_t) - sizeof(int8_t));
 	EXPECT_EQ(byteArray2->readableBytes(), sizeof(int64_t));
+
+	EXPECT_EQ(byteArray1->retrieveInt8(), 0);
+	EXPECT_EQ(byteArray1->retrieveInt8(), 0);
+	EXPECT_EQ(byteArray1->retrieveInt8(), 0);
+	EXPECT_EQ(byteArray1->retrieveInt32(), 2);
 }
 
 TEST_F(ByteArraySequentialReaderTest, ReadTwice)

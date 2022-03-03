@@ -90,6 +90,10 @@ std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> by
 		{
 			request.setBody(byteArray.lock());
 		}
+		else
+		{
+			request.setBody(std::make_shared<ByteArray>());
+		}
 		return request;
 	}
 	else

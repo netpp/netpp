@@ -53,6 +53,24 @@ void HttpBaseRequest::addRawHeader(std::string &&header, std::string &&value)
 	m_header.emplace(std::move(header), std::move(value));
 }
 
+std::string HttpBaseRequest::getHeader(KnownHeader header)
+{
+	return getHeader(std::string(getHeaderAsString(header)));
+}
+
+std::string HttpBaseRequest::getHeader(const std::string &header)
+{
+	return getHeader(std::string(header));
+}
+
+std::string HttpBaseRequest::getHeader(std::string &&header)
+{
+	auto it = m_header.find(header);
+	if (it != m_header.end())
+		return it->second;
+	return "";
+}
+
 bool HttpBaseRequest::hasHeader(KnownHeader header)
 {
 	return hasHeader(std::string(getHeaderAsString(header)));

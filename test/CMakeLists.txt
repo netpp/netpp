@@ -13,6 +13,8 @@ set(request_test
         http_request_v1_4
         http_request_v2_0
         http_request_without_header
+        http_request_header
+        http_request_header_without_body
         )
 foreach(rq ${request_test})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/${rq} ${CMAKE_CURRENT_BINARY_DIR}/requests/${rq} COPYONLY)

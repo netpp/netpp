@@ -76,10 +76,11 @@ void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 	{
 		m_buffer->m_availableSizeToRead -= size;
 		ByteArray::CowBuffer::NodeContainerIndexer moveForward = size / ByteArray::BufferNodeSize;
-		moveForward += (moveForward != 0 && (size % ByteArray::BufferNodeSize) != 0);
+		ByteArray::CowBuffer::NodeContainerIndexer left = size % ByteArray::BufferNodeSize;
+		moveForward += (moveForward != 0 && left != 0);
 		m_buffer->m_readNode += moveForward;
 		auto it = m_buffer->m_nodes->cowBegin(m_buffer->m_readNode);
-		it->start = it->end;
+		it->start += left;
 	}
 	m_buffer->unlockedMoveBufferHead();
 }
@@ -183,11 +184,12 @@ void SequentialByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType si
 		{
 			b->m_availableSizeToRead -= size;
 			ByteArray::CowBuffer::NodeContainerIndexer moveForward = size / ByteArray::BufferNodeSize;
-			moveForward += (moveForward != 0 && (size % ByteArray::BufferNodeSize) != 0);
+			ByteArray::CowBuffer::NodeContainerIndexer left = size % ByteArray::BufferNodeSize;
+			moveForward += (moveForward != 0 && left != 0);
 			size = 0;
 			b->m_readNode += moveForward;
 			auto it = b->m_nodes->cowBegin(b->m_readNode);
-			it->start = it->end;
+			it->start += left;
 		}
 		b->unlockedMoveBufferHead();
 		if (size <= 0)
