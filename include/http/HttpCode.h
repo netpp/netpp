@@ -66,45 +66,47 @@
 	XX(ContentType, "content-type")
 
 #define NETPP_HTTP_STATUS_CODE(XX)	\
-	XX(Continue, 100, "")			\
-	XX(SwitchingProtocols, 101, "")	\
-	XX(OK, 200, "")					\
-	XX(Created, 201, "")			\
-	XX(Accepted, 202, "")			\
-	XX(NonAuthoritativeInformation, 203, "")	\
-	XX(NoContent, 204, "")			\
-	XX(ResetContent, 205, "")		\
-	XX(PartialContent, 206, "")		\
-	XX(MultipleChoices, 300, "")	\
-	XX(MovedPermanently, 301, "")	\
-	XX(Found, 302, "")				\
-	XX(UseProxy, 305, "")			\
-	XX(Unused, 306, "")				\
-	XX(TemporaryRedirect, 307, "")	\
-	XX(BadRequest, 400, "")			\
-	XX(Unauthorized, 401, "")		\
-	XX(PaymentRequired, 402, "")	\
-	XX(Forbidden, 403, "")			\
-	XX(NotFound, 404, "")			\
-	XX(MethodNotAllowed, 405, "")	\
-	XX(NotAcceptable, 406, "")		\
-	XX(ProxyAuthenticationRequired, 407, "")	\
-	XX(RequestTimeout, 408, "")		\
-	XX(Conflict, 409, "")			\
-	XX(Gone, 410, "")				\
-	XX(LengthRequired, 411, "")		\
-	XX(PreconditionFailed, 412, "")	\
-	XX(RequestEntityTooLarge, 413, "")	\
-	XX(RequestURITooLarge, 414, "")	\
-	XX(UnsupportedMediaType, 415, "")	\
-	XX(RequestedRangeNotSatisfiable, 416, "")	\
-	XX(ExpectationFailed, 417, "")	\
-	XX(InternalServerError, 500, "")\
-	XX(NotImplemented, 501, "")		\
-	XX(BadGateway, 502, "")			\
-	XX(ServiceUnavailable, 503, "")	\
-	XX(GatewayTimeout, 504, "")		\
-	XX(HTTPVersionNotSupported, 505, "")
+	XX(Continue, 100, "Continue")			\
+	XX(SwitchingProtocols, 101, "Switching Protocols")	\
+	XX(OK, 200, "OK")					\
+	XX(Created, 201, "Created")			\
+	XX(Accepted, 202, "Accepted")			\
+	XX(NonAuthoritativeInformation, 203, "Non-Authoritative Information")	\
+	XX(NoContent, 204, "No Content")			\
+	XX(ResetContent, 205, "Reset Content")		\
+	XX(PartialContent, 206, "Partial Content")		\
+	XX(MultipleChoices, 300, "Multiple Choices")	\
+	XX(MovedPermanently, 301, "Moved Permanently")	\
+	XX(Found, 302, "Found")           \
+	XX(SeeOther, 303, "See Other")	\
+	XX(NotModified, 304, "Not Modified")	\
+	XX(UseProxy, 305, "Use Proxy")			\
+	XX(Unused, 306, "Unused")				\
+	XX(TemporaryRedirect, 307, "Temporary Redirect")	\
+	XX(BadRequest, 400, "Bad Request")			\
+	XX(Unauthorized, 401, "Unauthorized")		\
+	XX(PaymentRequired, 402, "Payment Required")	\
+	XX(Forbidden, 403, "Forbidden")			\
+	XX(NotFound, 404, "Not Found")			\
+	XX(MethodNotAllowed, 405, "Method Not Allowed")	\
+	XX(NotAcceptable, 406, "Not Acceptable")		\
+	XX(ProxyAuthenticationRequired, 407, "Proxy Authentication Required")	\
+	XX(RequestTimeout, 408, "Request Time-out")		\
+	XX(Conflict, 409, "Conflict")			\
+	XX(Gone, 410, "Gone")				\
+	XX(LengthRequired, 411, "Length Required")		\
+	XX(PreconditionFailed, 412, "Precondition Failed")	\
+	XX(RequestEntityTooLarge, 413, "Request Entity Too Large")	\
+	XX(RequestURITooLarge, 414, "Request-URI Too Large")	\
+	XX(UnsupportedMediaType, 415, "Unsupported Media Type")	\
+	XX(RequestedRangeNotSatisfiable, 416, "Requested range not satisfiable")	\
+	XX(ExpectationFailed, 417, "Expectation Failed")	\
+	XX(InternalServerError, 500, "Internal Server Error")\
+	XX(NotImplemented, 501, "Not Implemented")		\
+	XX(BadGateway, 502, "Bad Gateway")			\
+	XX(ServiceUnavailable, 503, "Service Unavailable")	\
+	XX(GatewayTimeout, 504, "Gateway Time-out")		\
+	XX(HTTPVersionNotSupported, 505, "HTTP Version not supported")
 
 
 namespace netpp::http {
@@ -129,6 +131,7 @@ enum class StatusCode {
 };
 const std::string_view &getHeaderAsString(KnownHeader header);
 ProtocolVersion getHttpVersion(int major, int minor);
+const std::string_view &getStatusAsString(StatusCode code);
 }
 
 #endif //NETPP_HTTPCODE_H

@@ -20,6 +20,19 @@ foreach(rq ${request_test})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/${rq} ${CMAKE_CURRENT_BINARY_DIR}/requests/${rq} COPYONLY)
 endforeach()
 
+set(response_test
+        http_response_v1_0
+        http_response_v1_1
+        http_response_v1_4
+        http_response_v2_0
+        http_response_without_header
+        http_response_header
+        http_response_header_without_body
+        )
+foreach(rq ${response_test})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/response/${rq} ${CMAKE_CURRENT_BINARY_DIR}/response/${rq} COPYONLY)
+endforeach()
+
 link_libraries(gtest gmock pthread dl netpp)
 add_executable(test ${netpp_http_test_source}
 main.cpp

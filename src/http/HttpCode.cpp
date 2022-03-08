@@ -34,4 +34,22 @@ ProtocolVersion getHttpVersion(int major, int minor)
 		default:	return ProtocolVersion::UnkownProtocol;
 	}
 }
+
+const std::string_view &getStatusAsString(StatusCode code)
+{
+	// avoid construct
+#define NETPP_HTTP_STATUS_TO_STRING_STATIC_VAR(status, code, err_string) \
+	static constexpr std::string_view s##status{err_string};
+
+	NETPP_HTTP_STATUS_CODE(NETPP_HTTP_STATUS_TO_STRING_STATIC_VAR)
+
+#define NETPP_HTTP_STATUS_TO_STRING(status, code, err_string) \
+	case StatusCode::status: return s##status;
+
+	switch (code)
+	{
+		NETPP_HTTP_STATUS_CODE(NETPP_HTTP_STATUS_TO_STRING)
+	}
+	return sOK;
+}
 }

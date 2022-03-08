@@ -57,7 +57,7 @@ if(NETPP_HTTP_SUPPORT)
             include/http/HttpCode.h src/http/HttpRequest.cpp include/http/HttpRequest.h src/http/HttpClient.cpp include/http/HttpClient.h src/http/HttpServer.cpp include/http/HttpServer.h src/http/HttpCode.cpp
             src/internal/http/Route.cpp include/internal/http/Route.h src/internal/http/HttpParser.cpp include/internal/http/HttpParser.h)
     set(netpp_source ${netpp_source} ${netpp_http_source})
-    set(netpp_http_test_source http/HttpRequestParseTest.cpp)
+    set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp)
     include_directories(${PROJECT_SOURCE_DIR}/thirdParty/llhttp/include)
 endif()
 

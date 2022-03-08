@@ -7,7 +7,7 @@
 
 namespace netpp::http {
 HttpBaseRequest::HttpBaseRequest()
-: m_method{RequestMethod::Get}, m_version{ProtocolVersion::Http2_0}
+: m_version{ProtocolVersion::Http2_0}
 {}
 
 void HttpBaseRequest::setHeader(std::map<std::string, std::string> header)
@@ -97,7 +97,17 @@ std::shared_ptr<ByteArray> HttpBaseRequest::body() const
 	return m_bodyBuffer;
 }
 
-HttpResponse::HttpResponse()
-	: m_statusCode{StatusCode::OK}
+HttpRequest::HttpRequest()
+	: m_method{RequestMethod::Get}
 {}
+
+HttpResponse::HttpResponse()
+	: m_statusCode{StatusCode::OK}, m_status{getStatusAsString(StatusCode::OK)}
+{}
+
+void HttpResponse::setStatus(StatusCode code)
+{
+	m_statusCode = code;
+	m_status = getStatusAsString(code);
+}
 }

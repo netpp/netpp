@@ -87,13 +87,9 @@ std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> by
 	{
 		HttpRequest request = m_impl->decodedRequest();
 		if (request.hasHeader(KnownHeader::ContentLength))
-		{
 			request.setBody(byteArray.lock());
-		}
 		else
-		{
 			request.setBody(std::make_shared<ByteArray>());
-		}
 		return request;
 	}
 	else
@@ -104,7 +100,12 @@ std::optional<HttpResponse> HttpParser::decodeResponse(std::weak_ptr<ByteArray> 
 {
 	if (m_impl->parse(byteArray))
 	{
-		return m_impl->decodedResponse();
+		HttpResponse response = m_impl->decodedResponse();
+		if (response.hasHeader(KnownHeader::ContentLength))
+			response.setBody(byteArray.lock());
+		else
+			response.setBody(std::make_shared<ByteArray>());
+		return response;
 	}
 	else
 		return std::nullopt;
@@ -190,7 +191,13 @@ void DecoderImpl::resetParse()
 }
 
 HttpResponse DecoderImpl::decodedResponse()
-{}
+{
+	HttpResponse response;
+	response.setStatus(statusCode);
+	response.setHttpVersion(version);
+	response.setHeader(header);
+	return response;
+}
 
 HttpRequest DecoderImpl::decodedRequest()
 {

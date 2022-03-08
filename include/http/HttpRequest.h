@@ -20,17 +20,6 @@ public:
 	HttpBaseRequest();
 	virtual ~HttpBaseRequest() = default;
 
-	/**
-	 * @brief Set request method
-	 * @param method
-	 */
-	void setMethod(const RequestMethod &method) { m_method = method; }
-	/**
-	 * @brief Get http request method
-	 * @return method
-	 */
-	[[nodiscard]] RequestMethod method() const { return m_method; }
-
 	void setHttpVersion(const ProtocolVersion &version) { m_version = version; }
 	/**
 	 * @brief Get request http version
@@ -68,7 +57,6 @@ public:
 	[[nodiscard]] std::shared_ptr<ByteArray> body() const;
 
 private:
-	RequestMethod m_method;
 	ProtocolVersion m_version;
 	std::map<std::string, std::string> m_header;
 	std::shared_ptr<ByteArray> m_bodyBuffer;
@@ -76,7 +64,7 @@ private:
 
 class HttpRequest : public HttpBaseRequest {
 public:
-	HttpRequest() = default;
+	HttpRequest();
 	~HttpRequest() override = default;
 
 	void setUrl(const std::string &url) { m_url = url; }
@@ -87,7 +75,19 @@ public:
 	 */
 	[[nodiscard]] std::string url() const { return m_url; }
 
+	/**
+	 * @brief Set request method
+	 * @param method
+	 */
+	void setMethod(const RequestMethod &method) { m_method = method; }
+	/**
+	 * @brief Get http request method
+	 * @return method
+	 */
+	[[nodiscard]] RequestMethod method() const { return m_method; }
+
 private:
+	RequestMethod m_method;
 	std::string m_url;
 };
 
@@ -95,6 +95,10 @@ class HttpResponse : public HttpBaseRequest {
 public:
 	HttpResponse();
 	~HttpResponse() override = default;
+
+	void setStatus(StatusCode code);
+	[[nodiscard]] StatusCode status() const { return m_statusCode; }
+	[[nodiscard]] std::string statusString() const { return m_status; }
 private:
 	StatusCode m_statusCode;
 	std::string m_status;
