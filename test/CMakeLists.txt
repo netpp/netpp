@@ -8,26 +8,26 @@ include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/googletest/googletest/in
 include_directories(${PROJECT_SOURCE_DIR}/../thirdParty/googletest/googlemock/include)
 
 set(request_test
-        http_request_v1_0
-        http_request_v1_1
-        http_request_v1_4
-        http_request_v2_0
-        http_request_without_header
-        http_request_header
-        http_request_header_without_body
+        v1_0.http_request
+        v1_1.http_request
+        v1_4.http_request
+        v2_0.http_request
+        without_header.http_request
+        header.http_request
+        header_without_body.http_request
         )
 foreach(rq ${request_test})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/requests/${rq} ${CMAKE_CURRENT_BINARY_DIR}/requests/${rq} COPYONLY)
 endforeach()
 
 set(response_test
-        http_response_v1_0
-        http_response_v1_1
-        http_response_v1_4
-        http_response_v2_0
-        http_response_without_header
-        http_response_header
-        http_response_header_without_body
+        v1_0.http_response
+        v1_1.http_response
+        v1_4.http_response
+        v2_0.http_response
+        without_header.http_response
+        header.http_response
+        header_without_body.http_response
         )
 foreach(rq ${response_test})
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/response/${rq} ${CMAKE_CURRENT_BINARY_DIR}/response/${rq} COPYONLY)

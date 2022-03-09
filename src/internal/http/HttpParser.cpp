@@ -83,6 +83,7 @@ HttpParser::~HttpParser() = default;
 
 std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> byteArray)
 {
+	m_impl->resetParse();
 	if (m_impl->parse(byteArray))
 	{
 		HttpRequest request = m_impl->decodedRequest();
@@ -98,6 +99,7 @@ std::optional<HttpRequest> HttpParser::decodeRequest(std::weak_ptr<ByteArray> by
 
 std::optional<HttpResponse> HttpParser::decodeResponse(std::weak_ptr<ByteArray> byteArray)
 {
+	m_impl->resetParse();
 	if (m_impl->parse(byteArray))
 	{
 		HttpResponse response = m_impl->decodedResponse();
@@ -182,6 +184,7 @@ bool DecoderImpl::parse(std::weak_ptr<ByteArray> &byteArray)
 
 void DecoderImpl::resetParse()
 {
+	::llhttp_reset(&m_parser);
 	headerField = "";
 	method = RequestMethod::UnknownHeader;
 	statusCode = StatusCode::OK;

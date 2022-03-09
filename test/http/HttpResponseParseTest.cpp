@@ -52,8 +52,8 @@ TEST_F(HttpResponseParseTest, ResponseParseTest)
 				{ "Host", "www.example.com" },
 				{ "Accept-Language", "en, mi" },
 				{ "some_custom_header", "haha" },
-				{ "content-length", "13" },
-				{ "content-type", "application/json" }
+				{ "Content-Length", "13" },
+				{ "Content-Type", "application/json" }
 				},
 				"{ \"a\" : \"b\" }\r\n"
 			},
@@ -66,15 +66,55 @@ TEST_F(HttpResponseParseTest, ResponseParseTest)
 				},
 				""
 			},
-			{ "v1_0", http::ProtocolVersion::Http1_0, http::StatusCode::OK, "OK", {}, "" },
-			{ "v1_1", http::ProtocolVersion::Http1_1, http::StatusCode::OK, "OK", {}, "" },
-			{ "v2_0", http::ProtocolVersion::Http2_0, http::StatusCode::OK, "OK", {}, "" },
-			{ "v1_4", http::ProtocolVersion::UnkownProtocol, http::StatusCode::OK, "OK", {}, "" },
+			{ "v1_0", http::ProtocolVersion::Http1_0, http::StatusCode::OK, "OK", 
+				{
+					{ "Date", "Mon, 27 Jul 2009 12:28:53 GMT" },
+					{ "Server", "Apache/2.2.14 (Win32)" },
+					{ "Last-Modified", "Wed, 22 Jul 2009 19:15:56 GMT" },
+					{ "Content-Length", "88" },
+					{ "Content-Type", "text/html" },
+					{ "Connection", "Closed" }
+				}, 
+				"<html>\r\n<body>\r\n<h1>Hello world!</h1>\r\n</body>\r\n</html>\r\n"
+			},
+			{ "v1_1", http::ProtocolVersion::Http1_1, http::StatusCode::OK, "OK", 
+				{
+					{ "Date", "Mon, 27 Jul 2009 12:28:53 GMT" },
+					{ "Server", "Apache/2.2.14 (Win32)" },
+					{ "Last-Modified", "Wed, 22 Jul 2009 19:15:56 GMT" },
+					{ "Content-Length", "88" },
+					{ "Content-Type", "text/html" },
+					{ "Connection", "Closed" }
+				}, 
+				"<html>\r\n<body>\r\n<h1>Hello world!</h1>\r\n</body>\r\n</html>\r\n"
+			},
+			{ "v2_0", http::ProtocolVersion::Http2_0, http::StatusCode::OK, "OK", 
+				{
+					{ "Date", "Mon, 27 Jul 2009 12:28:53 GMT" },
+					{ "Server", "Apache/2.2.14 (Win32)" },
+					{ "Last-Modified", "Wed, 22 Jul 2009 19:15:56 GMT" },
+					{ "Content-Length", "88" },
+					{ "Content-Type", "text/html" },
+					{ "Connection", "Closed" }
+				}, 
+				"<html>\r\n<body>\r\n<h1>Hello world!</h1>\r\n</body>\r\n</html>\r\n"
+			},
+			{ "v1_4", http::ProtocolVersion::UnkownProtocol, http::StatusCode::OK, "OK", 
+				{
+					{ "Date", "Mon, 27 Jul 2009 12:28:53 GMT" },
+					{ "Server", "Apache/2.2.14 (Win32)" },
+					{ "Last-Modified", "Wed, 22 Jul 2009 19:15:56 GMT" },
+					{ "Content-Length", "88" },
+					{ "Content-Type", "text/html" },
+					{ "Connection", "Closed" }
+				}, 
+				"<html>\r\n<body>\r\n<h1>Hello world!</h1>\r\n</body>\r\n</html>\r\n"
+			},
 			{ "without_header", http::ProtocolVersion::Http2_0, http::StatusCode::OK, "OK", {}, "" }
 	};
 	for (auto &v : version_suits)
 	{
-		std::ifstream fs(std::string("response/http_response_") + v.test_case_name);
+		std::ifstream fs("response/" + v.test_case_name + ".http_response");
 		EXPECT_TRUE(fs.is_open());
 		if (fs.is_open())
 		{

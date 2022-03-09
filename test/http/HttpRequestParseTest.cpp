@@ -51,8 +51,8 @@ TEST_F(HttpRequestParseTest, RequestParseTest)
 					{ "Host", "www.example.com" },
 					{ "Accept-Language", "en, mi" },
 					{ "some_custom_header", "haha" },
-					{ "content-length", "13" },
-					{ "content-type", "application/json" }
+					{ "Content-Length", "13" },
+					{ "Content-Type", "application/json" }
 				},
 				"{ \"a\" : \"b\" }\r\n"
 			},
@@ -73,7 +73,7 @@ TEST_F(HttpRequestParseTest, RequestParseTest)
 	};
 	for (auto &v : version_suits)
 	{
-		std::ifstream fs(std::string("requests/http_request_") + v.test_case_name);
+		std::ifstream fs("requests/" + v.test_case_name + ".http_request");
 		EXPECT_TRUE(fs.is_open());
 		if (fs.is_open())
 		{

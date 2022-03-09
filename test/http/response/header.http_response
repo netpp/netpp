@@ -1,9 +1,9 @@
-GET /test HTTP/2.0
+HTTP/2.0 200 OK
 User-Agent: curl/7.16.3 libcurl/7.16.3 OpenSSL/0.9.7l zlib/1.2.3
 Host: www.example.com
 Accept-Language: en, mi
 some_custom_header: haha
-content-length: 13
-content-type: application/json
+Content-Length: 13
+Content-Type: application/json
 
 { "a" : "b" }

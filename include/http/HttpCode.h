@@ -26,44 +26,44 @@
 	XX(Patch, "PATCH")
 
 #define NETPP_HTTP_HEADER(XX)					\
-	XX(CacheControl, "cache-control")			\
-	XX(Expect, "expect")						\
-	XX(Host, "host")							\
-	XX(MaxForwards, "max-forwards")				\
-	XX(Pragma, "pragma")						\
-	XX(Range, "range")							\
-	XX(TE, "te")								\
-	XX(IfMatch, "if-match")						\
-	XX(IfNoneMatch, "if-none-match")			\
-	XX(IfModifiedSince, "if-modified-since")	\
-	XX(IfUnmodifiedSince, "if-unmodified-since")\
-	XX(IfRange, "if-range")						\
-	XX(Accept, "accept")						\
-	XX(AcceptCharset, "accept-charset")			\
-	XX(AcceptEncoding, "accept-encoding")		\
-	XX(AcceptLanguage, "accept-language")		\
-	XX(Authorization, "authorization")			\
-	XX(ProxyAuthorization, "proxy-authorization")	\
-	XX(From, "from")							\
-	XX(Referer, "referer")						\
-	XX(UserAgent, "user-agent")					\
-	XX(Age, "age")								\
-	XX(Expires, "expires")						\
-	XX(Date, "date")							\
-	XX(Location, "location")					\
-	XX(RetryAfter, "retry-after")				\
-	XX(Vary, "vary")							\
-	XX(Warning, "warning")						\
-	XX(ETag, "etag")							\
-	XX(LastModified, "last-modified")			\
-	XX(WWWAuthenticate, "WWW-authenticate")		\
-	XX(ProxyAuthenticate, "proxy-authenticate")	\
-	XX(AcceptRanges, "accept-ranges")			\
-	XX(Allow, "allow")							\
-	XX(Server, "server")						\
-	XX(ContentEncoding, "content-encoding")		\
-	XX(ContentLength, "content-length")			\
-	XX(ContentType, "content-type")
+	XX(CacheControl, "Cache-Control")			\
+	XX(Expect, "Expect")						\
+	XX(Host, "Host")							\
+	XX(MaxForwards, "Max-Forwards")				\
+	XX(Pragma, "Pragma")						\
+	XX(Range, "Range")							\
+	XX(TE, "Te")								\
+	XX(IfMatch, "If-Match")						\
+	XX(IfNoneMatch, "If-None-Match")			\
+	XX(IfModifiedSince, "If-Modified-Since")	\
+	XX(IfUnmodifiedSince, "If-Unmodified-Since")\
+	XX(IfRange, "If-Range")						\
+	XX(Accept, "Accept")						\
+	XX(AcceptCharset, "Accept-Charset")			\
+	XX(AcceptEncoding, "Accept-Encoding")		\
+	XX(AcceptLanguage, "Accept-Language")		\
+	XX(Authorization, "Authorization")			\
+	XX(ProxyAuthorization, "Proxy-Authorization")	\
+	XX(From, "From")							\
+	XX(Referer, "Referer")						\
+	XX(UserAgent, "User-Agent")					\
+	XX(Age, "Age")								\
+	XX(Expires, "Expires")						\
+	XX(Date, "Date")							\
+	XX(Location, "Location")					\
+	XX(RetryAfter, "Retry-After")				\
+	XX(Vary, "Vary")							\
+	XX(Warning, "Warning")						\
+	XX(ETag, "Etag")							\
+	XX(LastModified, "Last-Modified")			\
+	XX(WWWAuthenticate, "WWW-Authenticate")		\
+	XX(ProxyAuthenticate, "Proxy-Authenticate")	\
+	XX(AcceptRanges, "Accept-Ranges")			\
+	XX(Allow, "Allow")							\
+	XX(Server, "Server")						\
+	XX(ContentEncoding, "Content-Encoding")		\
+	XX(ContentLength, "Content-Length")			\
+	XX(ContentType, "Content-Type")
 
 #define NETPP_HTTP_STATUS_CODE(XX)	\
 	XX(Continue, 100, "Continue")			\
