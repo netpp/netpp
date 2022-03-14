@@ -130,8 +130,10 @@ enum class StatusCode {
 	NETPP_HTTP_STATUS_CODE(NETPP_HTTP_STATUS_CODE_DEFINE)
 };
 const std::string_view &getHeaderAsString(KnownHeader header);
-ProtocolVersion getHttpVersion(int major, int minor);
 const std::string_view &getStatusAsString(StatusCode code);
+const std::string_view &getMethodAsString(RequestMethod method);
+const std::string_view &getHttpVersionAsString(ProtocolVersion version);
+ProtocolVersion getHttpVersion(int major, int minor);
 }
 
 #endif //NETPP_HTTPCODE_H

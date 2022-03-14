@@ -7,7 +7,7 @@
 #define private public
 #define protected public
 #include "ByteArray.h"
-#include "internal/http/HttpParser.h"
+#include "internal/http/HttpPackage.h"
 #include "http/HttpRequest.h"
 #undef private
 #undef protected

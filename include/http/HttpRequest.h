@@ -41,20 +41,20 @@ public:
 	 */
 	[[nodiscard]] std::map<std::string, std::string> headers() const { return m_header; }
 
-	std::string getHeader(KnownHeader header);
-	std::string getHeader(const std::string &header);
-	std::string getHeader(std::string &&header);
+	std::string getHeader(KnownHeader header) const;
+	std::string getHeader(const std::string &header) const;
+	std::string getHeader(std::string &&header) const;
 
-	bool hasHeader(KnownHeader header);
-	bool hasHeader(const std::string &header);
-	bool hasHeader(std::string &&header);
+	bool hasHeader(KnownHeader header) const;
+	bool hasHeader(const std::string &header) const;
+	bool hasHeader(std::string &&header) const;
 
 	void setBody(std::shared_ptr<ByteArray> body);
 	/**
 	 * @brief Read http message body
 	 * @return message body
 	 */
-	[[nodiscard]] std::shared_ptr<ByteArray> body() const;
+	[[nodiscard]] std::shared_ptr<ByteArray> body();
 
 private:
 	ProtocolVersion m_version;

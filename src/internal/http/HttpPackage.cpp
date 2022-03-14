@@ -2,7 +2,7 @@
 // Created by gaojian on 2021/12/19.
 //
 
-#include "internal/http/HttpParser.h"
+#include "internal/http/HttpPackage.h"
 #include "llhttp.h"
 #include "internal/socket/SocketIO.h"
 #include <cstring>
@@ -112,9 +112,6 @@ std::optional<HttpResponse> HttpParser::decodeResponse(std::weak_ptr<ByteArray> 
 	else
 		return std::nullopt;
 }
-
-void HttpParser::encode(std::weak_ptr<ByteArray> byteArray, const HttpResponse &response)
-{}
 
 DecoderImpl::DecoderImpl()
 		: m_parser{}, method{RequestMethod::UnknownHeader}, statusCode{StatusCode::OK}, version{ProtocolVersion::UnkownProtocol}
@@ -360,5 +357,62 @@ void DecoderImpl::getCodeAndProtocolVersion()
 		case HTTP_RECORD:break;
 		case HTTP_FLUSH:break;
 	}
+}
+
+void HttpPackage::encode(netpp::http::HttpRequest &request)
+{
+	auto method = getMethodAsString(request.method());
+	m_headerField->writeRaw(method.data(), method.length());
+	m_headerField->writeRaw(" ", 1);
+	// TODO: add url parse support
+	std::string url = "/";
+	m_headerField->writeString(url);
+	m_headerField->writeRaw(" ", 1);
+	auto version = getHttpVersionAsString(request.httpVersion());
+	m_headerField->writeRaw(version.data(), version.length());
+	m_headerField->writeRaw("\r\n", 2);
+	for (auto h : request.headers())
+	{
+		m_headerField->writeRaw(h.first.data(), h.first.length());
+		m_headerField->writeRaw(h.second.data(), h.second.length());
+		m_headerField->writeRaw("\r\n", 2);
+	}
+	m_bodyField = request.body();
+	ByteArray::LengthType contentLength = m_bodyField->readableBytes();
+	if (!request.hasHeader(KnownHeader::ContentLength) && contentLength != 0)
+	{
+		auto len = getHeaderAsString(KnownHeader::ContentLength);
+		m_headerField->writeRaw(len.data(), len.length());
+		m_headerField->writeRaw("\r\n", 2);
+	}
+	m_headerField->writeRaw("\r\n", 2);
+}
+
+void HttpPackage::encode(netpp::http::HttpResponse &response)
+{
+	auto version = getHttpVersionAsString(response.httpVersion());
+	m_headerField->writeRaw(version.data(), version.length());
+	m_headerField->writeRaw(" ", 1);
+	std::string code = std::to_string(static_cast<int>(response.status()));
+	m_headerField->writeString(code);
+	m_headerField->writeRaw(" ", 1);
+	std::string statusString = response.statusString();
+	m_headerField->writeString(statusString);
+	m_headerField->writeRaw("\r\n", 2);
+	for (auto h : response.headers())
+	{
+		m_headerField->writeRaw(h.first.data(), h.first.length());
+		m_headerField->writeRaw(h.second.data(), h.second.length());
+		m_headerField->writeRaw("\r\n", 2);
+	}
+	m_bodyField = response.body();
+	ByteArray::LengthType contentLength = m_bodyField->readableBytes();
+	if (!response.hasHeader(KnownHeader::ContentLength) && contentLength != 0)
+	{
+		auto len = getHeaderAsString(KnownHeader::ContentLength);
+		m_headerField->writeRaw(len.data(), len.length());
+		m_headerField->writeRaw("\r\n", 2);
+	}
+	m_headerField->writeRaw("\r\n", 2);
 }
 }

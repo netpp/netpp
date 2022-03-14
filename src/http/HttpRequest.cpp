@@ -53,17 +53,17 @@ void HttpBaseRequest::addRawHeader(std::string &&header, std::string &&value)
 	m_header.emplace(std::move(header), std::move(value));
 }
 
-std::string HttpBaseRequest::getHeader(KnownHeader header)
+std::string HttpBaseRequest::getHeader(KnownHeader header) const
 {
 	return getHeader(std::string(getHeaderAsString(header)));
 }
 
-std::string HttpBaseRequest::getHeader(const std::string &header)
+std::string HttpBaseRequest::getHeader(const std::string &header) const
 {
 	return getHeader(std::string(header));
 }
 
-std::string HttpBaseRequest::getHeader(std::string &&header)
+std::string HttpBaseRequest::getHeader(std::string &&header) const
 {
 	auto it = m_header.find(header);
 	if (it != m_header.end())
@@ -71,17 +71,17 @@ std::string HttpBaseRequest::getHeader(std::string &&header)
 	return "";
 }
 
-bool HttpBaseRequest::hasHeader(KnownHeader header)
+bool HttpBaseRequest::hasHeader(KnownHeader header) const
 {
 	return hasHeader(std::string(getHeaderAsString(header)));
 }
 
-bool HttpBaseRequest::hasHeader(const std::string &header)
+bool HttpBaseRequest::hasHeader(const std::string &header) const
 {
 	return hasHeader(std::string(header));
 }
 
-bool HttpBaseRequest::hasHeader(std::string &&header)
+bool HttpBaseRequest::hasHeader(std::string &&header) const
 {
 	auto it = m_header.find(header);
 	return it != m_header.end();
@@ -92,7 +92,7 @@ void HttpBaseRequest::setBody(std::shared_ptr<ByteArray> body)
 	m_bodyBuffer = std::move(body);
 }
 
-std::shared_ptr<ByteArray> HttpBaseRequest::body() const
+std::shared_ptr<ByteArray> HttpBaseRequest::body()
 {
 	return m_bodyBuffer;
 }
