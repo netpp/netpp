@@ -29,7 +29,7 @@ private:
 };
 
 /**
- * @brief Error hanpend on socket
+ * @brief Error happened on socket
  * 
  */
 class SocketException : public Exception {

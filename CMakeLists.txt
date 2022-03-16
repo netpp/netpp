@@ -54,8 +54,10 @@ if(NETPP_HTTP_SUPPORT)
     # not use llhttp's cmake, avoid link library
     set(netpp_http_source
             thirdParty/llhttp/include/llhttp.h thirdParty/llhttp/src/api.c thirdParty/llhttp/src/http.c thirdParty/llhttp/src/llhttp.c
-            include/http/HttpCode.h src/http/HttpRequest.cpp include/http/HttpRequest.h src/http/HttpClient.cpp include/http/HttpClient.h src/http/HttpServer.cpp include/http/HttpServer.h src/http/HttpCode.cpp
-            src/internal/http/Route.cpp include/internal/http/Route.h src/internal/http/HttpPackage.cpp include/internal/http/HttpPackage.h)
+            include/http/HttpCode.h include/http/HttpRequest.h include/http/HttpClient.h include/http/HttpServer.h include/http/Uri.h include/http/Types.h
+            src/http/HttpRequest.cpp src/http/HttpClient.cpp src/http/HttpServer.cpp src/http/HttpCode.cpp src/http/Uri.cpp
+            include/internal/http/Route.h include/internal/http/HttpPackage.h
+            src/internal/http/Route.cpp src/internal/http/HttpPackage.cpp)
     set(netpp_source ${netpp_source} ${netpp_http_source})
     set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp)
     include_directories(${PROJECT_SOURCE_DIR}/thirdParty/llhttp/include)

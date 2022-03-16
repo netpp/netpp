@@ -10,6 +10,8 @@ netpp is an event based, modern c++ TCP network library, based on reactor patter
 ## Dependent libs
 * Logging library [spdlog](https://github.com/gabime/spdlog)
 * Testing [gtest](https://github.com/google/googletest)
+* http parse [llhttp](https://github.com/nodejs/llhttp)
+* uri parse(include/http/Uri.h src/http/Uri.cpp) based on [cpprestsdk](https://github.com/microsoft/cpprestsdk)
 ## How to compile
 ### Requires
 * cmake >= 3.18.0
@@ -53,6 +55,3 @@ Start event loop.
 dispatcher.startLoop();
 ```
 For more information, take a look at example/*.
-
-***
-Thanks jetbrains for provide [opensource license](https://jb.gg/OpenSource) to project netpp.

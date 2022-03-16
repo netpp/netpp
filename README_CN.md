@@ -10,6 +10,8 @@ netpp是基于事件通知的TCP网络库，通过reactor和epoll实现，仅支
 ## 依赖库
 * 日志库 [spdlog](https://github.com/gabime/spdlog)
 * 测试框架 [gtest](https://github.com/google/googletest)
+* http解析 [llhttp](https://github.com/nodejs/llhttp)
+* uri解析(include/http/Uri.h src/http/Uri.cpp)基于 [cpprestsdk](https://github.com/microsoft/cpprestsdk)
 ## 如何编译
 ### 依赖
 * cmake >= 3.18.0
@@ -53,5 +55,3 @@ dispatcher.startLoop();
 ```
 查看example/*中的示例来获取更详细的信息。
 
-***
-感谢jetbrains为该项目提供全家桶的[开源授权](https://jb.gg/OpenSource)
