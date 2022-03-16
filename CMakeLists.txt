@@ -59,7 +59,7 @@ if(NETPP_HTTP_SUPPORT)
             include/internal/http/Route.h include/internal/http/HttpPackage.h
             src/internal/http/Route.cpp src/internal/http/HttpPackage.cpp)
     set(netpp_source ${netpp_source} ${netpp_http_source})
-    set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp)
+    set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp uri/UriAccessor.cpp uri/UriCombining.cpp uri/UriConstructor.cpp uri/UriConversions.cpp uri/UriEncoding.cpp uri/UriOperator.cpp uri/UriResolve.cpp uri/UriSplitting.cpp)
     include_directories(${PROJECT_SOURCE_DIR}/thirdParty/llhttp/include)
 endif()
 
