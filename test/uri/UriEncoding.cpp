@@ -101,7 +101,7 @@ TEST_F(UriEncoding, EncodePlusChar)
 	uri.setFragment("+", true);
 
 	EXPECT_EQ(uri.userInfo(), encodedPlus);
-	EXPECT_EQ(uri.path(), encodedPlus);
+	EXPECT_EQ(uri.path(), "/" + encodedPlus);
 	EXPECT_EQ(uri.query(), encodedPlus);
 	EXPECT_EQ(uri.fragment(), encodedPlus);
 }
