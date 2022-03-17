@@ -10,6 +10,21 @@
 
 namespace netpp::http {
 using utf8string = std::string;
+
+inline const utf8string& toUtf8String(const utf8string& val) { return val; }
+
+template<typename Source>
+utf8string toUtf8String(const Source& val)
+{
+	std::ostringstream oss;
+	oss.imbue(std::locale::classic());
+	oss << val;
+	if (oss.bad())
+	{
+		throw std::bad_cast();
+	}
+	return oss.str();
+}
 }
 
 #endif //NETPP_TYPES_H

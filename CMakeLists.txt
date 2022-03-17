@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 project(netpp)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror")
 
 option(NETPP_ENABLE_TEST "build test" ON)
 option(NETPP_LOG_SUPPORT "enable log output" ON)
@@ -59,7 +59,7 @@ if(NETPP_HTTP_SUPPORT)
             include/internal/http/Route.h include/internal/http/HttpPackage.h
             src/internal/http/Route.cpp src/internal/http/HttpPackage.cpp)
     set(netpp_source ${netpp_source} ${netpp_http_source})
-    set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp uri/UriAccessor.cpp uri/UriCombining.cpp uri/UriConstructor.cpp uri/UriConversions.cpp uri/UriEncoding.cpp uri/UriOperator.cpp uri/UriResolve.cpp uri/UriSplitting.cpp)
+    set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp uri/UriAccessor.cpp uri/UriCombining.cpp uri/UriConstructor.cpp uri/UriConversions.cpp uri/UriEncoding.cpp uri/UriOperator.cpp uri/UriResolve.cpp uri/UriSplitting.cpp uri/UriBuilder.cpp)
     include_directories(${PROJECT_SOURCE_DIR}/thirdParty/llhttp/include)
 endif()
 

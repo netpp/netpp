@@ -805,6 +805,11 @@ Uri Uri::authority() const
 	return uri;
 }
 
+bool Uri::validate()
+{
+	return validate(toString());
+}
+
 bool Uri::validate(const utf8string &uri_string)
 {
 	details::inner_parse_out out;

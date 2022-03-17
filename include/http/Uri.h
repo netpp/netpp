@@ -70,6 +70,7 @@ public:
 	[[nodiscard]] Uri authority() const;
 
 	static bool validate(const utf8string &uri);
+
 	/**
 	 * @brief An empty URI specifies no components, and serves as a default value
 	 */
