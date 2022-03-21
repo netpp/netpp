@@ -19,8 +19,7 @@ netpp是基于事件通知的TCP网络库，通过reactor和epoll实现，仅支
 ### 使用cmake
 ```
 git clone https://github.com/netpp/netpp.git
-git submodule init
-git submodule update
+git submodule update --init
 mkdir build
 cd build
 cmake ../

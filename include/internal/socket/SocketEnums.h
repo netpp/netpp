@@ -15,24 +15,37 @@ enum class TcpState {
 	HalfClose			// is closing connection
 };
 
+#define SOCKET_OPT(XX) \
+	XX(BROADCAST)	\
+	XX(DEBUG)		\
+	XX(DONTROUTE)	\
+	XX(ERROR)		\
+	XX(KEEPALIVE)	\
+	XX(LINGER)		\
+	XX(OOBINLINE)	\
+	XX(RCVBUF)		\
+	XX(SNDBUF)		\
+	XX(RCVLOWAT)	\
+	XX(SNDLOWAT)	\
+	XX(RCVTIMEO)	\
+	XX(SNDTIMEO)	\
+	XX(REUSEADDR)	\
+	XX(REUSEPORT)	\
+	XX(TYPE)		\
+	XX(USELOOPBACK)	\
+	XX(MAXSEG)		\
+	XX(NODELAY)		\
+// TODO: support more options
+// TODO: wrap set/get socket options
+
 /**
  * @brief Supported socket options, not used yet
  * 
  */
 enum class SocketOptions {
-#ifdef SOCKET_OPT_DEF
-#undef SOCKET_OPT_DEF
-#endif
-#ifdef LAST_SOCKET_OPT_DEF
-#undef LAST_SOCKET_OPT_DEF
-#endif
-#ifndef SOCKET_OPT_DEF
 #define SOCKET_OPT_DEF(opt) E_##opt,
-#endif
-#ifndef LAST_SOCKET_OPT_DEF
-#define LAST_SOCKET_OPT_DEF(opt) E_##opt
-#endif
-#include "SocketOption.def"
+	SOCKET_OPT(SOCKET_OPT_DEF)
+#undef SOCKET_OPT_DEF
 };
 // bool setSocketOption(SocketOptions);
 // bool getSocketOption(SocketOptions);

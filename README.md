@@ -19,8 +19,7 @@ netpp is an event based, modern c++ TCP network library, based on reactor patter
 ### Build with cmake
 ```
 git clone https://github.com/netpp/netpp.git
-git submodule init
-git submodule update
+git submodule update --init
 mkdir build
 cd build
 cmake ../

@@ -3,6 +3,37 @@
 
 #include <string>
 
+#define NETPP_SINGAL(XX) \
+	XX(HUP)		\
+	XX(INT)		\
+	XX(QUIT)	\
+	XX(ILL)		\
+	XX(TRAP)	\
+	XX(ABRT)	\
+	XX(BUS)		\
+	XX(FPE)		\
+	XX(USR1)	\
+	XX(SEGV)	\
+	XX(USR2)	\
+	XX(PIPE)	\
+	XX(ALRM)	\
+	XX(TERM)	\
+	XX(STKFLT)	\
+	XX(CHLD)	\
+	XX(CONT)	\
+	XX(TSTP)	\
+	XX(TTIN)	\
+	XX(TTOU)	\
+	XX(URG)		\
+	XX(XCPU)	\
+	XX(XFSZ)	\
+	XX(VTALRM)	\
+	XX(PROF)	\
+	XX(WINCH)	\
+	XX(IO)		\
+	XX(PWR)		\
+	XX(SYS)
+
 namespace netpp::signal {
 /**
  * @brief enumerate Signals that can be handled(SIGKILL and SIGSTOP not included),
@@ -10,15 +41,9 @@ namespace netpp::signal {
  * 
  */
 enum class Signals {
-#ifdef SIGNAL_DEF
-#undef SIGNAL_DEF
-#endif
-#ifdef LAST_SIGNAL_DEF
-#undef LAST_SIGNAL_DEF
-#endif
 #define SIGNAL_DEF(sig)	E_##sig,
-#define LAST_SIGNAL_DEF(sig) E_##sig
-#include "Signal.def"
+NETPP_SINGAL(SIGNAL_DEF)
+#undef SIGNAL_DEF
 };
 
 /**
