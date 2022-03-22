@@ -424,65 +424,35 @@ void inplace_tolower(std::string &target) noexcept
 		ch = to_lower_ch_impl(ch);
 	}
 }
+
+/// <summary>
+/// Helper function to convert a hex character digit to a decimal character value.
+/// Throws an exception if not a valid hex digit.
+/// </summary>
+static int hex_char_digit_to_decimal_char(int hex)
+{
+	int decimal;
+	if (hex >= '0' && hex <= '9')
+	{
+		decimal = hex - '0';
+	}
+	else if (hex >= 'A' && hex <= 'F')
+	{
+		decimal = 10 + (hex - 'A');
+	}
+	else if (hex >= 'a' && hex <= 'f')
+	{
+		decimal = 10 + (hex - 'a');
+	}
+	else
+	{
+		throw netpp::http::UriException("Invalid hexadecimal digit");
+	}
+	return decimal;
+}
 }
 
 namespace netpp::http {
-utf8string Uri::toString()
-{
-	// canonicalize components first
-
-	// convert scheme to lowercase
-	details::inplace_tolower(m_scheme);
-	// convert host to lowercase
-	details::inplace_tolower(m_host);
-
-	// canonicalize the path to have a leading slash if it's a full uri
-	if (!m_host.empty() && m_path.empty())
-		m_path = "/";
-	else if (!m_host.empty() && m_path[0] != '/')
-		m_path.insert(m_path.begin(), 1, '/');
-
-	utf8string ret;
-
-	if (!m_scheme.empty())
-	{
-		ret.append(m_scheme);
-		ret.push_back(':');
-	}
-
-	if (!m_host.empty())
-	{
-		ret.append("//");
-		if (!m_user_info.empty())
-			ret.append(m_user_info).append({'@'});
-		ret.append(m_host);
-		if (m_port > 0)
-			ret.append({':'}).append(std::to_string(m_port));
-	}
-
-	if (!m_path.empty())
-	{
-		// only add the leading slash when the host is present
-		if (!m_host.empty() && m_path.front() != '/')
-			ret.push_back('/');
-		ret.append(m_path);
-	}
-
-	if (!m_query.empty())
-	{
-		ret.push_back('?');
-		ret.append(m_query);
-	}
-
-	if (!m_fragment.empty())
-	{
-		ret.push_back('#');
-		ret.append(m_fragment);
-	}
-
-	return ret;
-}
-
 Uri::Uri()
 		: Uri("/")
 {}
@@ -640,102 +610,111 @@ Uri &Uri::setFragment(const utf8string &fragment, bool shouldEncode)
 	return *this;
 }
 
-utf8string UriCodec::encode(const utf8string &raw, UriComponent component)
+// resolving URI according to RFC3986, Section 5 https://tools.ietf.org/html/rfc3986#section-5
+Uri Uri::resolveUri(const utf8string &relativeUri) const
 {
-	// Note: we also encode the '+' character because some non-standard implementations
-	// encode the space character as a '+' instead of %20. To better interoperate we encode
-	// '+' to avoid any confusion and be mistaken as a space.
-	switch (component)
+	if (relativeUri.empty())
 	{
-		case UriComponent::userInfo:
-			return details::encode_impl(raw, [](int ch) -> bool {
-											return !details::is_user_info_character(ch) || ch == '%' || ch == '+';
-										}
-			);
-		case UriComponent::host:
-			return details::encode_impl(raw, [](int ch) -> bool {
-											// No encoding of ASCII characters in host name (RFC 3986 3.2.2)
-											return ch > 127;
-										}
-			);
-		case UriComponent::path:
-			return details::encode_impl(
-					raw, [](int ch) -> bool { return !details::is_path_character(ch) || ch == '%' || ch == '+'; }
-			);
-		case UriComponent::query:
-			return details::encode_impl(
-					raw, [](int ch) -> bool { return !details::is_query_character(ch) || ch == '%' || ch == '+'; }
-			);
-		case UriComponent::fragment:
-			return details::encode_impl(
-					raw, [](int ch) -> bool { return !details::is_fragment_character(ch) || ch == '%' || ch == '+'; }
-			);
-		case UriComponent::fullUri:
-		default:
-			return details::encode_impl(
-					raw, [](int ch) -> bool { return !details::is_unreserved(ch) && !details::is_reserved(ch); }
-			);
-	};
+		return *this;
+	}
+
+	if (relativeUri[0] == '/') // starts with '/'
+	{
+		if (relativeUri.size() >= 2 && relativeUri[1] == '/') // starts with '//'
+		{
+			return Uri(m_scheme + ':' + relativeUri);
+		}
+
+		// otherwise relative to root
+		Uri relative(relativeUri);
+		Uri authorityPart = authority();
+		authorityPart.appendPath(relative.m_path);
+		authorityPart.appendQuery(relative.m_query);
+		authorityPart.setFragment(m_fragment + relative.m_fragment);
+		details::removeDotSegments(authorityPart);
+		return authorityPart;
+	}
+
+	Uri url(relativeUri);
+	if (!url.scheme().empty()) return url;
+
+	if (!url.authority().isEmpty())
+	{
+		return url.setScheme(m_scheme);
+	}
+
+	// relative url
+	Uri thisUri = *this;
+	if (url.path() == "/" || url.path().empty()) // web::uri considers empty path as '/'
+	{
+		if (!url.query().empty())
+		{
+			thisUri.setQuery(url.query());
+		}
+	}
+	else if (!this->path().empty())
+	{
+		thisUri.setPath(details::mergePaths(this->path(), url.path()));
+		details::removeDotSegments(thisUri);
+		thisUri.setQuery(url.query());
+	}
+	return thisUri.setFragment(url.fragment());
 }
 
-/// <summary>
-/// Helper function to convert a hex character digit to a decimal character value.
-/// Throws an exception if not a valid hex digit.
-/// </summary>
-static int hex_char_digit_to_decimal_char(int hex)
+utf8string Uri::toString()
 {
-	int decimal;
-	if (hex >= '0' && hex <= '9')
-	{
-		decimal = hex - '0';
-	}
-	else if (hex >= 'A' && hex <= 'F')
-	{
-		decimal = 10 + (hex - 'A');
-	}
-	else if (hex >= 'a' && hex <= 'f')
-	{
-		decimal = 10 + (hex - 'a');
-	}
-	else
-	{
-		throw UriException("Invalid hexadecimal digit");
-	}
-	return decimal;
-}
+	// canonicalize components first
 
-utf8string UriCodec::decode(const utf8string &encoded)
-{
-	utf8string raw;
-	for (auto iter = encoded.begin(); iter != encoded.end(); ++iter)
-	{
-		if (*iter == '%')
-		{
-			if (++iter == encoded.end())
-			{
-				throw UriException("Invalid URI string, two hexadecimal digits must follow '%'");
-			}
-			int decimal_value = hex_char_digit_to_decimal_char(static_cast<int>(*iter)) << 4;
-			if (++iter == encoded.end())
-			{
-				throw UriException("Invalid URI string, two hexadecimal digits must follow '%'");
-			}
-			decimal_value += hex_char_digit_to_decimal_char(static_cast<int>(*iter));
+	// convert scheme to lowercase
+	details::inplace_tolower(m_scheme);
+	// convert host to lowercase
+	details::inplace_tolower(m_host);
 
-			raw.push_back(static_cast<char>(decimal_value));
-		}
-		else if (*iter < 0)
-//		else if (*iter > 127 || *iter < 0)
-		{
-			throw UriException("Invalid encoded URI string, must be entirely ascii");
-		}
-		else
-		{
-			// encoded string has to be ASCII.
-			raw.push_back(static_cast<char>(*iter));
-		}
+	// canonicalize the path to have a leading slash if it's a full uri
+	if (!m_host.empty() && m_path.empty())
+		m_path = "/";
+	else if (!m_host.empty() && m_path[0] != '/')
+		m_path.insert(m_path.begin(), 1, '/');
+
+	utf8string ret;
+
+	if (!m_scheme.empty())
+	{
+		ret.append(m_scheme);
+		ret.push_back(':');
 	}
-	return raw;
+
+	if (!m_host.empty())
+	{
+		ret.append("//");
+		if (!m_user_info.empty())
+			ret.append(m_user_info).append({'@'});
+		ret.append(m_host);
+		if (m_port > 0)
+			ret.append({':'}).append(std::to_string(m_port));
+	}
+
+	if (!m_path.empty())
+	{
+		// only add the leading slash when the host is present
+		if (!m_host.empty() && m_path.front() != '/')
+			ret.push_back('/');
+		ret.append(m_path);
+	}
+
+	if (!m_query.empty())
+	{
+		ret.push_back('?');
+		ret.append(m_query);
+	}
+
+	if (!m_fragment.empty())
+	{
+		ret.push_back('#');
+		ret.append(m_fragment);
+	}
+
+	return ret;
 }
 
 std::vector<utf8string> Uri::splitPath()
@@ -871,54 +850,74 @@ void Uri::append_query_encode_impl(const utf8string &name, const utf8string &val
 	}
 }
 
-// resolving URI according to RFC3986, Section 5 https://tools.ietf.org/html/rfc3986#section-5
-Uri Uri::resolveUri(const utf8string &relativeUri) const
+utf8string UriCodec::encode(const utf8string &raw, UriComponent component)
 {
-	if (relativeUri.empty())
+	// Note: we also encode the '+' character because some non-standard implementations
+	// encode the space character as a '+' instead of %20. To better interoperate we encode
+	// '+' to avoid any confusion and be mistaken as a space.
+	switch (component)
 	{
-		return *this;
-	}
+		case UriComponent::userInfo:
+			return details::encode_impl(raw, [](int ch) -> bool {
+											return !details::is_user_info_character(ch) || ch == '%' || ch == '+';
+										}
+			);
+		case UriComponent::host:
+			return details::encode_impl(raw, [](int ch) -> bool {
+											// No encoding of ASCII characters in host name (RFC 3986 3.2.2)
+											return ch > 127;
+										}
+			);
+		case UriComponent::path:
+			return details::encode_impl(
+					raw, [](int ch) -> bool { return !details::is_path_character(ch) || ch == '%' || ch == '+'; }
+			);
+		case UriComponent::query:
+			return details::encode_impl(
+					raw, [](int ch) -> bool { return !details::is_query_character(ch) || ch == '%' || ch == '+'; }
+			);
+		case UriComponent::fragment:
+			return details::encode_impl(
+					raw, [](int ch) -> bool { return !details::is_fragment_character(ch) || ch == '%' || ch == '+'; }
+			);
+		case UriComponent::fullUri:
+		default:
+			return details::encode_impl(
+					raw, [](int ch) -> bool { return !details::is_unreserved(ch) && !details::is_reserved(ch); }
+			);
+	};
+}
 
-	if (relativeUri[0] == '/') // starts with '/'
+utf8string UriCodec::decode(const utf8string &encoded)
+{
+	utf8string raw;
+	for (auto iter = encoded.begin(); iter != encoded.end(); ++iter)
 	{
-		if (relativeUri.size() >= 2 && relativeUri[1] == '/') // starts with '//'
+		if (*iter == '%')
 		{
-			return Uri(m_scheme + ':' + relativeUri);
+			if (++iter == encoded.end())
+			{
+				throw UriException("Invalid URI string, two hexadecimal digits must follow '%'");
+			}
+			int decimal_value = details::hex_char_digit_to_decimal_char(static_cast<int>(*iter)) << 4;
+			if (++iter == encoded.end())
+			{
+				throw UriException("Invalid URI string, two hexadecimal digits must follow '%'");
+			}
+			decimal_value += details::hex_char_digit_to_decimal_char(static_cast<int>(*iter));
+
+			raw.push_back(static_cast<char>(decimal_value));
 		}
-
-		// otherwise relative to root
-		Uri relative(relativeUri);
-		Uri authorityPart = authority();
-		authorityPart.appendPath(relative.m_path);
-		authorityPart.appendQuery(relative.m_query);
-		authorityPart.setFragment(m_fragment + relative.m_fragment);
-		details::removeDotSegments(authorityPart);
-		return authorityPart;
-	}
-
-	Uri url(relativeUri);
-	if (!url.scheme().empty()) return url;
-
-	if (!url.authority().isEmpty())
-	{
-		return url.setScheme(m_scheme);
-	}
-
-	// relative url
-	Uri thisUri = *this;
-	if (url.path() == "/" || url.path().empty()) // web::uri considers empty path as '/'
-	{
-		if (!url.query().empty())
+//		else if (*iter > 127 || *iter < 0)
+//		{
+//			throw UriException("Invalid encoded URI string, must be entirely ascii");
+//		}
+		else
 		{
-			thisUri.setQuery(url.query());
+			// encoded string has to be ASCII.
+			raw.push_back(static_cast<char>(*iter));
 		}
 	}
-	else if (!this->path().empty())
-	{
-		thisUri.setPath(details::mergePaths(this->path(), url.path()));
-		details::removeDotSegments(thisUri);
-		thisUri.setQuery(url.query());
-	}
-	return thisUri.setFragment(url.fragment());
+	return raw;
 }
 }

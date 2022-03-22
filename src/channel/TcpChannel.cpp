@@ -1,16 +1,14 @@
 //
-// Created by gaojian on 2020/7/9.
+// Created by gaojian on 2022/3/22.
 //
 
-#include "Channel.h"
-#include "internal/handlers/TcpConnection.h"
+#include "channel/TcpChannel.h"
 #include "ByteArray.h"
-#include "internal/socket/SocketEnums.h"
+#include "internal/socket/SocketIO.h"
 
 namespace netpp {
-
-ChannelWriter::ChannelWriter(std::shared_ptr<ByteArray> &&writeBuffer)
-	: m_writeBuffer{std::move(writeBuffer)}
+ChannelWriter::ChannelWriter(std::shared_ptr<ByteArray> writeBuffer)
+		: m_writeBuffer{std::move(writeBuffer)}
 {}
 
 ChannelWriter &ChannelWriter::writeInt8(int8_t value)
@@ -97,8 +95,8 @@ ChannelWriter &ChannelWriter::writeRaw(const char *data, std::size_t length)
 	return *this;
 }
 
-ChannelReader::ChannelReader(std::shared_ptr<ByteArray> &&readBuffer)
-	: m_readBuffer{std::move(readBuffer)}
+ChannelReader::ChannelReader(std::shared_ptr<ByteArray> readBuffer)
+		: m_readBuffer{std::move(readBuffer)}
 {}
 
 std::optional<int8_t> ChannelReader::retrieveInt8()
@@ -192,54 +190,28 @@ std::size_t ChannelReader::readableBytes() const
 	return 0;
 }
 
-Channel::Channel(std::weak_ptr<internal::handlers::TcpConnection> connection,
-				 std::weak_ptr<ByteArray> prependByteArray, std::weak_ptr<ByteArray> writeByteArray, std::weak_ptr<ByteArray> readByteArray)
-		: _connection{std::move(connection)}, _prependArray{std::move(prependByteArray)}, _writeArray{std::move(writeByteArray)},
-		  _readArray{std::move(readByteArray)}
+TcpChannel::TcpChannel(std::weak_ptr<internal::handlers::TcpConnection> connection)
+		: Channel(std::move(connection)),
+		  m_writeArray{std::make_shared<ByteArray>()}, m_readArray{std::make_shared<ByteArray>()}
 {}
 
-void Channel::send()
+ChannelWriter TcpChannel::writer()
 {
-	auto connection = _connection.lock();
-	if (connection)
-		connection->sendInLoop();
+	return ChannelWriter(m_writeArray);
 }
 
-void Channel::close()
+ChannelReader TcpChannel::reader()
 {
-	auto connection = _connection.lock();
-	if (connection)
-		connection->closeAfterWriteCompleted();
+	return ChannelReader(m_readArray);
 }
 
-ChannelWriter Channel::prependWriter()
+std::unique_ptr<internal::socket::ByteArray2IOVec> TcpChannel::ioReader()
 {
-	return ChannelWriter(_prependArray.lock());
+	return std::make_unique<internal::socket::ByteArrayReaderWithLock>(m_readArray);
 }
 
-ChannelWriter Channel::writer()
+std::unique_ptr<internal::socket::ByteArray2IOVec> TcpChannel::ioWriter()
 {
-	return ChannelWriter(_writeArray.lock());
-}
-
-ChannelReader Channel::reader()
-{
-	return ChannelReader(_readArray.lock());
-}
-
-bool Channel::channelActive() const
-{
-	// writing to a connection only available when state is Established
-	auto connection = _connection.lock();
-	return (connection) && (connection->currentState() == internal::socket::TcpState::Established);
-}
-
-int Channel::channelId()
-{
-	auto connection = _connection.lock();
-	if (connection)
-		return connection->connectionId();
-	else
-		return -1;
+	return std::make_unique<internal::socket::ByteArrayReaderWithLock>(m_writeArray);
 }
 }

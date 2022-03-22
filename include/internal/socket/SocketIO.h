@@ -10,35 +10,6 @@ struct iovec;
 
 namespace netpp::internal::socket {
 class Socket;
-
-/**
- * @brief Read/Write on socket from/into ByteArray
- */
-namespace SocketIO {
-	/**
-	 * @brief read from socket
-	 * 
-	 * @param socket	a socket object
-	 * @param byteArray	the buffer
-	 * @throw ResourceLimitException on (ENOMEM)
-	 * @throw SocketException on (ECONNREFUSED ENOTCONN)
-	 */
-	void read(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
-
-	/**
-	 * @brief write to a socket
-	 * 
-	 * @param socket	a socket object
-	 * @param byteArray	the buffer
-	 * @return true		write all
-	 * @return false	not write all, more data in buffer to write
-	 * @throw SocketException on (ECONNRESET EDESTADDRREQ EISCONN EMSGSIZE ENOTCONN EPIPE)
-	 * @throw ResourceLimitException on (ENOMEM)
-	 */
-	bool write(const Socket *socket, std::shared_ptr<ByteArray> byteArray);
-	bool write(const Socket *socket, std::vector<std::shared_ptr<ByteArray>> &&buffers);
-};
-
 /**
  * @brief Convert ByteArray to ::iovec, adapt to readv()/writev(), used by SocketIO
  */
@@ -61,6 +32,33 @@ protected:
 	::iovec *m_vec;
 	std::size_t m_vecLen;
 };
+
+/**
+ * @brief Read/Write on socket from/into ByteArray
+ */
+namespace SocketIO {
+/**
+ * @brief read from socket
+ *
+ * @param socket	a socket object
+ * @param byteArray	the buffer
+ * @throw ResourceLimitException on (ENOMEM)
+ * @throw SocketException on (ECONNREFUSED ENOTCONN)
+ */
+void read(const Socket *socket, std::unique_ptr<ByteArray2IOVec> &&writer);
+
+/**
+ * @brief write to a socket
+ *
+ * @param socket	a socket object
+ * @param byteArray	the buffer
+ * @return true		write all
+ * @return false	not write all, more data in buffer to write
+ * @throw SocketException on (ECONNRESET EDESTADDRREQ EISCONN EMSGSIZE ENOTCONN EPIPE)
+ * @throw ResourceLimitException on (ENOMEM)
+ */
+bool write(const Socket *socket, std::unique_ptr<ByteArray2IOVec> &&reader);
+}
 
 /**
  * @brief Convert a ByteArray to iovec, for read data from iovec

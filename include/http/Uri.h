@@ -51,8 +51,6 @@ public:
 	 */
 	[[nodiscard]] utf8string toString();
 
-	bool validate();
-
 	/**
 	 * @brief Splits a path into its hierarchical components.
 	 * @param path The path as a string
@@ -69,6 +67,7 @@ public:
 
 	[[nodiscard]] Uri authority() const;
 
+	bool validate();
 	static bool validate(const utf8string &uri);
 
 	/**

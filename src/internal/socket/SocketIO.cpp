@@ -7,29 +7,6 @@ extern "C" {
 #include <sys/uio.h>
 }
 
-namespace {
-bool _write_impl(const netpp::internal::socket::Socket *socket, netpp::internal::socket::ByteArray2IOVec *reader)
-{
-	std::size_t expectWriteSize = reader->availableBytes();
-	::msghdr msg{};
-	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = reader->iovec();
-	msg.msg_iovlen = reader->iovenLength();
-	::ssize_t actualSend = netpp::internal::stub::sendmsg(socket->fd(), &msg, MSG_NOSIGNAL);
-	if (actualSend != -1)
-	{
-		auto sendSize = static_cast<std::size_t>(actualSend);
-		reader->adjustByteArray(sendSize);
-		return (sendSize <= expectWriteSize);
-	}
-	else
-	{
-		// error that can not recovery threw as exception
-		return false;
-	}
-}
-}
-
 namespace netpp::internal::socket {
 ByteArray2IOVec::ByteArray2IOVec()
 	: m_vec{nullptr}, m_vecLen{0}
@@ -206,28 +183,36 @@ ByteArray::LengthType SequentialByteArrayReaderWithLock::availableBytes()
 }
 
 // SocketIO
-void SocketIO::read(const Socket *socket, std::shared_ptr<ByteArray> buffer)
+void SocketIO::read(const Socket *socket, std::unique_ptr<ByteArray2IOVec> &&writer)
 {
-	ByteArrayWriterWithLock writer(std::move(buffer));
 	::msghdr msg{};
 	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = writer.iovec();
-	msg.msg_iovlen = writer.iovenLength();
+	msg.msg_iov = writer->iovec();
+	msg.msg_iovlen = writer->iovenLength();
 	// TODO: use ioctl(fd, FIONREAD, &n) to get pending read data on socket
 	::ssize_t num = stub::recvmsg(socket->fd(), &msg, 0);
 	if (num != -1)
-		writer.adjustByteArray(static_cast<std::size_t>(num));
+		writer->adjustByteArray(static_cast<std::size_t>(num));
 }
 
-bool SocketIO::write(const Socket *socket, std::shared_ptr<ByteArray> buffer)
+bool SocketIO::write(const Socket *socket, std::unique_ptr<ByteArray2IOVec> &&reader)
 {
-	ByteArrayReaderWithLock reader(std::move(buffer));
-	return ::_write_impl(socket, &reader);
-}
-
-bool SocketIO::write(const Socket *socket, std::vector<std::shared_ptr<ByteArray>> &&buffers)
-{
-	SequentialByteArrayReaderWithLock reader(std::move(buffers));
-	return ::_write_impl(socket, &reader);
+	std::size_t expectWriteSize = reader->availableBytes();
+	::msghdr msg{};
+	std::memset(&msg, 0, sizeof(::msghdr));
+	msg.msg_iov = reader->iovec();
+	msg.msg_iovlen = reader->iovenLength();
+	::ssize_t actualSend = netpp::internal::stub::sendmsg(socket->fd(), &msg, MSG_NOSIGNAL);
+	if (actualSend != -1)
+	{
+		auto sendSize = static_cast<std::size_t>(actualSend);
+		reader->adjustByteArray(sendSize);
+		return (sendSize <= expectWriteSize);
+	}
+	else
+	{
+		// error that can not recovery threw as exception
+		return false;
+	}
 }
 }

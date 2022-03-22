@@ -5,7 +5,7 @@
 #include "Events.h"
 #include "TcpServer.h"
 #include "EventLoopDispatcher.h"
-#include "Channel.h"
+#include "channel/Channel.h"
 #include <list>
 #include <iostream>
 #include "error/SocketError.h"

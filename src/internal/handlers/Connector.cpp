@@ -136,7 +136,7 @@ std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatc
 	{
 		eventsPrototype.onError(rle.getSocketErrorCode());
 	}
-	return std::shared_ptr<Connector>();
+	return {};
 }
 
 void Connector::setupTimer()
@@ -144,7 +144,7 @@ void Connector::setupTimer()
 	m_retryTimer->setOnTimeout([this]{
 		auto oldSocket = std::move(m_socket);
 		m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
-		m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), shared_from_this(), m_socket->fd());
+		m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), weak_from_this(), m_socket->fd());
 		m_epollEvent->active(epoll::EpollEv::OUT);
 		connect();
 	});

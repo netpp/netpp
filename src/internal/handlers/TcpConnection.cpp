@@ -1,7 +1,7 @@
 #include "internal/handlers/TcpConnection.h"
 #include "internal/support/Log.h"
 #include "EventLoop.h"
-#include "Channel.h"
+#include "channel/Channel.h"
 #include "internal/socket/SocketIO.h"
 #include "internal/socket/SocketEnums.h"
 #include "error/Exception.h"
@@ -9,6 +9,7 @@
 #include "internal/time/TimeWheel.h"
 #include "ByteArray.h"
 #include "internal/socket/Socket.h"
+#include "channel/TcpChannel.h"
 
 using std::make_unique;
 using std::make_shared;
@@ -71,9 +72,7 @@ private:
 
 TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket)
 		: m_state{socket::TcpState::Established},
-		  m_isWaitWriting{false}, m_socket{std::move(socket)},
-		  m_prependBuffer{make_shared<ByteArray>()},
-		  m_writeBuffer{make_shared<ByteArray>()}, m_receiveBuffer{make_shared<ByteArray>()}
+		  m_isWaitWriting{false}, m_socket{std::move(socket)}
 {}
 
 void TcpConnection::handleIn()
@@ -81,10 +80,9 @@ void TcpConnection::handleIn()
 	try
 	{
 		renewWheel();
-		socket::SocketIO::read(m_socket.get(), m_receiveBuffer);
+		socket::SocketIO::read(m_socket.get(), m_connectionBufferChannel->ioWriter());
 		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
-		auto channel = getIOChannel();
-		m_events.onMessageReceived(channel);
+		m_events.onMessageReceived(m_connectionBufferChannel);
 	}
 	catch (error::SocketException &se)
 	{
@@ -106,15 +104,12 @@ void TcpConnection::handleOut()
 		// may not write all data this round, keep OUT event on and wait for next round
 		bool writeCompleted;
 		// TODO: handle read/write timeout
-		if (m_prependBuffer->readableBytes() != 0)
-			writeCompleted = socket::SocketIO::write(m_socket.get(), {m_prependBuffer, m_writeBuffer});
-		else
-			writeCompleted = socket::SocketIO::write(m_socket.get(), m_writeBuffer);
+		writeCompleted = socket::SocketIO::write(m_socket.get(), m_connectionBufferChannel->ioReader());
 		if (writeCompleted)
 		{
 			m_epollEvent->deactive(epoll::EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?
-			m_events.onWriteCompleted(getIOChannel());
+			m_events.onWriteCompleted(m_connectionBufferChannel);
 			m_isWaitWriting = false;
 			// if write completed, and we are half-closing, force close this connection
 			if (m_state.load(std::memory_order_acquire) == socket::TcpState::HalfClose)
@@ -156,7 +151,7 @@ void TcpConnection::sendInLoop()
 {
 	// Move to event loop thread
 	// capture weak_ptr in case TcpConnection destructed
-	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
+	std::weak_ptr<TcpConnection> connectionWeak = weak_from_this();
 	_loopThisHandlerLiveIn->runInLoop([connectionWeak] {
 										  auto connection = connectionWeak.lock();
 										  if (connection)
@@ -172,7 +167,7 @@ void TcpConnection::closeAfterWriteCompleted()
 {
 	// Move to event loop thread
 	// capture weak_ptr in case TcpConnection destructed
-	std::weak_ptr<TcpConnection> connectionWeak = shared_from_this();
+	std::weak_ptr<TcpConnection> connectionWeak = weak_from_this();
 	_loopThisHandlerLiveIn->runInLoop([connectionWeak] {
 		// nothing to write, close directly
 		auto connection = connectionWeak.lock();
@@ -203,7 +198,7 @@ void TcpConnection::closeAfterWriteCompleted()
 
 std::shared_ptr<Channel> TcpConnection::getIOChannel()
 {
-	return make_shared<Channel>(shared_from_this(), m_prependBuffer, m_writeBuffer, m_receiveBuffer);
+	return m_connectionBufferChannel;
 }
 
 void TcpConnection::renewWheel()
@@ -228,7 +223,7 @@ void TcpConnection::forceClose()
 		wheel->removeFromWheel(_idleConnectionWheel);
 		wheel->removeFromWheel(_halfCloseWheel);
 	}
-	m_events.onDisconnect(getIOChannel());
+	m_events.onDisconnect(m_connectionBufferChannel);
 	m_epollEvent->disable();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
@@ -248,6 +243,7 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
+	connection->m_connectionBufferChannel = std::make_shared<TcpChannel>(connection);
 	connection->m_events = std::move(eventsPrototype);
 	connection->_loopThisHandlerLiveIn = loop;
 	// set up events

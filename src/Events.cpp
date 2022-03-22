@@ -6,7 +6,7 @@
 
 #include <utility>
 #include "support/ThreadPool.hpp"
-#include "Channel.h"
+#include "channel/Channel.h"
 #include "error/SocketError.h"
 #include "signal/Signals.h"
 

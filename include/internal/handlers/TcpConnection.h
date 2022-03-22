@@ -122,11 +122,7 @@ private:
 	bool m_isWaitWriting;
 	std::unique_ptr<socket::Socket> m_socket;
 	/// @brief Buffer for prepend write data
-	std::shared_ptr<ByteArray> m_prependBuffer;
-	/// @brief Buffer for pending write data
-	std::shared_ptr<ByteArray> m_writeBuffer;
-	/// @brief Buffer for received data
-	std::shared_ptr<ByteArray> m_receiveBuffer;
+	std::shared_ptr<Channel> m_connectionBufferChannel;
 	/// @brief User-defined event handler
 	Events m_events;
 
