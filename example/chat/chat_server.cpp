@@ -5,7 +5,7 @@
 #include "Events.h"
 #include "TcpServer.h"
 #include "EventLoopDispatcher.h"
-#include "channel/Channel.h"
+#include "channel/TcpChannel.h"
 #include <list>
 #include <iostream>
 #include "error/SocketError.h"
@@ -18,7 +18,8 @@ public:
 		{
 			if (member != channel)
 			{
-				auto writer = member->writer();
+				auto tcpMemberChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(member);
+				auto writer = tcpMemberChannel->writer();
 				std::string hello{"hello!\n"};
 				writer.writeUInt16(static_cast<uint16_t>(hello.length())).writeString(hello);
 				member->send();
@@ -29,14 +30,16 @@ public:
 
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
-		auto reader = channel->reader();
+		auto tcpChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(channel);
+		auto reader = tcpChannel->reader();
 		uint16_t length = reader.retrieveUInt16().value();
 		std::string message = reader.retrieveString(length).value();
 		for (auto &member : m_room)
 		{
 			if (member->channelId() != channel->channelId())
 			{
-				auto writer = member->writer();
+				auto tcpMemberChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(member);
+				auto writer = tcpMemberChannel->writer();
 				writer.writeUInt16(length).writeString(message);
 				member->send();
 			}
@@ -55,10 +58,10 @@ public:
 			else
 			{
 				std::string hello{"good bye!\n"};
-				std::shared_ptr<netpp::Channel> &onlineChannel = (*it);
-				auto writer = onlineChannel->writer();
+				auto tcpOnlineChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(*it);
+				auto writer = tcpOnlineChannel->writer();
 				writer.writeUInt16(static_cast<uint16_t>(hello.length())).writeString(hello);
-				onlineChannel->send();
+				tcpOnlineChannel->send();
 				++it;
 			}
 		}

@@ -8,18 +8,6 @@
 #include <functional>
 #include <memory>
 
-namespace netpp {
-class Channel;
-namespace error {
-enum class SocketError;
-}
-namespace signal {
-enum class Signals;
-}
-namespace support {
-class ThreadPool;
-}
-namespace internal {
 #define NETPP_ASSERT_HAS_EVENT_METHOD(METHOD, ARG...)    \
 template<typename T>                    \
 class namingMatch##METHOD {                \
@@ -38,18 +26,16 @@ public:                                \
     static constexpr bool value = assert_has(static_cast<T*>(0));    \
 };
 
-NETPP_ASSERT_HAS_EVENT_METHOD(Connected, std::shared_ptr<netpp::Channel>)
-NETPP_ASSERT_HAS_EVENT_METHOD(MessageReceived, std::shared_ptr<netpp::Channel>)
-NETPP_ASSERT_HAS_EVENT_METHOD(WriteCompleted, std::shared_ptr<netpp::Channel>)
-NETPP_ASSERT_HAS_EVENT_METHOD(Disconnect, std::shared_ptr<netpp::Channel>)
-NETPP_ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
-NETPP_ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
-
-#define NETPP_BIND_METHOD(METHOD, Impl, functor, binder)			\
-if constexpr (internal::namingMatch##METHOD<Impl>::value) {	\
-	static_assert(internal::fullMatch##METHOD<Impl>::value, "on"#METHOD"() method was defined, but mismatch params, try check your arguments");	\
-	(functor) = (binder);	\
+namespace netpp {
+class Channel;
+namespace error {
+enum class SocketError;
 }
+namespace signal {
+enum class Signals;
+}
+namespace support {
+class ThreadPool;
 }
 
 /**
@@ -78,6 +64,14 @@ public:
 	using ErrorCallBack = std::function<void(error::SocketError)>;
 	using SignalCallBack = std::function<void(signal::Signals)>;
 
+private:
+	NETPP_ASSERT_HAS_EVENT_METHOD(Connected, std::shared_ptr<netpp::Channel>)
+	NETPP_ASSERT_HAS_EVENT_METHOD(MessageReceived, std::shared_ptr<netpp::Channel>)
+	NETPP_ASSERT_HAS_EVENT_METHOD(WriteCompleted, std::shared_ptr<netpp::Channel>)
+	NETPP_ASSERT_HAS_EVENT_METHOD(Disconnect, std::shared_ptr<netpp::Channel>)
+	NETPP_ASSERT_HAS_EVENT_METHOD(Error, error::SocketError)
+	NETPP_ASSERT_HAS_EVENT_METHOD(Signal, signal::Signals)
+
 public:
 	Events() : m_eventsPool{nullptr}, m_impl{nullptr} {}
 
@@ -93,12 +87,20 @@ public:
 	: m_eventsPool{nullptr}, m_impl{impl}
 	{
 		Impl *implPtr = static_cast<Impl *>(m_impl.get());
+
+#define NETPP_BIND_METHOD(METHOD, Impl, functor, binder)			\
+if constexpr (namingMatch##METHOD<Impl>::value) {	\
+	static_assert(fullMatch##METHOD<Impl>::value, "on"#METHOD"() method was defined, but mismatch params, try check your arguments");	\
+	(functor) = (binder);	\
+}
 		NETPP_BIND_METHOD(Connected, Impl, m_connectedCb, std::bind(&Impl::onConnected, implPtr, std::placeholders::_1))
 		NETPP_BIND_METHOD(MessageReceived, Impl, m_receiveMsgCb, std::bind(&Impl::onMessageReceived, implPtr, std::placeholders::_1))
 		NETPP_BIND_METHOD(WriteCompleted, Impl, m_writeCompletedCb, std::bind(&Impl::onWriteCompleted, implPtr, std::placeholders::_1))
 		NETPP_BIND_METHOD(Disconnect, Impl, m_disconnectCb, std::bind(&Impl::onDisconnect, implPtr, std::placeholders::_1))
 		NETPP_BIND_METHOD(Error, Impl, m_errorCb, std::bind(&Impl::onError, implPtr, std::placeholders::_1))
 		NETPP_BIND_METHOD(Signal, Impl, m_signalCb, std::bind(&Impl::onSignal, implPtr, std::placeholders::_1))
+#undef NETPP_BIND_METHOD
+
 		initThread(threads);
 	}
 
@@ -154,7 +156,7 @@ public:
 private:
 	void initThread(int threadsCount);
 
-	// every event handler will shared same thread pool
+	// every event handler will share same thread pool
 	std::shared_ptr<support::ThreadPool> m_eventsPool;
 
 	std::function<void(std::shared_ptr<netpp::Channel>)> m_connectedCb;
@@ -167,5 +169,7 @@ private:
 	std::shared_ptr<void> m_impl;
 };
 }
+
+#undef NETPP_ASSERT_HAS_EVENT_METHOD
 
 #endif //NETPP_EVENTS_H

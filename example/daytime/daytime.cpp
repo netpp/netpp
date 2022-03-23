@@ -1,5 +1,5 @@
 #include "Events.h"
-#include "channel/Channel.h"
+#include "channel/TcpChannel.h"
 #include "TcpServer.h"
 #include "EventLoopDispatcher.h"
 #include <ctime>
@@ -9,10 +9,11 @@ class DayTime {
 public:
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
 	{
+		auto tcpChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(channel);
 		std::time_t time;
 		std::time(&time);
 		std::string timeStr = std::ctime(&time);
-		auto writer = channel->writer();
+		auto writer = tcpChannel->writer();
 		writer.writeString(timeStr + "\r\n");
 		channel->send();
 		channel->close();
