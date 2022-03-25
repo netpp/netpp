@@ -8,11 +8,13 @@
 #include <memory>
 
 namespace netpp {
-namespace internal::handlers {
+namespace internal {
+namespace handlers {
 class TcpConnection;
 }
-namespace internal::socket {
-class ByteArray2IOVec;
+namespace buffer {
+class ChannelBufferConversion;
+}
 }
 
 /**
@@ -46,18 +48,7 @@ public:
 	 */
 	[[nodiscard]] virtual bool channelActive() const final;
 
-protected:
-	/**
-	 * @brief Read from buffer, and send to peer
-	 * @return The ByteArray to iovec convertor
-	 */
-	virtual std::unique_ptr<internal::socket::ByteArray2IOVec> ioReader() = 0;
-
-	/**
-	 * @brief Write peer message to buffer
-	 * @return The ByteArray to iovec convertor
-	 */
-	virtual std::unique_ptr<internal::socket::ByteArray2IOVec> ioWriter() = 0;
+	virtual std::unique_ptr<internal::buffer::ChannelBufferConversion> createBufferConvertor() = 0;
 
 private:
 	std::weak_ptr<internal::handlers::TcpConnection> _connection;

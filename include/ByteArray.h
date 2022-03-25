@@ -15,7 +15,7 @@ class ByteArrayWriterWithLock;
 class SequentialByteArrayReaderWithLock;
 }
 /**
- * @brief ByteArray has a list of buffer m_nodes, saved in network ending(big ending),
+ * @brief ByteArray has a list of buffer nodes, stored in network ending(big ending),
  * it's thread safe.
  * 
  * @section ReadNode
@@ -49,11 +49,13 @@ class SequentialByteArrayReaderWithLock;
  * +----------++----------++----------++----------+
  *                  |    |  |     |
  *     	         start/end  start/end
- * 
+ * </pre>
  */
 class ByteArray {
-	// access buffer directly
-	/// @note public methods are guarded by mutex, do NOT use with ByteArrayIOVector*WithLock, it will lead to dead lock
+	/**
+	 * @brief access buffer directly
+	 * @note public methods are guarded by mutex, do NOT use with ByteArrayIOVector*WithLock, it will lead to dead lock
+	 */
 	friend class internal::socket::ByteArrayReaderWithLock;
 	friend class internal::socket::ByteArrayWriterWithLock;
 	friend class internal::socket::SequentialByteArrayReaderWithLock;

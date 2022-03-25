@@ -16,12 +16,12 @@ set(netpp_source
         include/internal/socket/Socket.h include/internal/socket/SocketIO.h
         include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
         include/internal/time/TimeWheel.h
-        include/internal/buffer/CowLink.hpp include/internal/buffer/BufferNode.h
+        include/internal/buffer/CowLink.hpp include/internal/buffer/BufferNode.h include/internal/buffer/ChannelBufferConversion.h
         include/signal/Signals.h include/signal/SignalWatcher.h
         include/error/Exception.h include/error/SocketError.h
         include/support/ThreadPool.hpp
         include/time/Timer.h
-        include/channel/Channel.h include/channel/TcpChannel.h
+        include/channel/Channel.h include/channel/TcpChannel.h include/channel/HttpChannel.h
         include/Address.h include/ByteArray.h include/EventLoop.h include/EventLoopDispatcher.h include/Events.h include/TcpClient.h include/TcpServer.h include/Config.h
         src/internal/epoll/Epoll.cpp src/internal/epoll/EpollEvent.cpp
         src/internal/handlers/Acceptor.cpp src/internal/handlers/Connector.cpp src/internal/handlers/TcpConnection.cpp src/internal/handlers/TimerHandler.cpp src/internal/handlers/SignalHandler.cpp src/internal/handlers/RunInLoopHandler.cpp
@@ -29,12 +29,12 @@ set(netpp_source
         src/internal/socket/Socket.cpp src/internal/socket/SocketIO.cpp
         src/internal/stub/IO.cpp src/internal/stub/Socket.cpp src/internal/stub/Epoll.cpp
         src/internal/time/TimeWheel.cpp
-        src/internal/buffer/BufferNode.cpp
+        src/internal/buffer/BufferNode.cpp src/internal/buffer/ChannelBufferConversion.cpp
         src/signal/Signals.cpp src/signal/SignalWatcher.cpp
         src/error/Exception.cpp src/error/SocketError.cpp
         src/support/ThreadPool.cpp
         src/time/Timer.cpp
-        src/channel/Channel.cpp src/channel/TcpChannel.cpp
+        src/channel/Channel.cpp src/channel/TcpChannel.cpp src/channel/HttpChannel.cpp
         src/Address.cpp src/ByteArray.cpp src/channel/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp include/support/PooledTask.hpp
         )
 

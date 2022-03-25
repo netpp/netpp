@@ -10,6 +10,9 @@
 
 namespace netpp {
 class ByteArray;
+namespace internal::buffer {
+class TcpChannelConversion;
+}
 /**
  * @brief Write to byte array
  */
@@ -67,21 +70,21 @@ private:
  * @brief The normal tcp connection buffer
  */
 class TcpChannel : public Channel {
+	friend class internal::buffer::TcpChannelConversion;
 public:
-	explicit TcpChannel(std::weak_ptr <internal::handlers::TcpConnection> connection);
+	using BufferConversion = internal::buffer::TcpChannelConversion;
+
+	explicit TcpChannel(std::weak_ptr<internal::handlers::TcpConnection> connection);
+
+	std::unique_ptr<internal::buffer::ChannelBufferConversion> createBufferConvertor() override;
 
 	ChannelWriter writer();
 	ChannelReader reader();
-
-protected:
-	std::unique_ptr<internal::socket::ByteArray2IOVec> ioReader() override;
-	std::unique_ptr<internal::socket::ByteArray2IOVec> ioWriter() override;
 
 	// TODO: support sendfile and mmap
 
 private:
 	std::weak_ptr<internal::handlers::TcpConnection> _connection;
-//	std::shared_ptr <ByteArray> _prependArray;
 	std::shared_ptr<ByteArray> m_writeArray;
 	std::shared_ptr<ByteArray> m_readArray;
 };

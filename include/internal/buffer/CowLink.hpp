@@ -11,15 +11,19 @@
 #include <functional>
 
 namespace netpp::internal::buffer {
+/**
+ * @brief The node element must has default constructor and can be copy constructed
+ * @tparam Element node element
+ */
 template<typename Element>
-concept CowNode = std::is_copy_constructible_v<Element> && std::is_default_constructible_v<Element>;
+concept CowNodeRequire = std::is_copy_constructible_v<Element> && std::is_default_constructible_v<Element>;
 
 /**
- * @brief The node of buffer
+ * @brief The buffer container, support copy on write
  */
 // TODO: support remove unused node
 template<typename Element>
-requires CowNode<Element>
+requires CowNodeRequire<Element>
 class CowLink {
 public:
 	class CowIterator;
@@ -32,6 +36,9 @@ public:
 	constexpr static unsigned defaultNodeSize = 1;
 
 public:
+	/**
+	 * @brief Readonly iterator
+	 */
 	class ConstIterator {
 	public:
 		ConstIterator(CowLink *link, NodeContainerIndexer index) : _link{link}, m_current{index} {}
@@ -57,6 +64,9 @@ public:
 		NodeContainerIndexer m_current;
 	};
 
+	/**
+	 * @brief Iterator that is copy on write, this is the only way to perform write access
+	 */
 	class CowIterator {
 	public:
 		/**
@@ -90,6 +100,9 @@ public:
 		pointer_type operator->() { return _link->m_nodes[m_current]; }
 
 	private:
+		/**
+		 * @brief If the node of this iterator is not unique, copy it
+		 */
 		void cowThisNode()
 		{
 			if (m_current < _link->size() && !_link->m_nodes[m_current].unique())
@@ -131,6 +144,10 @@ public:
 		}
 	}
 
+	/**
+	 * @brief Alloc more node in list, after allocation, at least @em length size is available
+	 * @param length The minimum size
+	 */
 	void allocMore(NodeContainerIndexer length)
 	{
 		if (length < m_nodes.size())

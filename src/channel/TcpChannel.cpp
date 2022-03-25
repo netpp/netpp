@@ -4,7 +4,7 @@
 
 #include "channel/TcpChannel.h"
 #include "ByteArray.h"
-#include "internal/socket/SocketIO.h"
+#include "internal/buffer/ChannelBufferConversion.h"
 
 namespace netpp {
 ChannelWriter::ChannelWriter(std::shared_ptr<ByteArray> writeBuffer)
@@ -195,6 +195,11 @@ TcpChannel::TcpChannel(std::weak_ptr<internal::handlers::TcpConnection> connecti
 		  m_writeArray{std::make_shared<ByteArray>()}, m_readArray{std::make_shared<ByteArray>()}
 {}
 
+std::unique_ptr<internal::buffer::ChannelBufferConversion> TcpChannel::createBufferConvertor()
+{
+	return std::make_unique<internal::buffer::TcpChannelConversion>();
+}
+
 ChannelWriter TcpChannel::writer()
 {
 	return ChannelWriter(m_writeArray);
@@ -203,15 +208,5 @@ ChannelWriter TcpChannel::writer()
 ChannelReader TcpChannel::reader()
 {
 	return ChannelReader(m_readArray);
-}
-
-std::unique_ptr<internal::socket::ByteArray2IOVec> TcpChannel::ioReader()
-{
-	return std::make_unique<internal::socket::ByteArrayReaderWithLock>(m_readArray);
-}
-
-std::unique_ptr<internal::socket::ByteArray2IOVec> TcpChannel::ioWriter()
-{
-	return std::make_unique<internal::socket::ByteArrayReaderWithLock>(m_writeArray);
 }
 }

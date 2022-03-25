@@ -9,9 +9,14 @@
 namespace netpp {
 class EventLoop;
 class ByteArray;
-namespace internal::socket {
+namespace internal {
+namespace socket {
 enum class TcpState;
 class Socket;
+}
+namespace buffer {
+class ChannelBufferConversion;
+}
 }
 namespace internal::time {
 class TimeWheelEntry;
@@ -54,7 +59,7 @@ public:
 	 */
 	std::shared_ptr<Channel> getIOChannel();
 
-	internal::socket::TcpState currentState() { return m_state.load(std::memory_order_acquire); }
+	internal::socket::TcpState currentState() const { return m_state.load(std::memory_order_acquire); }
 
 	/**
 	 * @brief Get the unique connection id
@@ -123,6 +128,7 @@ private:
 	std::unique_ptr<socket::Socket> m_socket;
 	/// @brief Buffer for prepend write data
 	std::shared_ptr<Channel> m_connectionBufferChannel;
+	std::unique_ptr<buffer::ChannelBufferConversion> m_bufferConvertor;
 	/// @brief User-defined event handler
 	Events m_events;
 

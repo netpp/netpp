@@ -8,16 +8,32 @@
 #include <cstdint>
 
 namespace netpp::internal::buffer {
+/**
+ * @brief A single buffer node item
+ */
 struct BufferNode {
+	/**
+	 * @brief The type of buffer length
+	 */
 	using LengthType = std::uint64_t;
+	/**
+	 * @brief The default node size
+	 */
 	constexpr static LengthType BufferNodeSize = 1024;
 
 	BufferNode();
 	BufferNode(const BufferNode &other);
 
 	// constexpr static int maxTimeToLive = 10;
-	LengthType start;    // the offset of buffer read
-	LengthType end;    // the offset of buffer write
+	/**
+	 * @brief The offset where buffer start to read
+	 */
+	LengthType start;
+	/**
+	 * @brief The offset where buffer start to write
+	 */
+	LengthType end;
+
 	// int timeToLive;
 	char buffer[BufferNodeSize];    // buffer
 };

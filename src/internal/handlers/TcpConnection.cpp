@@ -7,15 +7,14 @@
 #include "error/Exception.h"
 #include "error/SocketError.h"
 #include "internal/time/TimeWheel.h"
-#include "ByteArray.h"
 #include "internal/socket/Socket.h"
 #include "channel/TcpChannel.h"
+#include "internal/buffer/ChannelBufferConversion.h"
 
 using std::make_unique;
 using std::make_shared;
 
 namespace netpp::internal::handlers {
-
 /**
  * @brief Time wheel for connection who have not transfer any data in few time,
  * try to close it on timeout
@@ -80,7 +79,7 @@ void TcpConnection::handleIn()
 	try
 	{
 		renewWheel();
-		socket::SocketIO::read(m_socket.get(), m_connectionBufferChannel->ioWriter());
+		socket::SocketIO::read(m_socket.get(), m_bufferConvertor->writeBufferConvert(m_connectionBufferChannel.get()));
 		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
 		m_events.onMessageReceived(m_connectionBufferChannel);
 	}
@@ -104,7 +103,7 @@ void TcpConnection::handleOut()
 		// may not write all data this round, keep OUT event on and wait for next round
 		bool writeCompleted;
 		// TODO: handle read/write timeout
-		writeCompleted = socket::SocketIO::write(m_socket.get(), m_connectionBufferChannel->ioReader());
+		writeCompleted = socket::SocketIO::write(m_socket.get(), m_bufferConvertor->readBufferConvert(m_connectionBufferChannel.get()));
 		if (writeCompleted)
 		{
 			m_epollEvent->deactive(epoll::EpollEv::OUT);
@@ -244,6 +243,7 @@ std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, s
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
 	connection->m_connectionBufferChannel = std::make_shared<TcpChannel>(connection);
+	connection->m_bufferConvertor = connection->m_connectionBufferChannel->createBufferConvertor();
 	connection->m_events = std::move(eventsPrototype);
 	connection->_loopThisHandlerLiveIn = loop;
 	// set up events

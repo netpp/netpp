@@ -95,6 +95,7 @@ private:
  */
 class SequentialByteArrayReaderWithLock : public ByteArray2IOVec {
 public:
+	SequentialByteArrayReaderWithLock(std::initializer_list<std::shared_ptr<ByteArray>> buffers);
 	explicit SequentialByteArrayReaderWithLock(std::vector<std::shared_ptr<ByteArray>> &&buffers);
 	~SequentialByteArrayReaderWithLock() override;
 

@@ -109,8 +109,12 @@ ByteArray::LengthType ByteArrayWriterWithLock::availableBytes()
 	return m_buffer->m_availableSizeToWrite;
 }
 
+SequentialByteArrayReaderWithLock::SequentialByteArrayReaderWithLock(std::initializer_list<std::shared_ptr<ByteArray>> buffers)
+	: SequentialByteArrayReaderWithLock(std::vector(buffers))
+{}
+
 SequentialByteArrayReaderWithLock::SequentialByteArrayReaderWithLock(std::vector<std::shared_ptr<ByteArray>> &&buffers)
-	: m_buffers(std::move(buffers))
+	: m_buffers(buffers)
 {
 	ByteArray::CowBuffer::NodeContainerIndexer nodeCount = 0;
 	for (auto &b : m_buffers)
