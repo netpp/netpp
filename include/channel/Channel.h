@@ -19,6 +19,9 @@ class ChannelBufferConversion;
 
 /**
  * @brief A Channel is an implement of TcpConnection's buffer.
+ *
+ * For user, Channel must provide a way to access buffer, data can be read/write into buffer
+ * For tcp connection, Channel is buffer.
  */
 class Channel {
 	friend class internal::handlers::TcpConnection;

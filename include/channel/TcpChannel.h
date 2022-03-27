@@ -84,7 +84,6 @@ public:
 	// TODO: support sendfile and mmap
 
 private:
-	std::weak_ptr<internal::handlers::TcpConnection> _connection;
 	std::shared_ptr<ByteArray> m_writeArray;
 	std::shared_ptr<ByteArray> m_readArray;
 };

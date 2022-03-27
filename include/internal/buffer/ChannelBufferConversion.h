@@ -47,26 +47,6 @@ public:
 	*/
 	std::unique_ptr<internal::socket::ByteArray2IOVec> writeBufferConvert(Channel *channel) override;
 };
-
-/**
- * @brief Support for HttpChannel, convert buffer for socket to read/write
- */
-class HttpChannelConversion : public ChannelBufferConversion {
-public:
-	~HttpChannelConversion() override = default;
-
-	/**
-	* @brief Read from buffer, and send to peer
-	* @return The ByteArray to iovec convertor
-	*/
-	std::unique_ptr<internal::socket::ByteArray2IOVec> readBufferConvert(Channel *channel) override;
-
-	/**
-	* @brief Write peer message to buffer
-	* @return The ByteArray to iovec convertor
-	*/
-	std::unique_ptr<internal::socket::ByteArray2IOVec> writeBufferConvert(Channel *channel) override;
-};
 }
 }
 }
