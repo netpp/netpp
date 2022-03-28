@@ -106,7 +106,7 @@ void TcpConnection::handleOut()
 		writeCompleted = socket::SocketIO::write(m_socket.get(), m_bufferConvertor->readBufferConvert(m_connectionBufferChannel.get()));
 		if (writeCompleted)
 		{
-			m_epollEvent->deactive(epoll::EpollEv::OUT);
+			m_epollEvent->deactivate(epoll::EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?
 			m_events.onWriteCompleted(m_connectionBufferChannel);
 			m_isWaitWriting = false;
@@ -134,8 +134,7 @@ void TcpConnection::handleRdhup()
 	LOG_TRACE("Socket {} rdhup", m_socket->fd());
 
 	// disable RDHUP and IN
-	m_epollEvent->deactive(epoll::EpollEv::RDHUP);
-	m_epollEvent->deactive(epoll::EpollEv::IN);
+	m_epollEvent->deactivate({epoll::EpollEv::RDHUP, epoll::EpollEv::IN});
 	socket::TcpState establishedState = socket::TcpState::Established;
 	// transform state: Established->HalfClose
 	if (m_state.compare_exchange_strong(establishedState, socket::TcpState::HalfClose, std::memory_order_acq_rel))
@@ -181,7 +180,7 @@ void TcpConnection::closeAfterWriteCompleted()
 			{
 				connection->m_socket->shutdownWrite();
 				// disable RDHUP, shutdown write will wake up epoll_wait with EPOLLRDHUP and EPOLLIN
-				connection->m_epollEvent->deactive(epoll::EpollEv::RDHUP);
+				connection->m_epollEvent->deactivate(epoll::EpollEv::RDHUP);
 				// force close connection in wheel
 				auto wheel = connection->_loopThisHandlerLiveIn->getTimeWheel();
 				if (wheel)

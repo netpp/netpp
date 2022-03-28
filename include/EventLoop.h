@@ -22,8 +22,16 @@ class RunInLoopHandler;
 }
 }
 class EventLoopImpl;
+/**
+ * @brief The event loop wait/dispatch/handle events.
+ *
+ * Event loop runs only in one thread, and a thread can only run one event loop
+ */
 class EventLoop {
 public:
+	/**
+	 * @brief Handler type
+	 */
 	using Handler = std::shared_ptr<internal::epoll::EventHandler>;
 	/**
 	 * @brief Default EventLoop, will not create time wheel
@@ -43,9 +51,10 @@ public:
 	~EventLoop();
 
 	/**
-	 * @brief Start run never ending event loop, however, the loop 
-	 * will be terminated if any uncached exception threw, if
-	 * the loop is already running, return immediately
+	 * @brief Start run never ending event loop.
+	 *
+	 * The loop will be terminated if any uncached exception threw. If
+	 * the loop is already running, return immediately.
 	 * 
 	 */
 	void run();

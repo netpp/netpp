@@ -17,13 +17,19 @@ netpp是基于事件通知的TCP网络库，通过reactor和epoll实现，仅支
 * cmake >= 3.18.0
 * 支持C++20的编译器
 ### 使用cmake
-```
+```shell
 git clone https://github.com/netpp/netpp.git
 git submodule update --init
 mkdir build
 cd build
 cmake ../
 make netpp -j8
+```
+## 生成文档
+使用doxygen生成文档，依赖于graphviz，文档目录位于doc
+```shell
+sudo pacman -S doxygen graphviz
+doxygen ./Doxyfile
 ```
 ## 开始
 Netpp提供非虚函数的方法作为接口通知事件，定义事件处理类，实现对应方法并注入netpp::Events。

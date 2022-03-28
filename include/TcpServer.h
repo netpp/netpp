@@ -13,14 +13,28 @@ namespace internal::handlers {
 class Acceptor;
 }
 class EventLoopDispatcher;
-
+/**
+ * @brief The top level tcp server
+ */
 class TcpServer {
 public:
+	/**
+	 * @brief Create a tcp server
+	 * @param dispatcher		event loop dispatcher
+	 * @param addr				address of server
+	 * @param eventsPrototype	user-defined events handler
+	 */
 	TcpServer(EventLoopDispatcher *dispatcher, Address addr, 
 		Events eventsPrototype);
 	~TcpServer();
 
+	/**
+	 * @brief Start listen connection request, and auto manage clients life cycle
+	 */
 	void listen();
+	/**
+	 * @brief Stop accept incoming connections
+	 */
 	void stopListen();
 
 private:

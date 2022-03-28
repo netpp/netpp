@@ -20,20 +20,36 @@ class EventHandler;
  * 
  */
 enum class EpollEv {
+	/** @brief EPOLLIN event */
 	IN		= 0x01,
+	/** @brief EPOLLOUT event */
 	OUT		= 0x02,
+	/** @brief EPOLLRDHUP event */
 	RDHUP	= 0x04,
-	PRI		= 0x08,	// TODO: out-of-band data are not handled
+	/**
+	 * @brief EPOLLPRI event
+	 * @todo out-of-band data are not handled
+	 * */
+	PRI		= 0x08,
+	/** @brief EPOLLERR event */
 	ERR		= 0x10,
+	/** @brief EPOLLHUP event */
 	HUP		= 0x20
 };
 
+/**
+ * @brief The poll event handler
+ */
 class EpollEvent {
 	friend class Epoll;
 public:
 	EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd);
 	~EpollEvent() = default;
 
+	/**
+	 * @brief Get watching fd of this event
+	 * @return file descriptor
+	 */
 	[[nodiscard]] int fd() const { return _watchingFd; }
 	
 	/**
@@ -42,11 +58,32 @@ public:
 	 */
 	void disable();
 
+	/**
+	 * @brief Active watch event
+	 * @param event Interested event
+	 */
 	void active(EpollEv event) { active({event}); }
-	void deactive(EpollEv event) { deactive({event}); }
-	void active(std::initializer_list<EpollEv> events);
-	void deactive(std::initializer_list<EpollEv> events);
 
+	/**
+	 * @brief Deactivate watch event
+	 * @param event Event to be deactivated
+	 */
+	void deactivate(EpollEv event) { deactivate({event}); }
+
+	/**
+	 * @brief Active watch serial event
+	 * @param events Interested events
+	 */
+	void active(std::initializer_list<EpollEv> events);
+	/**
+	 * @brief Deactivate watch serial event
+	 * @param events Events to be deactivated
+	 */
+	void deactivate(std::initializer_list<EpollEv> events);
+
+	/**
+	 * @brief Called when interested event happened, dispatch event
+	 */
 	void handleEvents();
 
 // for Epoll

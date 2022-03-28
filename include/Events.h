@@ -47,21 +47,27 @@ class ThreadPool;
  * User-defined handler might run in different thread, make sure it's
  * thread safe.
  * 
- * @section Events you can handle
- * @see Events::onConnected
- * @see Events::onMessageReceived
- * @see Events::onWriteCompleted
- * @see Events::onDisconnect
- * @see Events::onError
- * @see Events::onSignal
+ * @section can_handles Events you can handle
+ * - onConnected
+ * - onMessageReceived
+ * - onWriteCompleted
+ * - onDisconnect
+ * - onError
+ * - onSignal
  */
 class Events final {
 public:
+	/** @brief Callback type when new connecting accepted */
 	using ConnectedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	/** @brief Callback type when message received */
 	using MessageReceivedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	/** @brief Callback type when write finished */
 	using WriteCompletedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	/** @brief Callback type when disconnected */
 	using DisconnectedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
+	/** @brief Callback type when some error occurred */
 	using ErrorCallBack = std::function<void(error::SocketError)>;
+	/** @brief Callback type when signal emits */
 	using SignalCallBack = std::function<void(signal::Signals)>;
 
 private:
@@ -104,11 +110,17 @@ if constexpr (namingMatch##METHOD<Impl>::value) {	\
 		initThread(threads);
 	}
 
+	/** @brief Bind connected callback manually */
 	void bindConnectedCallback(ConnectedCallBack cb);
+	/** @brief Bind message received callback manually */
 	void bindMessageReceivedCallback(MessageReceivedCallBack cb);
+	/** @brief Bind message write finished callback manually */
 	void bindWriteCompletedCallback(WriteCompletedCallBack cb);
+	/** @brief Bind message disconnected callback manually */
 	void bindDisconnectedCallback(DisconnectedCallBack cb);
+	/** @brief Bind message error callback manually */
 	void bindErrorCallback(ErrorCallBack cb);
+	/** @brief Bind message signal callback manually */
 	void bindSignalCallback(SignalCallBack cb);
 
 	/**

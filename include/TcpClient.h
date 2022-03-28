@@ -13,12 +13,27 @@ namespace internal::handlers {
 class Connector;
 }
 class EventLoopDispatcher;
+/**
+ * @brief The top level tcp client, a client can connection to only one server
+ */
 class TcpClient {
 public:
+	/**
+	 * @brief Create a tcp client
+	 * @param dispatcher		event loop dispatcher
+	 * @param addr				address of server
+	 * @param eventsPrototype	user-defined events handler
+	 */
 	TcpClient(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype);
 	~TcpClient();
 
+	/**
+	 * @brief Connect to server async
+	 */
 	void connect();
+	/**
+	 * @brief Disconnect from server async
+	 */
 	void disconnect();
 
 private:

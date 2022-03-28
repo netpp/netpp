@@ -12,12 +12,29 @@
 #include <unordered_set>
 
 namespace netpp {
+/**
+ * @brief Implement real event loop
+ */
 class EventLoopImpl {
 public:
 	EventLoopImpl();
+	/**
+	 * @brief Start the event loop
+	 */
 	void start();
+	/**
+	 * @brief Add one more event handler to loop
+	 * @param handler The event handler, calls when interested event happened
+	 */
 	void add(const EventLoop::Handler &handler);
+	/**
+	 * @brief Remove a event handler from loop loop
+	 * @param handler The event handler to be removed
+	 */
 	void remove(const EventLoop::Handler &handler);
+	/**
+	 * @brief Get poller
+	 */
 	internal::epoll::Epoll *getPoll() { return &m_poll; }
 
 private:

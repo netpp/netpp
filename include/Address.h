@@ -11,17 +11,41 @@
 struct sockaddr_in;
 
 namespace netpp {
-// TODO: support ipv6
+/**
+ * @brief The ipv4 address
+ * @todo support ipv6
+ */
 class Address {
 public:
+	/**
+	 * @brief Create
+	 * @param ip	The ip address
+	 * @param port	The port
+	 */
 	explicit Address(const std::string &ip = "0.0.0.0", unsigned port = 11111);
-	explicit Address(std::shared_ptr<::sockaddr_in> addr);
+	/**
+	 * @brief Create from linux address
+	 * @param address linux address
+	 */
+	explicit Address(std::shared_ptr<::sockaddr_in> address);
 
+	/**
+	 * @brief Get ip address
+	 * @return ip string
+	 */
 	[[nodiscard]] std::string ip() const;
+	/**
+	 * @brief Get port
+	 * @return port
+	 */
 	[[nodiscard]] unsigned port() const;
 
 	// bool ipv6();
 
+	/**
+	 * @brief Get linux address
+	 * @return linux address info
+	 */
 	inline ::sockaddr_in *sockAddrIn() { return m_addr.get(); }
 
 private:

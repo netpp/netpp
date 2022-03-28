@@ -129,7 +129,7 @@ TEST_F(ConnectionTest, ConnectionBrokeTest)
 			&loop, std::make_unique<netpp::internal::socket::Socket>(0, netpp::Address()),
 			netpp::Events(handler)).lock();
 	EXPECT_EQ(netpp::internal::socket::TcpState::Established, connection->currentState());
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, testing::_)).Times(2);
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, testing::_)).Times(1);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_)).Times(testing::AtLeast(1));
 	connection->handleRdhup();
 	loop.m_runInLoop->handleIn();

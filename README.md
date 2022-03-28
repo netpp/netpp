@@ -17,13 +17,19 @@ netpp is an event based, modern c++ TCP network library, based on reactor patter
 * cmake >= 3.18.0
 * c++20 supports
 ### Build with cmake
-```
+```shell
 git clone https://github.com/netpp/netpp.git
 git submodule update --init
 mkdir build
 cd build
 cmake ../
 make netpp -j8
+```
+## Generate document
+use doxygen to generate, graphviz is required, documents were exported in doc
+```shell
+sudo pacman -S doxygen graphviz
+doxygen ./Doxyfile
 ```
 ## Quick start
 Netpp provides non-virtual methods as events notify interface, define event handler and inject to netpp::Events. 

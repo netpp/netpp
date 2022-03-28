@@ -20,8 +20,8 @@ concept CowNodeRequire = std::is_copy_constructible_v<Element> && std::is_defaul
 
 /**
  * @brief The buffer container, support copy on write
+ * @todo support remove unused node
  */
-// TODO: support remove unused node
 template<typename Element>
 requires CowNodeRequire<Element>
 class CowLink {
@@ -29,34 +29,73 @@ public:
 	class CowIterator;
 	class ConstIterator;
 
+	/**
+	 * @brief The node container, should support random access
+	 */
 	using NodeContainer = std::vector<std::shared_ptr<Element>>;
+	/**
+	 * @brief The position indicator of container
+	 */
 	using NodeContainerIndexer = typename NodeContainer::size_type;
+	/**
+	 * @brief Iterator of CowLink, read/write to iteration item are cow
+	 */
 	using iterator = CowIterator;
+	/**
+	 * @brief Const iterator of CowLink, readonly
+	 */
 	using const_iterator = ConstIterator;
 	constexpr static unsigned defaultNodeSize = 1;
 
 public:
 	/**
-	 * @brief Readonly iterator
+	 * @brief Readonly iterator, not cow
 	 */
 	class ConstIterator {
 	public:
+		/**
+		 * @brief Create an const iterator for CowLink
+		 * @param link	cow link
+		 * @param index	the index of nodes
+		 */
 		ConstIterator(CowLink *link, NodeContainerIndexer index) : _link{link}, m_current{index} {}
 		~ConstIterator() = default;
 
+		/** @brief Random access iterator */
 		using iterator_category = std::random_access_iterator_tag;
+		/** @brief Element type */
 		using value_type = const Element;
+		/** @brief Reference to element type */
 		using reference_type = const Element &;
+		/** @brief Pointer to element type */
 		using pointer_type = std::shared_ptr<const Element>;
+		/** @brief Distance of iterator */
 		using difference_type = NodeContainerIndexer;
 
+		/**
+		 * @brief Compare iterator
+		 * @param other iterator to be compared
+		 * @return weak order compare
+		 */
 		std::weak_ordering operator<=>(const ConstIterator &other) const { return m_current <=> other.m_current; }
+		/**
+		 * @brief Move to next
+		 * @return Next iterator
+		 */
 		ConstIterator &operator++()
 		{
 			++m_current;
 			return *this;
 		}
+		/**
+		 * @brief Dereference iterator
+		 * @return Reference to element
+		 */
 		reference_type operator*() { return *(_link->m_nodes[m_current].get()); }
+		/**
+		 * @brief Access element
+		 * @return Pointer to element
+		 */
 		pointer_type operator->() { return std::const_pointer_cast<value_type>(_link->m_nodes[m_current]); }
 
 	private:
@@ -119,11 +158,34 @@ public:
 	}
 	CowLink(const CowLink &other) = default;
 
+	/**
+	 * @brief Start of copy on write iteration
+	 * @param index start at index
+	 * @return cow iterator
+	 */
 	iterator cowBegin(NodeContainerIndexer index) { return CowLink::CowIterator(this, index, true); }
+	/**
+	 * @brief End of copy on write iteration
+	 * @param index end at index
+	 * @return cow iterator
+	 */
 	iterator cowEnd(NodeContainerIndexer index) { return CowLink::CowIterator(this, index, false); }
+	/**
+	 * @brief Start of readonly iteration
+	 * @param index start at index
+	 * @return readonly iterator
+	 */
 	const_iterator constBegin(NodeContainerIndexer index) { return CowLink::ConstIterator(this, index); }
+	/**
+	 * @brief End of readonly iteration
+	 * @param index end at index
+	 * @return readonly iterator
+	 */
 	const_iterator constEnd(NodeContainerIndexer index) { return CowLink::ConstIterator(this, index); }
 
+	/**
+	 *
+	 */
 	[[nodiscard]] NodeContainerIndexer size() const { return m_nodes.size(); }
 
 	/**

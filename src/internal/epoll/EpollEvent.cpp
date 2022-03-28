@@ -3,7 +3,6 @@
 //
 
 #include "internal/epoll/EpollEvent.h"
-
 #include <utility>
 #include "internal/epoll/EventHandler.h"
 #include "internal/epoll/Epoll.h"
@@ -53,7 +52,7 @@ void EpollEvent::active(std::initializer_list<EpollEv> events)
 	_poll->updateEvent(this);
 }
 
-void EpollEvent::deactive(std::initializer_list<EpollEv> events)
+void EpollEvent::deactivate(std::initializer_list<EpollEv> events)
 {
 	for (auto event : events)
 	{

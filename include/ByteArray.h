@@ -80,12 +80,23 @@ public:
 	 */
 	static constexpr LengthType BufferNodeSize = internal::buffer::BufferNode::BufferNodeSize;
 
+	/**
+	 * @brief Default ByteArray
+	 *
+	 * By default, alloc
+	 */
 	ByteArray();
+
 	/**
 	 * @brief Copy from other ByteArray is COW(copy on write)
 	 * @param other an other ByteArray
 	 */
 	ByteArray(const ByteArray &other);
+
+	/**
+	 * @brief Move construct a ByteArray from other
+	 * @param other an other ByteArray
+	 */
 	ByteArray(ByteArray &&other) noexcept;
 
 	/**

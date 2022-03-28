@@ -26,6 +26,10 @@ class ChannelBufferConversion;
 class Channel {
 	friend class internal::handlers::TcpConnection;
 public:
+	/**
+	 * @brief Create a channel
+	 * @param connection Connecting bind to this channel
+	 */
 	explicit Channel(std::weak_ptr<internal::handlers::TcpConnection> connection);
 
 	/**
@@ -51,6 +55,12 @@ public:
 	 */
 	[[nodiscard]] virtual bool channelActive() const final;
 
+	/**
+	 * @brief A Channel is for user, should not expose implementation of low level io,
+	 * ChannelBufferConversion is support class to do the transformation. Each Channel's
+	 * subclass should implement it's ChannelBufferConversion object.
+	 * @return The specified ChannelBufferConversion for Channel
+	 */
 	virtual std::unique_ptr<internal::buffer::ChannelBufferConversion> createBufferConvertor() = 0;
 
 private:

@@ -28,8 +28,8 @@ Address::Address(const std::string &ip, unsigned port)
 }
 #pragma GCC diagnostic pop
 
-Address::Address(std::shared_ptr<::sockaddr_in> addr)
-	: m_addr{std::move(addr)}
+Address::Address(std::shared_ptr<::sockaddr_in> address)
+	: m_addr{std::move(address)}
 {}
 
 std::string Address::ip() const
@@ -37,7 +37,7 @@ std::string Address::ip() const
 	char addr[INET_ADDRSTRLEN];
 	// inet_ntop(AF_INET6, &m_addr->sin_addr, addr, INET6_ADDRSTRLEN);
 	::inet_ntop(AF_INET, &m_addr->sin_addr, addr, INET_ADDRSTRLEN);
-	return string(::inet_ntoa(m_addr->sin_addr));
+	return {::inet_ntoa(m_addr->sin_addr)};
 }
 
 unsigned int Address::port() const
