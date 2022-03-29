@@ -11,6 +11,7 @@ netpp是基于事件通知的TCP网络库，通过reactor和epoll实现，仅支
 * 日志库 [spdlog](https://github.com/gabime/spdlog)
 * 测试框架 [gtest](https://github.com/google/googletest)
 * http解析 [llhttp](https://github.com/nodejs/llhttp)
+* 异步dns [c-ares](https://www.github.com/c-ares/c-ares)
 * uri解析(include/http/Uri.h src/http/Uri.cpp)基于 [cpprestsdk](https://github.com/microsoft/cpprestsdk)
 ## 如何编译
 ### 依赖

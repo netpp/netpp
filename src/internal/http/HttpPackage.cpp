@@ -18,8 +18,6 @@ using namespace netpp::http;
 #define D_C(parser) \
 	DecoderImpl *d = reinterpret_cast<DecoderImpl *>(parser);
 
-#define NETPP_UNUSED(x)	(void)(x)
-
 namespace netpp::internal::http {
 class DecoderImpl {
 public:
@@ -209,9 +207,8 @@ HttpRequest DecoderImpl::decodedRequest()
 	return request;
 }
 
-int DecoderImpl::onMessageBegin(llhttp_t *parser)
+int DecoderImpl::onMessageBegin([[maybe_unused]] llhttp_t *parser)
 {
-	NETPP_UNUSED(parser);
 	return 0;
 }
 
@@ -222,11 +219,8 @@ int DecoderImpl::onUrl(llhttp_t *parser, const char *at, size_t length)
 	return 0;
 }
 
-int DecoderImpl::onStatus(llhttp_t *parser, const char *at, size_t length)
+int DecoderImpl::onStatus([[maybe_unused]] llhttp_t *parser, [[maybe_unused]] const char *at, [[maybe_unused]] size_t length)
 {
-	NETPP_UNUSED(parser);
-	NETPP_UNUSED(at);
-	NETPP_UNUSED(length);
 	return 0;
 }
 
@@ -244,9 +238,8 @@ int DecoderImpl::onHeaderValue(llhttp_t *parser, const char *at, size_t length)
 	return 0;
 }
 
-int DecoderImpl::onHeadersComplete(llhttp_t *parser)
+int DecoderImpl::onHeadersComplete([[maybe_unused]] llhttp_t *parser)
 {
-	NETPP_UNUSED(parser);
 	// parse was done after header completed
 	return 2;
 }

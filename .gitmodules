@@ -7,3 +7,6 @@
 [submodule "thirdParty/llhttp"]
 	path = thirdParty/llhttp
 	url = https://github.com/nodejs/llhttp.git
+[submodule "thirdParty/c-ares"]
+	path = thirdParty/c-ares
+	url = https://www.github.com/c-ares/c-ares.git

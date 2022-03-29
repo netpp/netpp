@@ -23,6 +23,7 @@ set(netpp_source
         include/time/Timer.h
         include/channel/Channel.h include/channel/TcpChannel.h
         include/Address.h include/ByteArray.h include/EventLoop.h include/EventLoopDispatcher.h include/Events.h include/TcpClient.h include/TcpServer.h include/Config.h
+        include/uri/Uri.h include/uri/Types.h include/uri/UriException.h include/uri/UriCodec.h
         src/internal/epoll/Epoll.cpp src/internal/epoll/EpollEvent.cpp
         src/internal/handlers/Acceptor.cpp src/internal/handlers/Connector.cpp src/internal/handlers/TcpConnection.cpp src/internal/handlers/TimerHandler.cpp src/internal/handlers/SignalHandler.cpp src/internal/handlers/RunInLoopHandler.cpp
         src/internal/support/Log.cpp
@@ -36,7 +37,7 @@ set(netpp_source
         src/time/Timer.cpp
         src/channel/Channel.cpp src/channel/TcpChannel.cpp
         src/Address.cpp src/ByteArray.cpp src/channel/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp include/support/PooledTask.hpp
-        )
+        src/uri/Uri.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
@@ -57,13 +58,13 @@ if(NETPP_HTTP_SUPPORT)
     # not use llhttp's cmake, avoid link library
     set(netpp_http_source
             thirdParty/llhttp/include/llhttp.h thirdParty/llhttp/src/api.c thirdParty/llhttp/src/http.c thirdParty/llhttp/src/llhttp.c
-            include/http/HttpCode.h include/http/HttpRequest.h include/http/HttpClient.h include/http/HttpServer.h include/http/Uri.h include/http/Types.h
-            src/http/HttpRequest.cpp src/http/HttpClient.cpp src/http/HttpServer.cpp src/http/HttpCode.cpp src/http/Uri.cpp
+            include/http/HttpCode.h include/http/HttpRequest.h include/http/HttpClient.h include/http/HttpServer.h
+            src/http/HttpRequest.cpp src/http/HttpClient.cpp src/http/HttpServer.cpp src/http/HttpCode.cpp
             include/internal/http/Route.h include/internal/http/HttpPackage.h
             src/internal/http/Route.cpp src/internal/http/HttpPackage.cpp src/internal/http/channel/HttpChannelConversion.cpp include/internal/http/channel/HttpChannelConversion.h
-            include/internal/http/channel/HttpChannel.h src/internal/http/channel/HttpChannel.cpp)
+            include/internal/http/channel/HttpChannel.h src/internal/http/channel/HttpChannel.cpp src/internal/http/handler/ServerEvents.cpp include/internal/http/handler/ServerEvents.h src/internal/http/handler/ClientEvents.cpp include/internal/http/handler/ClientEvents.h)
     set(netpp_source ${netpp_source} ${netpp_http_source})
-    set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp uri/UriAccessor.cpp uri/UriCombining.cpp uri/UriConstructor.cpp uri/UriConversions.cpp uri/UriEncoding.cpp uri/UriOperator.cpp uri/UriResolve.cpp uri/UriSplitting.cpp uri/UriBuilder.cpp)
+    set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp)
     include_directories(${PROJECT_SOURCE_DIR}/thirdParty/llhttp/include)
 endif()
 

@@ -35,7 +35,7 @@ public:
 	inline void setOnTimeout(std::function<void()> callback) { m_callback = std::move(callback); }
 	/// @brief Set timer trigger interval, by default, interval is 1000ms
 	void setInterval(unsigned mSec);
-	
+
 	/**
 	 * @brief Set timer is single shot, by default, the value is true.
 	 * If the timer is running, the single shot property will effect immediately.

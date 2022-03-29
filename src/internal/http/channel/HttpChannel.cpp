@@ -6,6 +6,7 @@
 #include "ByteArray.h"
 #include "internal/http/channel/HttpChannelConversion.h"
 #include "internal/http/HttpPackage.h"
+#include "http/HttpRequest.h"
 
 namespace netpp::internal::http::channel {
 HttpChannel::HttpChannel(std::weak_ptr<internal::handlers::TcpConnection> connection)
@@ -36,12 +37,4 @@ std::unique_ptr<netpp::http::HttpResponse> HttpChannel::retrieveResponse()
 		return std::make_unique<netpp::http::HttpResponse>(response.value());
 	return nullptr;
 }
-
-void HttpChannel::addHttpRequest(std::unique_ptr<netpp::http::HttpBaseRequest> &&request)
-{
-	m_pendingSend.push(std::move(request));
-}
-
-void HttpChannel::moveToNextRequest()
-{}
 }

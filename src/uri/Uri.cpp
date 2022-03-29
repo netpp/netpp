@@ -4,8 +4,12 @@
 #include <map>
 #include <charconv>
 #include <functional>
-#include "http/Types.h"
-#include "http/Uri.h"
+#include "uri/Types.h"
+#include "uri/Uri.h"
+#include "uri/UriCodec.h"
+#include "uri/UriException.h"
+
+using namespace netpp::uri;
 
 /***
  * Copyright (C) Microsoft. All rights reserved.
@@ -333,10 +337,10 @@ struct inner_parse_out {
 };
 
 // Encodes all characters not in given set determined by given function.
-netpp::http::utf8string encode_impl(const netpp::http::utf8string &raw, const std::function<bool(int)> &should_encode)
+utf8string encode_impl(const utf8string &raw, const std::function<bool(int)> &should_encode)
 {
 	const char *const hex = "0123456789ABCDEF";
-	netpp::http::utf8string encoded;
+	utf8string encoded;
 	for (char iter: raw)
 	{
 		// for utf8 encoded string, char ASCII can be greater than 127.
@@ -358,10 +362,10 @@ netpp::http::utf8string encode_impl(const netpp::http::utf8string &raw, const st
 }
 
 // 5.2.3. Merge Paths https://tools.ietf.org/html/rfc3986#section-5.2.3
-netpp::http::utf8string mergePaths(const netpp::http::utf8string &base, const netpp::http::utf8string &relative)
+utf8string mergePaths(const utf8string &base, const utf8string &relative)
 {
 	const auto lastSlash = base.rfind('/');
-	if (lastSlash == netpp::http::utf8string::npos)
+	if (lastSlash == utf8string::npos)
 	{
 		return base + '/' + relative;
 	}
@@ -374,15 +378,15 @@ netpp::http::utf8string mergePaths(const netpp::http::utf8string &base, const ne
 }
 
 // 5.2.4. Remove Dot Segments https://tools.ietf.org/html/rfc3986#section-5.2.4
-void removeDotSegments(netpp::http::Uri &uri)
+void removeDotSegments(Uri &uri)
 {
-	static const netpp::http::utf8string dotSegment(".");
-	static const netpp::http::utf8string dotDotSegment("..");
+	static const utf8string dotSegment(".");
+	static const utf8string dotDotSegment("..");
 
-	if (uri.path().find('.') == netpp::http::utf8string::npos) return;
+	if (uri.path().find('.') == utf8string::npos) return;
 
 	const auto segments = uri.splitPath();
-	std::vector<std::reference_wrapper<const netpp::http::utf8string>> result;
+	std::vector<std::reference_wrapper<const utf8string>> result;
 	for (auto &segment: segments)
 	{
 		if (segment == dotSegment)
@@ -394,10 +398,10 @@ void removeDotSegments(netpp::http::Uri &uri)
 	}
 	if (result.empty())
 	{
-		uri.setPath(netpp::http::utf8string());
+		uri.setPath(utf8string());
 		return;
 	}
-	netpp::http::utf8string path = result.front().get();
+	utf8string path = result.front().get();
 	for (size_t i = 1; i != result.size(); ++i)
 	{
 		path += '/';
@@ -446,13 +450,13 @@ static int hex_char_digit_to_decimal_char(int hex)
 	}
 	else
 	{
-		throw netpp::http::UriException("Invalid hexadecimal digit");
+		throw UriException("Invalid hexadecimal digit");
 	}
 	return decimal;
 }
 }
 
-namespace netpp::http {
+namespace netpp::uri {
 Uri::Uri()
 		: Uri("/")
 {}

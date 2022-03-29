@@ -5,9 +5,8 @@
 #include <vector>
 #include <map>
 #include "Types.h"
-#include "error/Exception.h"
 
-namespace netpp::http {
+namespace netpp::uri {
 /**
  * @brief The Uniform Resource Identifier.
  * @section Uri components
@@ -151,59 +150,6 @@ private:
 	utf8string m_query;
 	utf8string m_fragment;
 	int m_port;
-};
-
-/**
- * @brief encode/decode uri components
- */
-class UriCodec {
-public:
-	/**
-	 * @brief The uri components
-	 * @see Uri
-	 */
-	enum class UriComponent {
-		/** uri user info part */
-		userInfo,
-		/** uri host part */
-		host,
-		/** uri path part */
-		path,
-		/** uri query part */
-		query,
-		/** uri fragment part */
-		fragment,
-		/** the whole uri */
-		fullUri
-	};
-
-	/**
-	 * @brief Encode with uri encoding
-	 * @param raw		The string to be encoded
-	 * @param component	What party the string is, by default UriComponent::fullUri
-	 * @return Encoded string
-	 */
-	static utf8string encode(const utf8string &raw, UriComponent component = UriComponent::fullUri);
-
-	/**
-	 * @brief Decode string with uri encoding
-	 * @param raw		The string to be encoded
-	 * @return Decoded string
-	 */
-	static utf8string decode(const utf8string &raw);
-};
-
-/**
- * @brief A single exception type to represent errors in parsing, encoding, and decoding URIs.
- *
- */
-class UriException : public error::Exception {
-public:
-	explicit UriException(std::string msg) : m_msg(std::move(msg)) {}
-	[[nodiscard]] const char* what() const noexcept override { return m_msg.c_str(); }
-
-private:
-	std::string m_msg;
 };
 }
 

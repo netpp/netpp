@@ -1,10 +1,10 @@
 //
-// Created by kojiko on 2022/3/16.
+// Created by gaojian on 2022/3/16.
 //
 #include <gtest/gtest.h>
-#include "http/Uri.h"
+#include "uri/Uri.h"
 
-using namespace netpp::http;
+using namespace netpp::uri;
 
 class UriAccessor : public testing::Test {
 public:

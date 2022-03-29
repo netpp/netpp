@@ -6,11 +6,13 @@
 #define NETPP_HTTPCHANNEL_H
 
 #include "channel/Channel.h"
-#include "http/HttpRequest.h"
-#include <queue>
 
 namespace netpp {
 class ByteArray;
+namespace http {
+class HttpRequest;
+class HttpResponse;
+}
 namespace internal::http {
 class HttpChannelConversion;
 class HttpParser;
@@ -42,23 +44,11 @@ public:
 	 */
 	std::unique_ptr<netpp::http::HttpResponse> retrieveResponse();
 
-	/**
-	 * @brief Add a request to send queue
-	 * @param request Request to send
-	 */
-	void addHttpRequest(std::unique_ptr<netpp::http::HttpBaseRequest> &&request);
-
-	/**
-	 * @brief When one request send finished, move to nex request in queue
-	 */
-	void moveToNextRequest();
-
 private:
 	std::unique_ptr<HttpParser> m_httpParser;
 
 	std::shared_ptr<ByteArray> m_receiveArray;
 
-	std::queue<std::unique_ptr<netpp::http::HttpBaseRequest>> m_pendingSend;
 	std::shared_ptr<ByteArray> m_sendHeaderArray;
 	std::shared_ptr<ByteArray> m_sendBodyArray;
 };
