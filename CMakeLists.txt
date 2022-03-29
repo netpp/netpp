@@ -21,6 +21,7 @@ set(netpp_source
         include/error/Exception.h include/error/SocketError.h
         include/support/ThreadPool.hpp
         include/time/Timer.h
+#        include/dns/DnsResolver.h include/internal/handlers/AsyncDnsHandler.h
         include/channel/Channel.h include/channel/TcpChannel.h
         include/Address.h include/ByteArray.h include/EventLoop.h include/EventLoopDispatcher.h include/Events.h include/TcpClient.h include/TcpServer.h include/Config.h
         include/uri/Uri.h include/uri/Types.h include/uri/UriException.h include/uri/UriCodec.h
@@ -35,6 +36,7 @@ set(netpp_source
         src/error/Exception.cpp src/error/SocketError.cpp
         src/support/ThreadPool.cpp
         src/time/Timer.cpp
+#        src/dns/DnsResolver.cpp src/internal/handlers/AsyncDnsHandler.cpp
         src/channel/Channel.cpp src/channel/TcpChannel.cpp
         src/Address.cpp src/ByteArray.cpp src/channel/Channel.cpp src/EventLoop.cpp src/EventLoopDispatcher.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp include/support/PooledTask.hpp
         src/uri/Uri.cpp)
