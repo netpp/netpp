@@ -7,29 +7,40 @@
 
 #include "internal/epoll/EventHandler.h"
 #include "ares.h"
+#include <functional>
 
-namespace netpp::dns {
-class DnsResolver;
+namespace netpp {
+class Address;
+namespace time {
+class Timer;
 }
 
-namespace netpp::internal::handlers {
-class AsyncDnsHandler : public epoll::EventHandler, public std::enable_shared_from_this<AsyncDnsHandler>  {
+namespace internal::handlers {
+class AsyncDnsHandler : public epoll::EventHandler, public std::enable_shared_from_this<AsyncDnsHandler> {
 public:
-	explicit AsyncDnsHandler(dns::DnsResolver *resolver);
+	using ResolvedCallback = std::function<void(Address)>;
+	explicit AsyncDnsHandler();
+
 	~AsyncDnsHandler() override;
+
+	void resolve(const std::string &host, const ResolvedCallback &cb);
 
 protected:
 	void handleIn() override;
 
 private:
-	static int aresSockCreate(int sock, int type, void* data);
+	static int aresSockCreate(int sock, int type, void *data);
 	static void aresSockStateChanged(void *arg, int fd, int readable, int writable);
+	static void aresHostResolvedCallback(void* data, int status, int timeouts, struct ::hostent *hostent);
+
+	void resolveTimeout();
 
 private:
-	dns::DnsResolver *_resolver;
+	std::unique_ptr<time::Timer> m_timeout;
 	::ares_channel m_areasChannel;
 	int m_aresSockFd;
 };
+}
 }
 
 #endif //NETPP_ASYNCDNSHANDLER_H

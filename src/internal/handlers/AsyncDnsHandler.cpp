@@ -4,10 +4,25 @@
 
 #include "internal/handlers/AsyncDnsHandler.h"
 #include "EventLoop.h"
+#include "time/Timer.h"
+#include <cstring>
+#include <netdb.h>
+#include "Address.h"
 
+namespace {
+unsigned toSecond(::timeval* tvp)
+{
+	return static_cast<unsigned>(tvp->tv_sec) + static_cast<unsigned>(static_cast<double>(tvp->tv_usec) / 1000000.0);
+}
+
+struct CAresResolveData {
+	netpp::internal::handlers::AsyncDnsHandler *handler;
+	netpp::internal::handlers::AsyncDnsHandler::ResolvedCallback cb;
+};
+}
 namespace netpp::internal::handlers {
-AsyncDnsHandler::AsyncDnsHandler(dns::DnsResolver *resolver)
-	: _resolver{resolver}, m_areasChannel{nullptr}
+AsyncDnsHandler::AsyncDnsHandler()
+	: m_timeout{nullptr}, m_areasChannel{nullptr}, m_aresSockFd{0}
 {
 	::ares_options options{};
 	int optionMask = ARES_OPT_FLAGS;
@@ -28,11 +43,23 @@ AsyncDnsHandler::AsyncDnsHandler(dns::DnsResolver *resolver)
 	if ((::ares_init_options(&m_areasChannel, &options, optionMask)) != ARES_SUCCESS) {
 	}
 	::ares_set_socket_callback(m_areasChannel, &AsyncDnsHandler::aresSockCreate, this);
+	m_timeout->setSingleShot(true);
+	m_timeout->setOnTimeout([this] { resolveTimeout(); });
 }
 
 AsyncDnsHandler::~AsyncDnsHandler()
 {
 	::ares_destroy(m_areasChannel);
+}
+
+void AsyncDnsHandler::resolve(const std::string &host, const ResolvedCallback &cb)
+{
+	auto *data = new CAresResolveData{this, cb};
+	::ares_gethostbyname(m_areasChannel, host.c_str(), AF_INET, &AsyncDnsHandler::aresHostResolvedCallback, data);
+	::timeval tv{};
+	::timeval* tvp = ::ares_timeout(m_areasChannel, nullptr, &tv);
+	unsigned timeoutSec = ::toSecond(tvp);
+	m_timeout->setInterval(timeoutSec);
 }
 
 void AsyncDnsHandler::handleIn()
@@ -51,5 +78,31 @@ int AsyncDnsHandler::aresSockCreate(int sock, [[maybe_unused]] int type, void* d
 
 void AsyncDnsHandler::aresSockStateChanged([[maybe_unused]] void *arg, [[maybe_unused]] int fd, [[maybe_unused]] int readable, [[maybe_unused]] int writable)
 {
+}
+
+void AsyncDnsHandler::aresHostResolvedCallback(void* data, int status, [[maybe_unused]] int timeouts, struct ::hostent* hostent)
+{
+	auto resolveData = static_cast<CAresResolveData *>(data);
+
+	auto address = std::make_shared<::sockaddr_in>();
+	std::memset(address.get(), 0, sizeof address);
+	address->sin_family = AF_INET;
+	address->sin_port = 0;
+	if (status)
+		address->sin_addr = *reinterpret_cast<in_addr*>(hostent->h_addr);
+	Address inet(address);
+	resolveData->cb(inet);
+}
+
+void AsyncDnsHandler::resolveTimeout()
+{
+	::ares_process_fd(m_areasChannel, ARES_SOCKET_BAD, ARES_SOCKET_BAD);
+	::timeval tv{};
+	::timeval* tvp = ::ares_timeout(m_areasChannel, nullptr, &tv);
+	if (tvp)
+	{
+		unsigned timeoutSec = ::toSecond(tvp);
+		m_timeout->setInterval(timeoutSec);
+	}
 }
 }
