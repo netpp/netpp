@@ -1,16 +1,16 @@
 #include "internal/handlers/RunInLoopHandler.h"
 #include "internal/stub/IO.h"
-#include "EventLoop.h"
+#include "eventloop/EventLoop.h"
 #include "internal/support/Log.h"
 extern "C" {
 #include <fcntl.h>
 }
 
 namespace netpp::internal::handlers {
-RunInLoopHandler::RunInLoopHandler(EventLoop *loop)
+RunInLoopHandler::RunInLoopHandler(eventloop::EventLoop *loop)
+	: epoll::EventHandler(loop)
 {
 	m_wakeUpFd = stub::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-	_loopThisHandlerLiveIn = loop;
 }
 
 RunInLoopHandler::~RunInLoopHandler()
@@ -38,7 +38,9 @@ void RunInLoopHandler::handleIn()
 		}
 	}
 	for (auto &f : functors)
+	{
 		f();
+	}
 }
 
 void RunInLoopHandler::addPendingFunction(std::function<void()> functor)
@@ -48,7 +50,7 @@ void RunInLoopHandler::addPendingFunction(std::function<void()> functor)
 	m_pendingFunctors.emplace_back(std::move(functor));
 }
 
-std::shared_ptr<RunInLoopHandler> RunInLoopHandler::makeRunInLoopHandler(EventLoop *loop)
+std::shared_ptr<RunInLoopHandler> RunInLoopHandler::makeRunInLoopHandler(eventloop::EventLoop *loop)
 {
 	auto handler = std::make_shared<RunInLoopHandler>(loop);
 	handler->m_epollEvent = std::make_unique<epoll::EpollEvent>(loop->getPoll(), handler, handler->m_wakeUpFd);

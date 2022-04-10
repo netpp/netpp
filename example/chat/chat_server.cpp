@@ -4,7 +4,7 @@
 
 #include "Events.h"
 #include "TcpServer.h"
-#include "EventLoopDispatcher.h"
+#include "Application.h"
 #include "channel/TcpChannel.h"
 #include <list>
 #include <iostream>
@@ -78,8 +78,11 @@ private:
 
 int main()
 {
-	netpp::EventLoopDispatcher dispatcher(2);
-	netpp::TcpServer chatServer(&dispatcher, netpp::Address(), netpp::Events(std::make_shared<ChatServer>()));
+	netpp::Config config;
+//	config.eventLoopNumber = 2;
+	config.eventHandler = netpp::Events(std::make_shared<ChatServer>());
+	netpp::Application app(config);
+	netpp::TcpServer chatServer(netpp::Address("0.0.0.0", 12346));
 	chatServer.listen();
-	dispatcher.startLoop();
+	app.exec();
 }

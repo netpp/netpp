@@ -241,8 +241,8 @@ public:
 	// TODO: support sendfile and mmap
 
 private:
-	std::shared_ptr<ByteArray> m_writeArray;
-	std::shared_ptr<ByteArray> m_readArray;
+	std::shared_ptr<ByteArray> m_sendBuffer;
+	std::shared_ptr<ByteArray> m_receiveArray;
 };
 }
 

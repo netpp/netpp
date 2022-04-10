@@ -2,54 +2,47 @@
 #define NETPP_SIGNAL_WATCHER_H
 
 namespace netpp {
-namespace internal::handlers {
-class SignalHandler;
-}
-class EventLoopDispatcher;
-class Events;
+class Application;
 }
 
 namespace netpp::signal {
 enum class Signals;
 /**
- * @brief The signal handle system, use signal fd
+ * @brief Take care of signals emits in event loop
+ * @note By default, thread signal masks inherit creating thread, and the SignalWatcher
+ * handles only signals on event loop. For threads create by you, the following result may
+ * happen:
+ * 1. No signal send to your threads, because all signals were blocked at initialization of netpp.
  * 
  */
 class SignalWatcher {
-	// make sure only SignalHandler can access signal fd
-	friend class internal::handlers::SignalHandler;
+	friend class netpp::Application;
 public:
-	SignalWatcher() = default;
+	/**
+	 * @brief start watch signal, take over default signal action
+	 * @note set start watch a signal will not effect immediately due to event loop's schedule
+	 */
+	static void watch(Signals signal);
+
+	/** @brief stop watch signal, handle it by default
+	 * @note set stop watch a signal will not effect immediately due to event loop's schedule
+	 */
+	static void restore(Signals signal);
 
 	/**
-	 * @brief enable signal handling
-	 * @note must call before any threads started, or signal may send to unexpected thread,
-	 * recommending use this at the beginning of main()
-	 * 
+	 * @brief is watching signal
+	 * @param signal netpp signal enumerator
 	 */
-	static void enableWatchSignal();
-
-	/**
-	 * @brief init signal event handler
-	 * 
-	 * @param dispatcher		event loop dispatcher
-	 * @param eventsPrototype	how to handle signal event
-	 */
-	static SignalWatcher with(EventLoopDispatcher *dispatcher, Events eventsPrototype);
-
-	/// @brief start watch signal, take over default signal action
-	static SignalWatcher watch(Signals signal);
-
-	/// @brief stop watch signal, handle it by default
-	static SignalWatcher restore(Signals signal);
-
-	/// @brief is watching signal
 	static bool isWatching(Signals signal);
+
+	/**
+	 * @brief is watching signal
+	 * @param signal linux signal number
+	 */
 	static bool isWatching(int signal);
 
-// for SignalHandler
 private:
-	static int signalFd;
+	static void enableWatchSignal();
 };
 }
 

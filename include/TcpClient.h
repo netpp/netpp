@@ -7,12 +7,12 @@
 
 #include "Address.h"
 #include "Events.h"
+#include "Config.h"
 
 namespace netpp {
 namespace internal::handlers {
 class Connector;
 }
-class EventLoopDispatcher;
 /**
  * @brief The top level tcp client, a client can connection to only one server
  */
@@ -20,11 +20,10 @@ class TcpClient {
 public:
 	/**
 	 * @brief Create a tcp client
-	 * @param dispatcher		event loop dispatcher
-	 * @param addr				address of server
+	 * @param address			address of server
 	 * @param eventsPrototype	user-defined events handler
 	 */
-	TcpClient(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype);
+	explicit TcpClient(Address address);
 	~TcpClient();
 
 	/**
@@ -37,10 +36,9 @@ public:
 	void disconnect();
 
 private:
-	Address m_addr;
+	Address m_address;
 	std::shared_ptr<internal::handlers::Connector> m_connector;
-
-	EventLoopDispatcher *_dispatcher;
+	ConnectionConfig m_config;
 	Events m_eventsPrototype;
 };
 }

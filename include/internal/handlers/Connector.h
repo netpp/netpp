@@ -5,9 +5,9 @@
 #include <atomic>
 #include "internal/epoll/EventHandler.h"
 #include "Events.h"
+#include "Config.h"
 
 namespace netpp {
-class EventLoopDispatcher;
 class Address;
 namespace internal::socket {
 class Socket;
@@ -29,7 +29,7 @@ class TcpConnection;
 class Connector : public epoll::EventHandler, public std::enable_shared_from_this<Connector> {
 public:
 	/// @brief Use makeConnector to create a Connector
-	Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);
+	Connector(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket);
 	~Connector() override;
 
 	/**
@@ -63,9 +63,8 @@ public:
 	 * @param eventsPrototype			User-define event handler
 	 * @return std::weak_ptr<Connector>	The Connector created
 	 */
-	static std::shared_ptr<Connector> makeConnector(EventLoopDispatcher *dispatcher,
-												 const Address &serverAddr,
-												 Events eventsPrototype);
+	static std::shared_ptr<Connector> makeConnector(eventloop::EventLoop *loop, const Address &serverAddr,
+												 Events eventsPrototype, ConnectionConfig config);
 
 protected:
 	/**
@@ -78,12 +77,6 @@ protected:
 
 private:
 	/**
-	 * @brief Init retry timer
-	 * 
-	 */
-	void setupTimer();
-
-	/**
 	 * @brief Try to reconnect later
 	 * 
 	 */
@@ -91,11 +84,11 @@ private:
 
 	std::weak_ptr<TcpConnection> _connection;
 
-	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;
 	std::unique_ptr<netpp::time::Timer> m_retryTimer;
 	Events m_events;
 
+	ConnectionConfig m_config;
 	/**
 	 * @brief the state of connector
 	 *           stop()   retry()

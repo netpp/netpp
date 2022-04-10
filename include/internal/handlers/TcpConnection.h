@@ -4,11 +4,18 @@
 #include <memory>
 #include "internal/epoll/EventHandler.h"
 #include "Events.h"
+#include "time/TimerType.h"
 #include <atomic>
+#include "Config.h"
 
 namespace netpp {
+namespace eventloop {
 class EventLoop;
+}
 class ByteArray;
+namespace time {
+class TickTimer;
+}
 namespace internal {
 namespace socket {
 enum class TcpState;
@@ -17,9 +24,6 @@ class Socket;
 namespace buffer {
 class ChannelBufferConversion;
 }
-}
-namespace internal::time {
-class TimeWheelEntry;
 }
 }
 
@@ -31,10 +35,9 @@ namespace netpp::internal::handlers {
  * 
  */
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
-	friend class HalfCloseConnectionWheelEntry;
 public:
 	/// @brief Use makeTcpConnection to create TcpConnection
-	explicit TcpConnection(std::unique_ptr<socket::Socket> &&socket);
+	TcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket);
 	~TcpConnection() override = default;
 
 	/**
@@ -67,8 +70,8 @@ public:
 	 */
 	int connectionId();
 
-	static std::weak_ptr<TcpConnection> makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-									  Events eventsPrototype);
+	static std::shared_ptr<TcpConnection> makeTcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
+															Events eventsPrototype, ConnectionConfig config);
 
 protected:
 	/**
@@ -132,10 +135,11 @@ private:
 	/// @brief User-defined event handler
 	Events m_events;
 
+	ConnectionConfig m_config;
 	/// @brief if connection is idle, closed by this time wheel
-	std::weak_ptr<internal::time::TimeWheelEntry> _idleConnectionWheel;
+	std::unique_ptr<time::TickTimer> m_idleConnectionWheel;
 	/// @brief if connection is half close, and no data transferred, closed by this time wheel
-	std::weak_ptr<internal::time::TimeWheelEntry> _halfCloseWheel;
+	std::unique_ptr<time::TickTimer> m_halfCloseWheel;
 };
 }
 

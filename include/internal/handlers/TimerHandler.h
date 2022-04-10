@@ -8,10 +8,7 @@
 #include <functional>
 #include <memory>
 #include "internal/epoll/EventHandler.h"
-
-namespace netpp::time {
-class Timer;
-}
+#include "time/TimerType.h"
 
 namespace netpp::internal::handlers {
 /**
@@ -19,16 +16,20 @@ namespace netpp::internal::handlers {
  * 
  */
 class TimerHandler : public epoll::EventHandler, public std::enable_shared_from_this<TimerHandler> {
-	friend class netpp::time::Timer;
 public:
-	explicit TimerHandler(netpp::time::Timer *timer);
-	~TimerHandler() override = default;
+	explicit TimerHandler(eventloop::EventLoop *loop);
+	~TimerHandler() override;
 
 	/**
 	 * @brief Remove timer handler from event loop
 	 * 
 	 */
 	void remove();
+
+	void stopTimer() const;
+	void setIntervalAndRun(time::TimerInterval intervalInMSec, bool repeat, std::function<void()> callback);
+
+	static std::shared_ptr<TimerHandler> makeTimerHandler(eventloop::EventLoop *loop);
 
 protected:
 	/**
@@ -39,7 +40,8 @@ protected:
 	void handleIn() override;
 
 private:
-	netpp::time::Timer *_timer;
+	int m_timerFd;
+	std::function<void()> m_timeoutCallback;
 };
 }
 

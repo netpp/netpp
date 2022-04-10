@@ -27,7 +27,7 @@ public:
 	void resolve(const uri::Uri &uri, const DnsResolvedCallback &callback);
 
 private:
-	static std::shared_ptr<internal::handlers::AsyncDnsHandler> m_asyncDnsHandler;
+	std::shared_ptr<internal::handlers::AsyncDnsHandler> m_asyncDnsHandler;
 };
 }
 }

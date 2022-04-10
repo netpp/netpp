@@ -7,7 +7,7 @@
 
 #include "EpollEvent.h"
 
-namespace netpp {
+namespace netpp::eventloop {
 class EventLoop;
 }
 
@@ -17,7 +17,9 @@ namespace netpp::internal::epoll {
 class EventHandler {
 	friend class EpollEvent;
 public:
-	EventHandler() : _loopThisHandlerLiveIn{nullptr} {}
+	explicit EventHandler(eventloop::EventLoop *loop)
+		: _loopThisHandlerLiveIn{loop}
+	{}
 	virtual ~EventHandler() = default;
 
 // for EpollEvent
@@ -30,7 +32,7 @@ protected:
 	virtual void handleHup() {}
 
 protected:
-	EventLoop *_loopThisHandlerLiveIn;
+	eventloop::EventLoop *_loopThisHandlerLiveIn;
 	std::unique_ptr<EpollEvent> m_epollEvent;
 };
 

@@ -2,11 +2,11 @@
 #include <gmock/gmock.h>
 #define private public
 #define protected public
-#include "MockSysCallEnvironment.h"
+#include "../MockSysCallEnvironment.h"
 #include "internal/handlers/Connector.h"
 #include "EventLoopDispatcher.h"
 #include "Address.h"
-#include "EventLoop.h"
+#include "internal/eventloop/EventLoop.h"
 #include "internal/handlers/RunInLoopHandler.h"
 #undef private
 #undef protected

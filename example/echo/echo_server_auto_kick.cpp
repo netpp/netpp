@@ -1,7 +1,7 @@
 #include "TcpServer.h"
 #include "Events.h"
 #include "channel/TcpChannel.h"
-#include "EventLoopDispatcher.h"
+#include "Application.h"
 #include <iostream>
 
 class Echo {
@@ -21,9 +21,13 @@ public:
 
 int main()
 {
-	netpp::EventLoopDispatcher dispatcher(1, 1000, 8);
-	netpp::Events events(std::make_shared<Echo>());
-	netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(events));
+	netpp::Config config;
+	config.connection.enableAutoClose = true;
+	config.connection.idleConnectionTimeout = 8;
+	config.connection.halfCloseConnectionTimeout = 8;
+	config.eventHandler = netpp::Events(std::make_shared<Echo>());
+	netpp::Application app(config);
+	netpp::TcpServer server(netpp::Address("0.0.0.0", 12347));
 	server.listen();
-	dispatcher.startLoop();
+	app.exec();
 }

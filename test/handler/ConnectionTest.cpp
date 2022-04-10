@@ -4,12 +4,12 @@
 #define private public
 #define protected public
 
-#include "EventLoop.h"
-#include "MockSysCallEnvironment.h"
+#include "internal/eventloop/EventLoop.h"
+#include "../MockSysCallEnvironment.h"
 #include "internal/handlers/TcpConnection.h"
 #include "internal/socket/Socket.h"
 #include "Address.h"
-#include "internal/time/TimeWheel.h"
+#include "time/TimeWheel.h"
 #include "internal/handlers/RunInLoopHandler.h"
 #include "internal/socket/SocketEnums.h"
 

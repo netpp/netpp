@@ -4,9 +4,9 @@
 
 #include "TcpClient.h"
 #include "Events.h"
-#include "EventLoopDispatcher.h"
 #include <iostream>
 #include "channel/TcpChannel.h"
+#include "Application.h"
 
 class Echo {
 public:
@@ -46,10 +46,11 @@ public:
 
 int main()
 {
-	netpp::EventLoopDispatcher dispatcher;
-	netpp::Events events(std::make_shared<Echo>());
-	netpp::TcpClient client(&dispatcher, netpp::Address("127.0.0.1", 12345), std::move(events));
+	netpp::Config config;
+	config.tickTimer.enable = false;
+	config.eventHandler = netpp::Events(std::make_shared<Echo>());
+	netpp::Application app(config);
+	netpp::TcpClient client(netpp::Address("127.0.0.1", 12347));
 	client.connect();
-	dispatcher.startLoop();
-	return 0;
+	app.exec();
 }

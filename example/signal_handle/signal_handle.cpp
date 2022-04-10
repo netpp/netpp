@@ -1,7 +1,7 @@
 #include "signal/SignalWatcher.h"
 #include "signal/Signals.h"
 #include "Events.h"
-#include "EventLoopDispatcher.h"
+#include "Application.h"
 #include <iostream>
 
 class SignalEvent {
@@ -14,12 +14,14 @@ public:
 
 int main()
 {
-	netpp::signal::SignalWatcher::enableWatchSignal();
+	netpp::Config config;
+	config.enableLog = true;
+	config.enableHandleSignal = true;
+	config.eventHandler = netpp::Events(std::make_shared<SignalEvent>());
+	netpp::Application app(config);
 
-	netpp::EventLoopDispatcher dispatcher;
-	netpp::Events event(std::make_shared<SignalEvent>());
-	netpp::signal::SignalWatcher::with(&dispatcher, std::move(event))
-								.watch(netpp::signal::Signals::E_QUIT)
-								.watch(netpp::signal::Signals::E_ALRM);
-	dispatcher.startLoop();
+	netpp::signal::SignalWatcher::watch(netpp::signal::Signals::E_QUIT);
+	netpp::signal::SignalWatcher::watch(netpp::signal::Signals::E_ALRM);
+
+	app.exec();
 }

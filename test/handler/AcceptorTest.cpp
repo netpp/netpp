@@ -4,11 +4,10 @@
 #define protected public
 #include "internal/handlers/Acceptor.h"
 #include "internal/handlers/RunInLoopHandler.h"
-#include "EventLoopDispatcher.h"
-#include "MockSysCallEnvironment.h"
+#include "../MockSysCallEnvironment.h"
 #include "error/Exception.h"
 #include "Address.h"
-#include "EventLoop.h"
+#include "eventloop/EventLoop.h"
 #undef private
 #undef protected
 
@@ -57,7 +56,7 @@ public:
 
 TEST_F(AcceptorTest, CreateTest)
 {
-	netpp::EventLoopDispatcher dispatcher;
+	netpp::eventloop::EventLoop loop;
 	std::shared_ptr<netpp::internal::handlers::Acceptor> acceptor;
 	EXPECT_CALL(mock, mock_socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP))
 		.Times(3)
@@ -66,21 +65,21 @@ TEST_F(AcceptorTest, CreateTest)
 		.WillOnce(testing::DoAll(testing::Assign(&errno, EMFILE), testing::Return(-1)));
 	EXPECT_NO_THROW({
 		acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig{}
 		);}
 	);
 	EXPECT_NE(acceptor.get(), nullptr);
 
 	EXPECT_NO_THROW({
 		acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig{}
 		);}
 	);
 	EXPECT_EQ(acceptor.get(), nullptr);
 
 	EXPECT_NO_THROW({
 		acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig{}
 		);}
 	);
 	EXPECT_EQ(acceptor.get(), nullptr);
@@ -90,17 +89,16 @@ TEST_F(AcceptorTest, CreateTest)
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 TEST_F(AcceptorTest, ListenTest)
 {
-	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
+	netpp::eventloop::EventLoop loop;
 
 	EXPECT_CALL(mock, mock_socket)
 		.Times(1);
 	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
 			);
 
 	acceptor->listen();
-	loop->m_runInLoop->handleIn();
+	loop.m_runInLoop->handleIn();
 }
 
 TEST_F(AcceptorTest, StopListenTest)

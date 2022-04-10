@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "EventLoop.h"
-#include "MockSysCallEnvironment.h"
+#include "eventloop/EventLoop.h"
+#include "../MockSysCallEnvironment.h"
 #include <gmock/gmock.h>
 #include "internal/epoll/Epoll.h"
 #include "internal/handlers/RunInLoopHandler.h"
@@ -53,7 +53,7 @@ TEST_F(RunInLoopTest, CreateRunInLoopTest)
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
-	netpp::EventLoop eventLoop;
+	netpp::eventloop::EventLoop eventLoop;
 	ASSERT_NE(MockSysCallEnvironment::ptrFromEpollCtl, nullptr);
 
 	// destruction
@@ -67,7 +67,7 @@ TEST_F(RunInLoopTest, RunFunctorInLoopTest)
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
 		.Times(1)
 		.WillOnce(testing::DoAll(testing::Return(0)));
-	netpp::EventLoop eventLoop;
+	netpp::eventloop::EventLoop eventLoop;
 	
 	EXPECT_CALL(mock, mock_eventfd_write).Times(1);
 	eventLoop.runInLoop([&]{

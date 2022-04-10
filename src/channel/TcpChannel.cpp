@@ -192,7 +192,7 @@ std::size_t ChannelReader::readableBytes() const
 
 TcpChannel::TcpChannel(std::weak_ptr<internal::handlers::TcpConnection> connection)
 		: Channel(std::move(connection)),
-		  m_writeArray{std::make_shared<ByteArray>()}, m_readArray{std::make_shared<ByteArray>()}
+		  m_sendBuffer{std::make_shared<ByteArray>()}, m_receiveArray{std::make_shared<ByteArray>()}
 {}
 
 std::unique_ptr<internal::buffer::ChannelBufferConversion> TcpChannel::createBufferConvertor()
@@ -202,11 +202,11 @@ std::unique_ptr<internal::buffer::ChannelBufferConversion> TcpChannel::createBuf
 
 ChannelWriter TcpChannel::writer()
 {
-	return ChannelWriter(m_writeArray);
+	return ChannelWriter(m_sendBuffer);
 }
 
 ChannelReader TcpChannel::reader()
 {
-	return ChannelReader(m_readArray);
+	return ChannelReader(m_receiveArray);
 }
 }

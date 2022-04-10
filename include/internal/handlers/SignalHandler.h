@@ -4,8 +4,12 @@
 #include "internal/epoll/EventHandler.h"
 #include "Events.h"
 
-namespace netpp {
+namespace netpp::eventloop {
 class EventLoop;
+}
+
+namespace netpp::signal {
+enum class Signals;
 }
 
 namespace netpp::internal::handlers {
@@ -16,15 +20,11 @@ namespace netpp::internal::handlers {
 class SignalHandler : public epoll::EventHandler, public std::enable_shared_from_this<SignalHandler> {
 public:
 	/// @brief Use makeSignalHandler to create SignalHandler
-	SignalHandler() = default;
-	~SignalHandler() override = default;
+	explicit SignalHandler(eventloop::EventLoop *loop);
+	~SignalHandler() override;
 
-	/**
-	 * @brief Stop handle signal fd event, however, watched signal emited will still
-	 * send to signal fd
-	 * 
-	 */
-	void stop();
+	void startWatchSignal(signal::Signals signal);
+	void stopWatchSignal(signal::Signals signal);
 
 	/**
 	 * @brief Create a signal handler, thread safe
@@ -34,7 +34,7 @@ public:
 	 * @param eventsPrototype					User-define signal handler
 	 * @return std::shared_ptr<SignalHandler>	SignalHandler created
 	 */
-	static std::shared_ptr<SignalHandler> makeSignalHandler(EventLoop *loop, Events eventsPrototype);
+	static std::shared_ptr<SignalHandler> makeSignalHandler(eventloop::EventLoop *loop, Events eventsPrototype);
 
 protected:
 	/**
@@ -46,7 +46,9 @@ protected:
 	void handleIn() override;
 
 private:
+	int m_signalFd;
 	Events m_events;
+	::sigset_t *m_watchingSignals;
 };
 }
 

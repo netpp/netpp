@@ -1,21 +1,22 @@
 #include "internal/handlers/Connector.h"
 #include "internal/support/Log.h"
 #include "internal/handlers/TcpConnection.h"
-#include "EventLoop.h"
-#include "EventLoopDispatcher.h"
+#include "eventloop/EventLoop.h"
+#include "eventloop/EventLoopManager.h"
 #include "error/Exception.h"
 #include "error/SocketError.h"
 #include "Address.h"
 #include "internal/socket/Socket.h"
 #include "time/Timer.h"
 #include "internal/socket/SocketEnums.h"
+#include "Application.h"
 
 using std::make_unique;
 using std::make_shared;
 
 namespace netpp::internal::handlers {
-Connector::Connector(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket)
-		: _dispatcher(dispatcher), m_socket{std::move(socket)}, m_state{socket::TcpState::Closed}, m_connectionEstablished{false}
+Connector::Connector(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket)
+		: epoll::EventHandler(loop), m_socket{std::move(socket)}, m_state{socket::TcpState::Closed}, m_connectionEstablished{false}
 {}
 
 Connector::~Connector() = default;
@@ -67,14 +68,23 @@ void Connector::handleOut()
 {
 	LOG_TRACE("Connector write available");
 	error::SocketError err = m_socket->getError();
-	// XXX: maybe can retry in other situations
+	// todo maybe can retry in other situations
 	if (err == error::SocketError::E_TIMEDOUT || err == error::SocketError::E_CONNREFUSED)
 	{
 		LOG_ERROR("Connector error {}", error::errorAsString(err));
 		if (!m_retryTimer)
 		{
 			m_retryTimer = make_unique<netpp::time::Timer>(_loopThisHandlerLiveIn);
-			setupTimer();
+			m_retryTimer->setOnTimeout([this]{
+				auto oldSocket = std::move(m_socket);
+				m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
+				m_epollEvent->disable();
+				m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), weak_from_this(), m_socket->fd());
+				connect();
+			});
+			m_retryTimer->setSingleShot(false);
+			m_retryTimer->setInterval(1000);
+			m_retryTimer->start();
 		}
 		reconnect();
 	}
@@ -92,9 +102,9 @@ void Connector::handleOut()
 		// clean up this first
 		m_epollEvent->disable();
 
-		auto connection = TcpConnection::makeTcpConnection(_dispatcher->dispatchEventLoop(),
+		auto connection = TcpConnection::makeTcpConnection(Application::loopManager()->dispatch(),
 																   std::move(m_socket),
-																   m_events).lock();
+																   m_events, m_config);
 		m_connectionEstablished.store(true, std::memory_order_relaxed);
 		_connection = connection;
 		LOG_TRACE("Connected to server");
@@ -113,18 +123,16 @@ void Connector::handleOut()
 	}
 }
 
-std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatcher,
-													const Address &serverAddr,
-													Events eventsPrototype)
+std::shared_ptr<Connector> Connector::makeConnector(eventloop::EventLoop *loop, const Address &serverAddr,
+													Events eventsPrototype, ConnectionConfig config)
 {
 	try
 	{
-		EventLoop *loop = dispatcher->dispatchEventLoop();
-		auto connector = make_shared<Connector>(dispatcher, make_unique<socket::Socket>(serverAddr));
+		auto connector = make_shared<Connector>(loop, make_unique<socket::Socket>(serverAddr));
 		connector->m_events = eventsPrototype;
 		connector->m_epollEvent = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
-		connector->_loopThisHandlerLiveIn = loop;
 		connector->m_state = socket::TcpState::Closed;
+		connector->m_config = config;
 
 		return connector;
 	}
@@ -139,24 +147,10 @@ std::shared_ptr<Connector> Connector::makeConnector(EventLoopDispatcher *dispatc
 	return {};
 }
 
-void Connector::setupTimer()
-{
-	m_retryTimer->setOnTimeout([this]{
-		auto oldSocket = std::move(m_socket);
-		m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
-		m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), weak_from_this(), m_socket->fd());
-		m_epollEvent->active(epoll::EpollEv::OUT);
-		connect();
-	});
-	m_retryTimer->setSingleShot(false);
-	m_retryTimer->setInterval(100);
-	m_retryTimer->start();
-}
-
 void Connector::reconnect()
 {
 	m_epollEvent->disable();
-	unsigned currentInterval = m_retryTimer->interval();
+	time::TimerInterval currentInterval = m_retryTimer->interval();
 	if (currentInterval < 4000)
 		m_retryTimer->setInterval(currentInterval * 2);
 	LOG_INFO("Connector error on fd {}, retry in {} mseconds", m_socket->fd(), currentInterval);

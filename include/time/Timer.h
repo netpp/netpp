@@ -7,68 +7,75 @@
 
 #include <memory>
 #include <functional>
+#include "TimerType.h"
 
 namespace netpp {
+namespace eventloop {
 class EventLoop;
+}
 namespace internal::handlers {
 class TimerHandler;
 }
 }
 
 namespace netpp::time {
-class TimerImpl;
 /**
- * @brief Timer runs in EventLoop, but the ownership does not belong to EventLoop,
- * if user does not own it, the timer will never triggered.
+ * @brief Timer runs in EventLoop, but the ownership belongs to user,
+ * the timer never be triggered if user delete the timer.
  * 
  * Timer is not thread, consider protect it if used in multithreading
  * 
  */
 class Timer {
-	friend class internal::handlers::TimerHandler;
 public:
-	// TODO: remove param loop or set default value, user do not have to specify which event loop
-	explicit Timer(EventLoop *loop);
+	/**
+	 * @brief Create a timer
+	 * @param loop The timer runs in event loop, this param specify which loop this timer lives.
+	 * By default nullptr passed, timer will try to find event loop in creating thread,
+	 * if no event loop runs in current thread, then main loop is it.
+	 */
+	explicit Timer(eventloop::EventLoop *loop = nullptr);
 	~Timer();
 
-	/// @brief Callback on timeout, the callback must NOT throw exception
-	inline void setOnTimeout(std::function<void()> callback) { m_callback = std::move(callback); }
-	/// @brief Set timer trigger interval, by default, interval is 1000ms
-	void setInterval(unsigned mSec);
+	/**
+	 * @brief Callback on timeout, the callback must NOT throw exception
+	 * @param callback The callback on timeout
+	 */
+	void setOnTimeout(std::function<void()> callback) { m_callback = std::move(callback); }
 
 	/**
-	 * @brief Set timer is single shot, by default, the value is true.
+	 * @brief Set timer trigger interval, by default, interval is 1000ms
+	 * @param mSec The interval of timer, in milliseconds
+	 */
+	void setInterval(TimerInterval mSec);
+
+	/**
+	 * @brief Set timer is single shot, by default Timer is signle shot.
 	 * If the timer is running, the single shot property will effect immediately.
-	 * 
+	 * @param singleShot The timer should runs repeatedly
 	 */
 	void setSingleShot(bool singleShot);
 
 	/// @brief Get timer interval
-	[[nodiscard]] inline unsigned interval() const { return m_interval; }
+	[[nodiscard]] TimerInterval interval() const { return m_interval; }
 	/// @brief Get is single shot
-	[[nodiscard]] inline bool singleShot() const { return m_singleShot; }
+	[[nodiscard]] bool singleShot() const { return m_singleShot; }
 	/// @brief Get is timer running
-	[[nodiscard]] inline bool running() const { return m_running; }
+	[[nodiscard]] bool running() const { return m_running; }
 
 	/// @brief Run timer
 	void start();
 	/// @brief Stop timer
 	void stop();
 
-// for TimerHandler
 private:
-	/// @brief Called on timeout, for internal use
-	void onTimeOut();
-	/// @brief Get timer fd
-	[[nodiscard]] int fd() const;
+	void setAndRunTimer();
 
-private:
-	unsigned m_interval;
+	TimerInterval m_interval;
 	bool m_singleShot;
 	bool m_running;	
 	std::function<void()> m_callback;
 
-	std::unique_ptr<time::TimerImpl> m_impl;
 	// event and handler
 	std::shared_ptr<internal::handlers::TimerHandler> m_handler;
 };

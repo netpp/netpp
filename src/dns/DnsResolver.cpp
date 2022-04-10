@@ -7,7 +7,6 @@
 #include "internal/handlers/AsyncDnsHandler.h"
 
 namespace netpp::dns {
-
 DnsResolver::DnsResolver()
 {}
 

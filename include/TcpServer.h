@@ -7,12 +7,12 @@
 
 #include "Events.h"
 #include "Address.h"
+#include "Config.h"
 
 namespace netpp {
 namespace internal::handlers {
 class Acceptor;
 }
-class EventLoopDispatcher;
 /**
  * @brief The top level tcp server
  */
@@ -20,12 +20,10 @@ class TcpServer {
 public:
 	/**
 	 * @brief Create a tcp server
-	 * @param dispatcher		event loop dispatcher
-	 * @param addr				address of server
+	 * @param address			address of server
 	 * @param eventsPrototype	user-defined events handler
 	 */
-	TcpServer(EventLoopDispatcher *dispatcher, Address addr, 
-		Events eventsPrototype);
+	explicit TcpServer(Address address);
 	~TcpServer();
 
 	/**
@@ -38,10 +36,10 @@ public:
 	void stopListen();
 
 private:
-	Address m_addr;
+	Address m_address;
 	std::weak_ptr<internal::handlers::Acceptor> _acceptor;
-	
-	EventLoopDispatcher *_dispatcher;
+	ConnectionConfig m_config;
+
 	Events m_eventPrototype;
 };
 }

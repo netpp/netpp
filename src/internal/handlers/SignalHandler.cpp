@@ -1,5 +1,5 @@
 #include "internal/handlers/SignalHandler.h"
-#include "EventLoop.h"
+#include "eventloop/EventLoop.h"
 #include "internal/epoll/EpollEvent.h"
 #include "signal/Signals.h"
 #include "internal/stub/IO.h"
@@ -7,18 +7,42 @@
 #include "internal/support/Log.h"
 extern "C" {
 #include <sys/signalfd.h>
+#include <csignal>
 }
 
 namespace netpp::internal::handlers {
+SignalHandler::SignalHandler(eventloop::EventLoop *loop)
+	: epoll::EventHandler(loop), m_watchingSignals{new ::sigset_t}
+{
+	::sigemptyset(m_watchingSignals);
+	m_signalFd = ::signalfd(-1, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
+}
+
+SignalHandler::~SignalHandler()
+{
+	delete m_watchingSignals;
+}
+
+void SignalHandler::startWatchSignal(signal::Signals signal)
+{
+	::sigaddset(m_watchingSignals, toLinuxSignal(signal));
+	::signalfd(m_signalFd, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
+	::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
+}
+
+void SignalHandler::stopWatchSignal(signal::Signals signal)
+{
+	::sigdelset(m_watchingSignals, toLinuxSignal(signal));
+	::signalfd(m_signalFd, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
+	::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
+}
+
 void SignalHandler::handleIn()
 {
 	static constexpr int maxSignalRead = 20;
+	static constexpr int readSize = sizeof(::signalfd_siginfo) * maxSignalRead;
 	::signalfd_siginfo signals[maxSignalRead];
-	::ssize_t readBytes = stub::read(
-		signal::SignalWatcher::signalFd,
-		signals,
-		sizeof(::signalfd_siginfo) * maxSignalRead
-	);
+	::ssize_t readBytes = stub::read(m_signalFd, signals, readSize);
 	if (readBytes != -1)
 	{
 		auto bytes = static_cast<unsigned>(readBytes);
@@ -40,30 +64,18 @@ void SignalHandler::handleIn()
 	}
 }
 
-void SignalHandler::stop()
+std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(eventloop::EventLoop *loop, Events eventsPrototype)
 {
-	auto externLife = shared_from_this();
-	_loopThisHandlerLiveIn->runInLoop([externLife](){
-		externLife->m_epollEvent->disable();
-		externLife->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(externLife);
-	});
-}
-
-std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(EventLoop *loop, Events eventsPrototype)
-{
-	auto signalHandler = std::make_shared<SignalHandler>();
+	auto signalHandler = std::make_shared<SignalHandler>(loop);
 	signalHandler->m_events = std::move(eventsPrototype);
-	signalHandler->m_epollEvent = std::make_unique<epoll::EpollEvent>(
-		loop->getPoll(), signalHandler,
-		signal::SignalWatcher::signalFd
-	);
-	signalHandler->_loopThisHandlerLiveIn = loop;
 
-	loop->runInLoop([signalHandler]{
-		signalHandler->_loopThisHandlerLiveIn->addEventHandlerToLoop(signalHandler);
-		signalHandler->m_epollEvent->active(epoll::EpollEv::IN);
-		LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
-	});
+	signalHandler->m_epollEvent = std::make_unique<epoll::EpollEvent>(
+			loop->getPoll(), signalHandler,
+			signalHandler->m_signalFd
+	);
+	loop->addEventHandlerToLoop(signalHandler);
+	signalHandler->m_epollEvent->active(epoll::EpollEv::IN);
+	LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
 	return signalHandler;
 }
 }

@@ -1,76 +1,23 @@
 #include "internal/handlers/TcpConnection.h"
 #include "internal/support/Log.h"
-#include "EventLoop.h"
+#include "eventloop/EventLoop.h"
 #include "channel/Channel.h"
 #include "internal/socket/SocketIO.h"
 #include "internal/socket/SocketEnums.h"
 #include "error/Exception.h"
 #include "error/SocketError.h"
-#include "internal/time/TimeWheel.h"
 #include "internal/socket/Socket.h"
 #include "channel/TcpChannel.h"
 #include "internal/buffer/ChannelBufferConversion.h"
+#include "time/TickTimer.h"
+#include "eventloop/EventLoopManager.h"
 
 using std::make_unique;
 using std::make_shared;
 
 namespace netpp::internal::handlers {
-/**
- * @brief Time wheel for connection who have not transfer any data in few time,
- * try to close it on timeout
- *
- */
-class IdleConnectionWheelEntry : public internal::time::TimeWheelEntry {
-public:
-	explicit IdleConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-			: internal::time::TimeWheelEntry("idle"), _connection{std::move(connection)}
-	{}
-
-	~IdleConnectionWheelEntry() override = default;
-
-	void onTimeout() override
-	{
-		auto conn = _connection.lock();
-		if (conn)
-		{
-			LOG_INFO("idle connection timeout, close write");
-			conn->closeAfterWriteCompleted();
-		}
-	}
-
-private:
-	std::weak_ptr<TcpConnection> _connection;
-};
-
-/**
- * @brief Time wheel for connection who's half closed(during Four-Way-Wavehand),
- * have not transfer any data in few time, force close it on timeout
- *
- */
-class HalfCloseConnectionWheelEntry : public internal::time::TimeWheelEntry {
-public:
-	explicit HalfCloseConnectionWheelEntry(std::weak_ptr<TcpConnection> connection)
-			: internal::time::TimeWheelEntry("half close"), _connection{std::move(connection)}
-	{}
-
-	~HalfCloseConnectionWheelEntry() override = default;
-
-	void onTimeout() override
-	{
-		auto conn = _connection.lock();
-		if (conn)
-		{
-			LOG_INFO("half closed connection timeout, force close");
-			conn->forceClose();
-		}
-	}
-
-private:
-	std::weak_ptr<TcpConnection> _connection;
-};
-
-TcpConnection::TcpConnection(std::unique_ptr<socket::Socket> &&socket)
-		: m_state{socket::TcpState::Established},
+TcpConnection::TcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket)
+		: epoll::EventHandler(loop), m_state{socket::TcpState::Established},
 		  m_isWaitWriting{false}, m_socket{std::move(socket)}
 {}
 
@@ -179,15 +126,27 @@ void TcpConnection::closeAfterWriteCompleted()
 					std::memory_order_acq_rel) && !connection->m_isWaitWriting)
 			{
 				connection->m_socket->shutdownWrite();
+
 				// disable RDHUP, shutdown write will wake up epoll_wait with EPOLLRDHUP and EPOLLIN
 				connection->m_epollEvent->deactivate(epoll::EpollEv::RDHUP);
-				// force close connection in wheel
-				auto wheel = connection->_loopThisHandlerLiveIn->getTimeWheel();
-				if (wheel)
+
+				if (connection->m_config.enableAutoClose)
 				{
-					auto halfCloseWheel = std::make_shared<HalfCloseConnectionWheelEntry>(connection);
-					connection->_halfCloseWheel = halfCloseWheel;
-					wheel->addToWheel(halfCloseWheel);
+					// force close connection in wheel
+					connection->m_halfCloseWheel = std::make_unique<time::TickTimer>();
+					connection->m_halfCloseWheel->setSingleShot(true);
+					connection->m_halfCloseWheel->setInterval(connection->m_config.halfCloseConnectionTimeout);
+					auto weakConnection = connection->weak_from_this();
+					connection->m_halfCloseWheel->setOnTimeout([weakConnection] {
+																   auto conn = weakConnection.lock();
+																   if (conn)
+																   {
+																	   LOG_INFO("half closed connection timeout, force close");
+																	   conn->forceClose();
+																   }
+															   }
+					);
+					connection->m_halfCloseWheel->start();
 				}
 			}
 		}
@@ -201,31 +160,24 @@ std::shared_ptr<Channel> TcpConnection::getIOChannel()
 
 void TcpConnection::renewWheel()
 {
-	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
-	if (wheel)
-	{
-		if (!_idleConnectionWheel.expired())
-			wheel->renew(_idleConnectionWheel.lock());
-		if (!_halfCloseWheel.expired())
-			wheel->renew(_idleConnectionWheel.lock());
-	}
+	if (m_idleConnectionWheel)
+		m_idleConnectionWheel->restart();
+	if (m_halfCloseWheel)
+		m_halfCloseWheel->restart();
 }
 
 void TcpConnection::forceClose()
 {
 	LOG_TRACE("Force close socket {}", m_socket->fd());
-	// no need to remove wheels, they will self destructed after timeout
-	auto wheel = _loopThisHandlerLiveIn->getTimeWheel();
-	if (wheel)
-	{
-		wheel->removeFromWheel(_idleConnectionWheel);
-		wheel->removeFromWheel(_halfCloseWheel);
-	}
+	if (m_idleConnectionWheel)
+		m_idleConnectionWheel->stop();
+	if (m_halfCloseWheel)
+		m_halfCloseWheel->stop();
 	m_events.onDisconnect(m_connectionBufferChannel);
 	m_epollEvent->disable();
 	// extern TcpConnection life after remove
 	volatile auto externLife = shared_from_this();
-	_loopThisHandlerLiveIn->removeEventHandlerFromLoop(shared_from_this());
+	eventloop::EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
 	m_state.store(socket::TcpState::Closed, std::memory_order_release);
 }
 
@@ -234,28 +186,41 @@ int TcpConnection::connectionId()
 	return m_socket->fd();
 }
 
-std::weak_ptr<TcpConnection> TcpConnection::makeTcpConnection(EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
-															  Events eventsPrototype)
+std::shared_ptr<TcpConnection> TcpConnection::makeTcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
+															  Events eventsPrototype, ConnectionConfig config)
 {
-	auto connection = std::make_shared<TcpConnection>(std::move(socket));
+	auto connection = std::make_shared<TcpConnection>(loop, std::move(socket));
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
 	connection->m_connectionBufferChannel = std::make_shared<TcpChannel>(connection);
 	connection->m_bufferConvertor = connection->m_connectionBufferChannel->createBufferConvertor();
 	connection->m_events = std::move(eventsPrototype);
-	connection->_loopThisHandlerLiveIn = loop;
+
 	// set up events
 	loop->addEventHandlerToLoop(connection);
 	eventPtr->active({epoll::EpollEv::IN, epoll::EpollEv::RDHUP});
-	// set up kick idle connection here
-	auto wheel = loop->getTimeWheel();
-	if (wheel)
+
+	connection->m_config = config;
+	if (connection->m_config.enableAutoClose)
 	{
-		auto idleWheel = std::make_shared<IdleConnectionWheelEntry>(connection);
-		connection->_idleConnectionWheel = idleWheel;
-		wheel->addToWheel(idleWheel);
+		// set up kick idle connection here
+		connection->m_idleConnectionWheel = std::make_unique<time::TickTimer>();
+		connection->m_idleConnectionWheel->setSingleShot(true);
+		connection->m_idleConnectionWheel->setInterval(connection->m_config.idleConnectionTimeout);
+		auto weakConnection = connection->weak_from_this();
+		connection->m_idleConnectionWheel->setOnTimeout([weakConnection] {
+															auto conn = weakConnection.lock();
+															if (conn)
+															{
+																LOG_INFO("idle connection timeout, close write");
+																conn->closeAfterWriteCompleted();
+															}
+														}
+		);
+		connection->m_idleConnectionWheel->start();
 	}
+
 	return connection;
 }
 }

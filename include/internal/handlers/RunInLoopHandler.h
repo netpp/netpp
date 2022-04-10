@@ -8,7 +8,7 @@
 #include <functional>
 #include <vector>
 
-namespace netpp {
+namespace netpp::eventloop {
 class EventLoop;
 }
 
@@ -26,7 +26,7 @@ public:
 	 * @throw ResourceLimitException when file descriptor reached the limitation
 	 * 
 	 */
-	explicit RunInLoopHandler(EventLoop *loop);
+	explicit RunInLoopHandler(eventloop::EventLoop *loop);
 	~RunInLoopHandler() override;
 
 	/**
@@ -36,7 +36,7 @@ public:
 	 */
 	void addPendingFunction(std::function<void()> functor);
 
-	static std::shared_ptr<RunInLoopHandler> makeRunInLoopHandler(EventLoop *loop);
+	static std::shared_ptr<RunInLoopHandler> makeRunInLoopHandler(eventloop::EventLoop *loop);
 
 protected:
 	void handleIn() override;

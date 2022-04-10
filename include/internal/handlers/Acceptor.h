@@ -3,9 +3,9 @@
 
 #include "internal/epoll/EventHandler.h"
 #include "Events.h"
+#include "Config.h"
 
 namespace netpp {
-class EventLoopDispatcher;
 class Address;
 namespace internal::socket {
 class Socket;
@@ -21,7 +21,7 @@ namespace netpp::internal::handlers {
 class Acceptor : public epoll::EventHandler, public std::enable_shared_from_this<Acceptor> {
 public:
 	/// @brief Use makeAcceptor to create an Acceptor
-	Acceptor(EventLoopDispatcher *dispatcher, std::unique_ptr<socket::Socket> &&socket);
+	Acceptor(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket);
 	~Acceptor() override;
 
 	/**
@@ -45,9 +45,8 @@ public:
 	 * @param eventsPrototype			User-define event handler
 	 * @return std::weak_ptr<Acceptor>	The acceptor just created
 	 */
-	static std::shared_ptr<Acceptor> makeAcceptor(EventLoopDispatcher *dispatcher,
-												  const Address &listenAddr,
-												  Events eventsPrototype);
+	static std::shared_ptr<Acceptor> makeAcceptor(eventloop::EventLoop *loop, const Address &listenAddr,
+												  Events eventsPrototype, ConnectionConfig config);
 
 protected:
 	/**
@@ -58,9 +57,10 @@ protected:
 	void handleIn() override;
 
 private:
-	EventLoopDispatcher *_dispatcher;
 	std::unique_ptr<socket::Socket> m_socket;
 	Events m_events;	// user-defined event handler
+
+	ConnectionConfig m_config;
 
 	/**
 	 * @brief The state of acceptor

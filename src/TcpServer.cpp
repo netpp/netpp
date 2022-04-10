@@ -3,14 +3,18 @@
 //
 
 #include "TcpServer.h"
-#include "EventLoop.h"
+#include "eventloop/EventLoop.h"
 #include "internal/handlers/Acceptor.h"
-#include "EventLoopDispatcher.h"
+#include "Application.h"
 
 namespace netpp {
-TcpServer::TcpServer(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype)
-	: m_addr{std::move(addr)}, _dispatcher(dispatcher), m_eventPrototype{std::move(eventsPrototype)}
-{}
+TcpServer::TcpServer(Address address)
+	: m_address{std::move(address)}
+{
+	Config config = Application::appConfig();
+	m_config = config.connection;
+	m_eventPrototype = config.eventHandler;
+}
 
 TcpServer::~TcpServer()
 {
@@ -20,7 +24,7 @@ TcpServer::~TcpServer()
 
 void TcpServer::listen()
 {
-	auto acceptor = internal::handlers::Acceptor::makeAcceptor(_dispatcher, m_addr, m_eventPrototype);
+	auto acceptor = internal::handlers::Acceptor::makeAcceptor(Application::loopManager()->dispatch(), m_address, m_eventPrototype, m_config);
 	_acceptor = acceptor;
 	if (acceptor)
 		acceptor->listen();

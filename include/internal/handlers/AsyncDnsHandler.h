@@ -19,7 +19,7 @@ namespace internal::handlers {
 class AsyncDnsHandler : public epoll::EventHandler, public std::enable_shared_from_this<AsyncDnsHandler> {
 public:
 	using ResolvedCallback = std::function<void(Address)>;
-	explicit AsyncDnsHandler();
+	explicit AsyncDnsHandler(eventloop::EventLoop *loop);
 
 	~AsyncDnsHandler() override;
 

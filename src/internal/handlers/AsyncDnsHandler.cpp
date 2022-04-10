@@ -3,7 +3,7 @@
 //
 
 #include "internal/handlers/AsyncDnsHandler.h"
-#include "EventLoop.h"
+#include "eventloop/EventLoop.h"
 #include "time/Timer.h"
 #include <cstring>
 #include <netdb.h>
@@ -21,8 +21,8 @@ struct CAresResolveData {
 };
 }
 namespace netpp::internal::handlers {
-AsyncDnsHandler::AsyncDnsHandler()
-	: m_timeout{nullptr}, m_areasChannel{nullptr}, m_aresSockFd{0}
+AsyncDnsHandler::AsyncDnsHandler(eventloop::EventLoop *loop)
+	: epoll::EventHandler(loop), m_timeout{nullptr}, m_areasChannel{nullptr}, m_aresSockFd{0}
 {
 	::ares_options options{};
 	int optionMask = ARES_OPT_FLAGS;

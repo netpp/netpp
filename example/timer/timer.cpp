@@ -1,21 +1,22 @@
 #include "time/Timer.h"
-#include "EventLoop.h"
 #include <iostream>
+#include "Application.h"
 
 int main()
 {
-	netpp::EventLoop loop;
-	std::shared_ptr<netpp::time::Timer> timer;
-	loop.runInLoop([&]{
-		timer = std::make_shared<netpp::time::Timer>(&loop);
-		timer->setInterval(1000);
-		timer->setSingleShot(false);
-		timer->setOnTimeout([]{
-			static int timerTriggerCount = 0;
-			std::cout << "Timer triggered count " << timerTriggerCount << std::endl;
-			++timerTriggerCount;
-		});
-		timer->start();
+	netpp::Config config;
+//	config.tickTimer.enable = false;
+	netpp::Application app(config);
+	netpp::time::Timer timer;
+	timer.setInterval(1000);
+	timer.setSingleShot(false);
+	timer.setOnTimeout([&timer]{
+		static int timerTriggerCount = 0;
+		std::cout << "Timer triggered count " << timerTriggerCount << std::endl;
+		++timerTriggerCount;
+		if (timerTriggerCount > 5)
+			timer.stop();
 	});
-	loop.run();
+	timer.start();
+	app.exec();
 }

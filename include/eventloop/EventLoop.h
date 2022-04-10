@@ -7,21 +7,15 @@
 
 #include <functional>
 #include <memory>
+#include <unordered_set>
+#include <mutex>
 
 namespace netpp {
-namespace internal {
-namespace epoll {
+namespace internal::epoll {
 class EventHandler;
 class Epoll;
 }
-namespace time {
-class TimeWheel;
-}
-namespace handlers {
-class RunInLoopHandler;
-}
-}
-class EventLoopImpl;
+namespace eventloop {
 /**
  * @brief The event loop wait/dispatch/handle events.
  *
@@ -33,6 +27,7 @@ public:
 	 * @brief Handler type
 	 */
 	using Handler = std::shared_ptr<internal::epoll::EventHandler>;
+
 	/**
 	 * @brief Default EventLoop, will not create time wheel
 	 * @throw ResourceLimitException
@@ -41,13 +36,6 @@ public:
 	 */
 	EventLoop();
 
-	/**
-	 * @brief Construct an EventLoop with time wheel
-	 * 
-	 * @param tickInterval	Wheel rotate interval, by milliseconds
-	 * @param bucketCount	Contains n buckets
-	 */
-	EventLoop(unsigned tickInterval, unsigned bucketCount);
 	~EventLoop();
 
 	/**
@@ -64,7 +52,7 @@ public:
 	 * 
 	 * @param handler The adding event handler
 	 */
-	void addEventHandlerToLoop(const Handler& handler);
+	void addEventHandlerToLoop(const Handler &handler);
 
 	/**
 	 * @brief Remove event handler from event loop.
@@ -73,26 +61,26 @@ public:
 	 * 
 	 * @param handler The removing event handler
 	 */
-	void removeEventHandlerFromLoop(const Handler& handler);
+	void removeEventHandlerFromLoop(const Handler &handler);
 
 	/// @brief Get poller object in this loop
 	internal::epoll::Epoll *getPoll();
 
 	/**
-	 * @brief Get time wheel in this loop
-	 * @note It could be nullptr if not time wheel was created
-	 * 
+	 * @brief Get the event loop running on current thread
+	 * @return The event loop running, if no event loop runs in this thread, nullptr returned
 	 */
-	[[nodiscard]] internal::time::TimeWheel *getTimeWheel() const { return m_kickIdleConnectionWheel.get(); }
-
-	/// @brief Runs method in event loop
-	void runInLoop(std::function<void()> functor);
+	static EventLoop *thisLoop();
+	void runInLoop(std::function<void()> task);
 
 private:
-	std::unique_ptr<EventLoopImpl> m_impl;
-	std::shared_ptr<internal::handlers::RunInLoopHandler> m_runInLoop;
-	std::unique_ptr<internal::time::TimeWheel> m_kickIdleConnectionWheel;
+	std::atomic_flag m_loopRunning;
+	std::unique_ptr<internal::epoll::Epoll> m_poll;
+
+	std::mutex m_handlersMutex;    // guard m_handlers
+	std::unordered_set<EventLoop::Handler> m_handlers;    // epoll events handlers
 };
+}
 }
 
 #endif //NETPP_EVENTLOOP_H

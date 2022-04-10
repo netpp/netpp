@@ -5,14 +5,18 @@
 #include "TcpClient.h"
 #include "internal/handlers/Connector.h"
 #include "internal/handlers/TcpConnection.h"
-#include "EventLoopDispatcher.h"
+#include "Application.h"
 
 using std::make_unique;
 
 namespace netpp {
-TcpClient::TcpClient(EventLoopDispatcher *dispatcher, Address addr, Events eventsPrototype)
-	: m_addr{std::move(addr)}, _dispatcher{dispatcher}, m_eventsPrototype{std::move(eventsPrototype)}
-{}
+TcpClient::TcpClient(Address address)
+	: m_address{std::move(address)}
+{
+	Config config = Application::appConfig();
+	m_config = config.connection;
+	m_eventsPrototype = config.eventHandler;
+}
 
 TcpClient::~TcpClient()
 {
@@ -21,7 +25,7 @@ TcpClient::~TcpClient()
 
 void TcpClient::connect()
 {
-	auto connector = internal::handlers::Connector::makeConnector(_dispatcher, m_addr, m_eventsPrototype);
+	auto connector = internal::handlers::Connector::makeConnector(Application::loopManager()->dispatch(), m_address, m_eventsPrototype, m_config);
 	connector->connect();
 }
 

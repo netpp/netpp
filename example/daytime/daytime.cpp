@@ -1,7 +1,7 @@
 #include "Events.h"
 #include "channel/TcpChannel.h"
 #include "TcpServer.h"
-#include "EventLoopDispatcher.h"
+#include "Application.h"
 #include <ctime>
 #include <iostream>
 
@@ -32,9 +32,10 @@ public:
 
 int main()
 {
-	netpp::EventLoopDispatcher dispatcher;
-	netpp::Events dayTime(std::make_shared<DayTime>());
-	netpp::TcpServer server(&dispatcher, netpp::Address("0.0.0.0", 12345), std::move(dayTime));
+	netpp::Config config;
+	config.eventHandler = netpp::Events(std::make_shared<DayTime>());
+	netpp::Application app(config);
+	netpp::TcpServer server(netpp::Address("0.0.0.0", 12345));
 	server.listen();
-	dispatcher.startLoop();
+	app.exec();
 }
