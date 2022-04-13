@@ -168,17 +168,22 @@ void TcpConnection::renewWheel()
 
 void TcpConnection::forceClose()
 {
-	LOG_TRACE("Force close socket {}", m_socket->fd());
-	if (m_idleConnectionWheel)
-		m_idleConnectionWheel->stop();
-	if (m_halfCloseWheel)
-		m_halfCloseWheel->stop();
-	m_events.onDisconnect(m_connectionBufferChannel);
-	m_epollEvent->disable();
-	// extern TcpConnection life after remove
-	volatile auto externLife = shared_from_this();
-	eventloop::EventLoop::thisLoop()->removeEventHandlerFromLoop(shared_from_this());
-	m_state.store(socket::TcpState::Closed, std::memory_order_release);
+	std::weak_ptr<TcpConnection> connectionWeak = weak_from_this();
+	_loopThisHandlerLiveIn->runInLoop([connectionWeak] {
+		auto connection = connectionWeak.lock();
+		if (connection)
+		{
+			LOG_TRACE("Force close socket {}", m_socket->fd());
+			if (connection->m_idleConnectionWheel)
+				connection->m_idleConnectionWheel->stop();
+			if (connection->m_halfCloseWheel)
+				connection->m_halfCloseWheel->stop();
+			connection->m_events.onDisconnect(connection->m_connectionBufferChannel);
+			connection->m_epollEvent->disable();
+			connection->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(connection);
+			connection->m_state.store(socket::TcpState::Closed, std::memory_order_release);
+		}
+	});
 }
 
 int TcpConnection::connectionId()

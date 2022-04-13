@@ -15,6 +15,7 @@ private:
 	 * @brief The index in TimeWheel, can be accessed by TimeWheel only
 	 */
 	TimerInterval wheelIndex = 0;
+	bool expire = false;
 public:
 	/**
 	 * @brief Can run this entry repeatedly

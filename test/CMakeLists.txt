@@ -39,4 +39,4 @@ add_executable(test ${netpp_http_test_source}
         MockSysCallEnvironment.h MockSysCallEnvironment.cpp
         ByteArray/ByteArrayReaderTest.cpp ByteArray/ByteArraySequentialReaderTest.cpp ByteArray/ByteArrayTest.cpp ByteArray/ByteArrayWriterTest.cpp
         uri/UriAccessor.cpp uri/UriCombining.cpp uri/UriConstructor.cpp uri/UriConversions.cpp uri/UriEncoding.cpp uri/UriOperator.cpp uri/UriResolve.cpp uri/UriSplitting.cpp uri/UriBuilder.cpp
-        SocketAndAddressTest.cpp ThreadPoolTest.cpp EpollEventTest.cpp SignalTest.cpp TimerTest.cpp StubTest.cpp handler/AcceptorTest.cpp handler/RunInLoopTest.cpp handler/ConnectorTest.cpp handler/ConnectionTest.cpp ByteArray/CowLinkTest.cpp)
+        SocketAndAddressTest.cpp ThreadPoolTest.cpp EpollEventTest.cpp SignalTest.cpp timer/TimerTest.cpp StubTest.cpp handler/AcceptorTest.cpp handler/RunInLoopTest.cpp handler/ConnectorTest.cpp handler/ConnectionTest.cpp ByteArray/CowLinkTest.cpp handler/HandleEpollEventTest.cpp timer/TimerWheelTest.cpp handler/TimerHandlerTest.cpp timer/TickTimerTest.cpp)

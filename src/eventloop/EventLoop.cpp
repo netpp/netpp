@@ -7,6 +7,7 @@
 #include "internal/support/Log.h"
 #include "internal/epoll/Epoll.h"
 #include "Application.h"
+#include "internal/handlers/RunInLoopHandler.h"
 
 namespace {
 thread_local netpp::eventloop::EventLoop *thisEventLoopOnThread = nullptr;
@@ -74,6 +75,8 @@ EventLoop *EventLoop::thisLoop()
 
 void EventLoop::runInLoop(std::function<void()> task)
 {
-	Application::loopManager()->runInLoop(this, std::move(task));
+	auto loopData = Application::loopManager()->getLoopData(this);
+	if (loopData)
+		loopData->runInLoopHandler->addPendingFunction(std::move(task));
 }
 }

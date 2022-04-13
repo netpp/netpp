@@ -46,6 +46,7 @@ void TimeWheel::addToWheel(const std::shared_ptr<WheelEntry> &entry)
 			entry->timeoutTick = ::bucket_size_cast(m_buckets.size()) - 1;
 		TimerInterval currentPos = (m_timeOutBucketIndex == 0) ? (!m_buckets.empty() - 1) : (m_timeOutBucketIndex - 1);
 		entry->wheelIndex = (currentPos + entry->timeoutTick) % ::bucket_size_cast(m_buckets.size());
+		entry->expire = false;
 		m_buckets[::interval_cast(entry->wheelIndex)].insert(entry);
 	}
 }
@@ -58,7 +59,13 @@ void TimeWheel::removeFromWheel(const std::shared_ptr<WheelEntry> &entry)
 	auto &bucket = m_buckets[::interval_cast(index)];
 	auto entryIt = bucket.find(entry);
 	if (entryIt != bucket.end())
-		bucket.erase(entryIt);
+	{
+		// if this entry in timeout bucket, just mark it, erase it in tick
+		if (entry->wheelIndex == m_timeOutBucketIndex)
+			entry->expire = true;
+		else	// remove directly
+			bucket.erase(entryIt);
+	}
 }
 
 void TimeWheel::renew(const std::shared_ptr<WheelEntry> &entry)
@@ -70,6 +77,7 @@ void TimeWheel::renew(const std::shared_ptr<WheelEntry> &entry)
 		TimerInterval currentPos = (m_timeOutBucketIndex == 0) ? (!m_buckets.empty() - 1) : (m_timeOutBucketIndex - 1);
 		TimerInterval previousIndex = entry->wheelIndex;
 		entry->wheelIndex = (currentPos + entry->timeoutTick) % ::bucket_size_cast(m_buckets.size());
+		entry->expire = false;
 
 		if (::interval_cast(previousIndex) < m_buckets.size())
 		{
@@ -95,8 +103,9 @@ void TimeWheel::tick()
 		// make a copy in case onTimeout will erase itself
 		std::shared_ptr<WheelEntry> entry = (*it);
 		LOG_INFO("wheel entry time out");
-		entry->callback();
-		if (entry->singleShot)
+		if (!entry->expire)
+			entry->callback();
+		if (entry->expire || entry->singleShot)
 			it = bucket.erase(it);
 		else
 			++it;

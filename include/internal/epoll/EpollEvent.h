@@ -73,6 +73,7 @@ public:
 	/**
 	 * @brief Active watch serial event
 	 * @param events Interested events
+	 * @todo use | operator to improve performance
 	 */
 	void active(std::initializer_list<EpollEv> events);
 	/**

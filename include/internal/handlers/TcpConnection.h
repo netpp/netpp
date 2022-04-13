@@ -56,6 +56,11 @@ public:
 	void closeAfterWriteCompleted();
 
 	/**
+	 * @brief Force close this connection. thread safe
+	 */
+	void forceClose();
+
+	/**
 	 * @brief Get the Channel read/write to connection buffer
 	 * thread safe
 	 * @return std::shared_ptr<Channel>	the read/write channel to this connection
@@ -102,12 +107,6 @@ private:
 	 * @note Not thread safe
 	 */
 	void renewWheel();
-
-	/**
-	 * @brief Force close this connection
-	 * @note Not thread safe
-	 */
-	void forceClose();
 
 	/**
 	 * @brief The state transition of TcpConnection

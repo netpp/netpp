@@ -18,8 +18,6 @@ TimerHandler::TimerHandler(eventloop::EventLoop *loop)
 		: epoll::EventHandler(loop)
 {
 	m_timerFd = ::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
-	::itimerspec timerSpec{};
-	std::memset(&timerSpec, 0, sizeof(::itimerspec));
 	LOG_TRACE("Timer fd {}", m_timerFd);
 }
 

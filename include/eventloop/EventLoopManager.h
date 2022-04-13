@@ -63,13 +63,6 @@ public:
 	void startLoop();
 
 	/**
-	 * @brief Move task and run in target event loop
-	 * @param loop The loop to run this task
-	 * @param task The pending task, it must be thread safe, the task runs in different thread
-	 */
-	void runInLoop(EventLoop *loop, std::function<void()> task);
-
-	/**
 	 * @brief Get property of given loop
 	 * @param loop target event loop
 	 * @return loop own data

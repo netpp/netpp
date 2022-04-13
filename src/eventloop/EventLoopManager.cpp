@@ -63,13 +63,6 @@ void EventLoopManager::startLoop()
 	m_mainEventLoop->eventLoop->run();
 }
 
-void EventLoopManager::runInLoop(EventLoop *loop, std::function<void()> task)
-{
-	auto it = m_loopData.find(loop);
-	if (it != m_loopData.end())
-		it->second->runInLoopHandler->addPendingFunction(std::move(task));
-}
-
 EventLoopData *EventLoopManager::getLoopData(EventLoop *loop) const
 {
 	auto it = m_loopData.find(loop);
