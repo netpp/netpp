@@ -101,12 +101,12 @@ TEST_F(TimerTest, SetTimerPropertyTest)
 
 TEST_F(TimerTest, SingleShotTimerTest)
 {
-	netpp::eventloop::EventLoop eventLoop;
-	netpp::time::Timer timer(&eventLoop);
-	netpp::time::Timer quitLoopTimer(&eventLoop);
-
 	int timerTriggerCount = 0;
 	try {
+		netpp::eventloop::EventLoop eventLoop;
+		netpp::time::Timer timer(&eventLoop);
+		netpp::time::Timer quitLoopTimer(&eventLoop);
+
 		timer.setInterval(10);
 		timer.setSingleShot(true);
 		timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; });
@@ -123,11 +123,11 @@ TEST_F(TimerTest, SingleShotTimerTest)
 
 TEST_F(TimerTest, RepeatedlyTimerTest)
 {
-	netpp::eventloop::EventLoop eventLoop;
-	netpp::time::Timer timer(&eventLoop);
-
 	int timerTriggerCount = 0;
 	try {
+		netpp::eventloop::EventLoop eventLoop;
+		netpp::time::Timer timer(&eventLoop);
+
 		timer.setInterval(10);
 		timer.setSingleShot(true);
 		timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; if (timerTriggerCount > 5) throw std::runtime_error("quit"); });
@@ -140,12 +140,12 @@ TEST_F(TimerTest, RepeatedlyTimerTest)
 
 TEST_F(TimerTest, SetSingleShotWhileRunningTest)
 {
-	netpp::eventloop::EventLoop eventLoop;
-	netpp::time::Timer timer(&eventLoop);
-	netpp::time::Timer quitLoopTimer(&eventLoop);
-
 	int timerTriggerCount = 0;
 	try {
+		netpp::eventloop::EventLoop eventLoop;
+		netpp::time::Timer timer(&eventLoop);
+		netpp::time::Timer quitLoopTimer(&eventLoop);
+
 		timer.setInterval(10);
 		timer.setSingleShot(false);
 		timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.setSingleShot(true); });

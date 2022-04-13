@@ -9,6 +9,7 @@ extern "C" {
 struct iovec;
 struct msghdr;
 
+// TODO: the stub are useless, except write/read/sendmsg/recvmsg
 namespace netpp::internal::stub {
 extern int close(int fd) noexcept;
 extern ::ssize_t write(int fd, const void *buf, ::size_t count) noexcept;

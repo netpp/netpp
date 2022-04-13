@@ -1,2 +1,3 @@
+* text=auto eol=lf
 *.http_request	text eol=crlf
 *.http_response	text eol=crlf

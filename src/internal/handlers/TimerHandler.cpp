@@ -23,7 +23,7 @@ TimerHandler::TimerHandler(eventloop::EventLoop *loop)
 
 TimerHandler::~TimerHandler()
 {
-	if (internal::stub::close(m_timerFd) == -1)
+	if (stub::close(m_timerFd) == -1)
 		LOG_WARN("failed to close timer");
 }
 

@@ -56,6 +56,7 @@ public:
 private:
 	int m_epollFd;
 	std::vector<::epoll_event> m_activeEvents;
+	// TODO: remove this for better performance
 	std::map<int, EpollEvent *> _events;
 };
 }

@@ -4,12 +4,12 @@
 #include "internal/epoll/EpollEvent.h"
 #include <memory>
 #include <gmock/gmock.h>
-#include "MockSysCallEnvironment.h"
+#include "../MockSysCallEnvironment.h"
 
 class Handler : public netpp::internal::epoll::EventHandler {
 	friend class EpollEventTest;
 public:
-	Handler() = default;
+	explicit Handler(netpp::eventloop::EventLoop *loop = nullptr) : EventHandler(loop) {}
 	~Handler() override = default;
 
 	MOCK_METHOD(void, handleIn, (), (override));
