@@ -77,6 +77,9 @@ int SysCall::mock_timerfd_create(int clockid, int flags)
 int SysCall::mock_timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value)
 { return MockSysCallEnvironment::real_timerfd_settime(fd, flags, new_value, old_value); }
 
+int SysCall::mock_clock_gettime(clockid_t __clock_id, struct timespec *__tp)
+{ return MockSysCallEnvironment::real_clock_gettime(__clock_id, __tp); }
+
 int SysCall::mock_sigaddset(sigset_t *set, int signum)
 { return MockSysCallEnvironment::real_sigaddset(set, signum); }
 
@@ -166,6 +169,7 @@ void MockSysCallEnvironment::SetUp()
 
 	real_timerfd_create = reinterpret_cast<TimerfdCreate>(::dlsym(RTLD_NEXT, "timerfd_create"));
 	real_timerfd_settime = reinterpret_cast<TimerfdSettime>(::dlsym(RTLD_NEXT, "timerfd_settime"));
+	real_clock_gettime = reinterpret_cast<ClockGetTime>(::dlsym(RTLD_NEXT, "clock_gettime"));
 
 	real_sigaddset = reinterpret_cast<SigAddSet>(::dlsym(RTLD_NEXT, "sigaddset"));
 	real_signalfd = reinterpret_cast<SignalFd>(::dlsym(RTLD_NEXT, "signalfd"));
@@ -302,6 +306,11 @@ int timerfd_create(int clockid, int flags)
 int timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value)
 {
 	return MockSysCallEnvironment::sysMock->mock_timerfd_settime(fd, flags, new_value, old_value);
+}
+
+int clock_gettime(clockid_t __clock_id, struct timespec *__tp)
+{
+	return MockSysCallEnvironment::sysMock->mock_clock_gettime(__clock_id, __tp);
 }
 
 int signalfd(int fd, const sigset_t *mask, int flags)

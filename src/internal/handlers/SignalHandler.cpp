@@ -20,6 +20,9 @@ SignalHandler::SignalHandler(eventloop::EventLoop *loop)
 
 SignalHandler::~SignalHandler()
 {
+	::close(m_signalFd);
+	::sigemptyset(m_watchingSignals);
+	::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
 	delete m_watchingSignals;
 }
 

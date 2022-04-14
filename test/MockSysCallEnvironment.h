@@ -40,6 +40,7 @@ public:
 
 	virtual int mock_timerfd_create(int clockid, int flags);
 	virtual int mock_timerfd_settime(int fd, int flags, const struct itimerspec *new_value, struct itimerspec *old_value);
+	virtual int mock_clock_gettime(clockid_t __clock_id, struct timespec *__tp);
 
 	virtual int mock_sigaddset(sigset_t *set, int signum);
 	virtual int mock_signalfd(int fd, const sigset_t *mask, int flags);
@@ -75,6 +76,7 @@ using GetSockOpt = int(*)(int, int, int, void *, ::socklen_t *);
 
 using TimerfdCreate = int(*)(int, int);
 using TimerfdSettime = int(*)(int, int, const struct itimerspec *, struct itimerspec *);
+using ClockGetTime = int(*)(clockid_t, struct timespec *);
 
 using SigAddSet = int(*)(sigset_t *, int);
 using SignalFd = int(*)(int, const sigset_t *, int);
@@ -125,6 +127,7 @@ public:
 
 	static TimerfdCreate real_timerfd_create;
 	static TimerfdSettime real_timerfd_settime;
+	static ClockGetTime real_clock_gettime;
 
 	static SigAddSet real_sigaddset;
 	static SignalFd real_signalfd;
@@ -151,7 +154,19 @@ MATCHER_P(EpollEventEq, event, "")
 {
 	if (arg)
 		return arg->events == event;
-	return true;
+	return false;
+}
+
+MATCHER_P(TimerspecEq, time, "")
+{
+	if (arg)
+	{
+		return (arg->it_interval.tv_sec == time.it_interval.tv_sec) &&
+		(arg->it_interval.tv_nsec == time.it_interval.tv_nsec) &&
+		(arg->it_interval.tv_sec == time.it_interval.tv_sec) &&
+		(arg->it_interval.tv_nsec == time.it_interval.tv_nsec);
+	}
+	return false;
 }
 
 #endif
