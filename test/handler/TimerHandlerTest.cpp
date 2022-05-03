@@ -8,17 +8,28 @@
 #include <cstring>
 extern "C" {
 #include <sys/timerfd.h>
-#include <bits/timerfd.h>
 }
 #define private public
 #define protected public
 #include "eventloop/EventLoop.h"
 #include "internal/handlers/TimerHandler.h"
-#include "../MockSysCallEnvironment.h"
+#include "../mock/MockSysCallEnvironment.h"
 #undef private
 #undef protected
 
 using namespace netpp::internal::handlers;
+
+MATCHER_P(TimerspecEq, time, "")
+{
+	if (arg)
+	{
+		return (arg->it_interval.tv_sec == time.it_interval.tv_sec) &&
+			   (arg->it_interval.tv_nsec == time.it_interval.tv_nsec) &&
+			   (arg->it_interval.tv_sec == time.it_interval.tv_sec) &&
+			   (arg->it_interval.tv_nsec == time.it_interval.tv_nsec);
+	}
+	return false;
+}
 
 class MockTimer : public SysCall {
 public:
@@ -27,7 +38,7 @@ public:
 	MOCK_METHOD(int, mock_epoll_ctl, (int, int, int, struct epoll_event *), (override));
 	MOCK_METHOD(int, mock_close, (int), (override));
 	MOCK_METHOD(::ssize_t, mock_read, (int, void *, ::size_t), (override));
-	MOCK_METHOD(int, mock_clock_gettime, (clockid_t __clock_id, struct timespec *__tp), (override));
+	MOCK_METHOD(int, mock_clock_gettime, (clockid_t, struct ::timespec *), (override));
 };
 
 class TimerHandlerTest : public testing::Test {
@@ -105,7 +116,7 @@ TEST_F(TimerHandlerTest, RunSignleShotTimerTest)
 	TimerHandler handler(&loop);
 
 	{
-		::timespec now{};
+		struct ::timespec now{};
 		std::memset(&now, 0, sizeof(::timespec));
 		::itimerspec timerSpec{};
 		std::memset(&timerSpec, 0, sizeof(::itimerspec));
@@ -115,7 +126,7 @@ TEST_F(TimerHandlerTest, RunSignleShotTimerTest)
 		timerSpec.it_interval.tv_nsec = 0;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(1000, false, [] {});
@@ -133,7 +144,7 @@ TEST_F(TimerHandlerTest, RunSignleShotTimerTest)
 		timerSpec.it_interval.tv_nsec = 0;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(1000, false, [] {});
@@ -149,7 +160,7 @@ TEST_F(TimerHandlerTest, RunSignleShotTimerTest)
 		timerSpec.it_interval.tv_nsec = 0;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(1001, false, [] {});
@@ -165,7 +176,7 @@ TEST_F(TimerHandlerTest, RunSignleShotTimerTest)
 		timerSpec.it_interval.tv_nsec = 0;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(10010, false, [] {});
@@ -188,7 +199,7 @@ TEST_F(TimerHandlerTest, RunRepeatlyTimerTest)
 		timerSpec.it_interval.tv_nsec = 0;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(1000, true, [] {});
@@ -206,7 +217,7 @@ TEST_F(TimerHandlerTest, RunRepeatlyTimerTest)
 		timerSpec.it_interval.tv_nsec = 1000;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(1000, true, [] {});
@@ -222,7 +233,7 @@ TEST_F(TimerHandlerTest, RunRepeatlyTimerTest)
 		timerSpec.it_interval.tv_nsec = 1000000;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(1001, true, [] {});
@@ -238,7 +249,7 @@ TEST_F(TimerHandlerTest, RunRepeatlyTimerTest)
 		timerSpec.it_interval.tv_nsec = 10000000;
 		EXPECT_CALL(mock, mock_clock_gettime(CLOCK_MONOTONIC, testing::_))
 				.Times(1)
-				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now)));
+				.WillOnce(testing::DoAll(testing::SetArgPointee<1>(now), testing::Return(0)));
 		EXPECT_CALL(mock, mock_timerfd_settime(testing::_, TFD_TIMER_ABSTIME, TimerspecEq(timerSpec), nullptr))
 				.Times(1);
 		handler.setIntervalAndRun(10010, true, [] {});

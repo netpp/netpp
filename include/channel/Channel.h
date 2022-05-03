@@ -31,6 +31,7 @@ public:
 	 * @param connection Connecting bind to this channel
 	 */
 	explicit Channel(std::weak_ptr<internal::handlers::TcpConnection> connection);
+	virtual ~Channel();
 
 	/**
 	 * @brief Tell event loop data on this channel is ready to send, event loop will send it later,

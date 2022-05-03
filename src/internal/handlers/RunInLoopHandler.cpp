@@ -8,7 +8,7 @@ extern "C" {
 
 namespace netpp::internal::handlers {
 RunInLoopHandler::RunInLoopHandler(eventloop::EventLoop *loop)
-	: epoll::EventHandler(loop)
+		: epoll::EventHandler(loop)
 {
 	m_wakeUpFd = stub::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
 }
@@ -17,8 +17,7 @@ RunInLoopHandler::~RunInLoopHandler()
 {
 	// no need to consider thread safety here, 
 	// this handler will always live with event loop
-	if (m_epollEvent)
-		m_epollEvent->disable();
+	m_epollEvent->disable();
 	if (m_wakeUpFd != -1)
 		stub::close(m_wakeUpFd);
 }
@@ -28,6 +27,18 @@ void RunInLoopHandler::handleIn()
 	::eventfd_t v;
 	stub::eventfd_read(m_wakeUpFd, &v);
 	LOG_DEBUG("Run in loop triggered, {} pending functors to run", v);
+	runFunctors();
+}
+
+void RunInLoopHandler::addPendingFunction(std::function<void()> functor)
+{
+	stub::eventfd_write(m_wakeUpFd, 1);
+	std::lock_guard lck(m_functorMutex);
+	m_pendingFunctors.emplace_back(std::move(functor));
+}
+
+void RunInLoopHandler::runFunctors()
+{
 	std::vector<std::function<void()>> functors;
 	{
 		std::lock_guard lck(m_functorMutex);
@@ -37,17 +48,10 @@ void RunInLoopHandler::handleIn()
 			m_pendingFunctors.clear();
 		}
 	}
-	for (auto &f : functors)
+	for (auto &f: functors)
 	{
 		f();
 	}
-}
-
-void RunInLoopHandler::addPendingFunction(std::function<void()> functor)
-{
-	stub::eventfd_write(m_wakeUpFd, 1);
-	std::lock_guard lck(m_functorMutex);
-	m_pendingFunctors.emplace_back(std::move(functor));
 }
 
 std::shared_ptr<RunInLoopHandler> RunInLoopHandler::makeRunInLoopHandler(eventloop::EventLoop *loop)

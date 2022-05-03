@@ -42,7 +42,8 @@ protected:
 	void handleIn() override;
 
 private:
-	// TODO: maybe this wake up fd can put in event loop, for other class to use
+	void runFunctors();
+
 	int m_wakeUpFd;
 	std::mutex m_functorMutex;
 	std::vector<std::function<void()>> m_pendingFunctors;	// methods run in loop

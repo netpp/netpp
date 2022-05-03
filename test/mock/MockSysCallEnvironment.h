@@ -88,7 +88,7 @@ using PthreadSigMask = int(*)(int, const sigset_t *, sigset_t *);
 
 class MockSysCallEnvironment : public testing::Environment {
 public:
-	MockSysCallEnvironment() = default;
+	MockSysCallEnvironment();
 	~MockSysCallEnvironment() override = default;
 
 	void SetUp() override;
@@ -157,14 +157,12 @@ MATCHER_P(EpollEventEq, event, "")
 	return false;
 }
 
-MATCHER_P(TimerspecEq, time, "")
+MATCHER(RunFunctor, "")
 {
 	if (arg)
 	{
-		return (arg->it_interval.tv_sec == time.it_interval.tv_sec) &&
-		(arg->it_interval.tv_nsec == time.it_interval.tv_nsec) &&
-		(arg->it_interval.tv_sec == time.it_interval.tv_sec) &&
-		(arg->it_interval.tv_nsec == time.it_interval.tv_nsec);
+		arg();
+		return true;
 	}
 	return false;
 }

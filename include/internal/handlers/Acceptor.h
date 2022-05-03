@@ -21,7 +21,7 @@ namespace netpp::internal::handlers {
 class Acceptor : public epoll::EventHandler, public std::enable_shared_from_this<Acceptor> {
 public:
 	/// @brief Use makeAcceptor to create an Acceptor
-	Acceptor(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket);
+	Acceptor(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket, Events eventsPrototype, ConnectionConfig config);
 	~Acceptor() override;
 
 	/**

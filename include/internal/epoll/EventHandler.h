@@ -15,15 +15,12 @@ namespace netpp::internal::epoll {
 // TODO: set handler priority
 // TODO: let user have the ability to define their own handler
 class EventHandler {
-	friend class EpollEvent;
 public:
 	explicit EventHandler(eventloop::EventLoop *loop)
 		: _loopThisHandlerLiveIn{loop}
 	{}
 	virtual ~EventHandler() = default;
 
-// for EpollEvent
-protected:
 	virtual void handleIn() {}
 	virtual void handleOut() {}
 	virtual void handleErr() {}

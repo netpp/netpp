@@ -16,9 +16,11 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::internal::handlers {
-TcpConnection::TcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket)
+TcpConnection::TcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
+							 Events eventsPrototype, ConnectionConfig config)
 		: epoll::EventHandler(loop), m_state{socket::TcpState::Established},
-		  m_isWaitWriting{false}, m_socket{std::move(socket)}
+		  m_isWaitWriting{false}, m_socket{std::move(socket)},
+		  m_events{std::move(eventsPrototype)}, m_config{config}
 {}
 
 void TcpConnection::handleIn()
@@ -194,19 +196,17 @@ int TcpConnection::connectionId()
 std::shared_ptr<TcpConnection> TcpConnection::makeTcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
 															  Events eventsPrototype, ConnectionConfig config)
 {
-	auto connection = std::make_shared<TcpConnection>(loop, std::move(socket));
+	auto connection = std::make_shared<TcpConnection>(loop, std::move(socket), std::move(eventsPrototype), config);
 	auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), connection, connection->m_socket->fd());
 	epoll::EpollEvent *eventPtr = event.get();
 	connection->m_epollEvent = std::move(event);
 	connection->m_connectionBufferChannel = std::make_shared<TcpChannel>(connection);
 	connection->m_bufferConvertor = connection->m_connectionBufferChannel->createBufferConvertor();
-	connection->m_events = std::move(eventsPrototype);
 
 	// set up events
 	loop->addEventHandlerToLoop(connection);
 	eventPtr->active({epoll::EpollEv::IN, epoll::EpollEv::RDHUP});
 
-	connection->m_config = config;
 	if (connection->m_config.enableAutoClose)
 	{
 		// set up kick idle connection here

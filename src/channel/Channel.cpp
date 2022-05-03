@@ -11,6 +11,8 @@ Channel::Channel(std::weak_ptr<internal::handlers::TcpConnection> connection)
 		: _connection{std::move(connection)}
 {}
 
+Channel::~Channel() = default;
+
 void Channel::send()
 {
 	auto connection = _connection.lock();

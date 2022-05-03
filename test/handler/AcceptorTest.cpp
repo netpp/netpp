@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "../mock/MockSysCallEnvironment.h"
+#include "../mock/MockEpollEvent.h"
+#include "../mock/MockEventLoop.h"
+#include "../mock/MockSocket.h"
 #define private public
 #define protected public
 #include "internal/handlers/Acceptor.h"
 #include "internal/handlers/RunInLoopHandler.h"
-#include "../MockSysCallEnvironment.h"
 #include "error/Exception.h"
 #include "Address.h"
-#include "eventloop/EventLoop.h"
+#include "internal/socket/SocketEnums.h"
 #undef private
 #undef protected
 
@@ -85,73 +88,75 @@ TEST_F(AcceptorTest, CreateTest)
 	EXPECT_EQ(acceptor.get(), nullptr);
 }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 TEST_F(AcceptorTest, ListenTest)
 {
-	netpp::eventloop::EventLoop loop;
-
-	EXPECT_CALL(mock, mock_socket)
-		.Times(1);
+	MockEventLoop loop;
 	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
-			);
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+	);
+	auto socket = std::make_unique<MockSocket>();
+	MockSocket *mockSocket = socket.get();
+	acceptor->m_socket = std::move(socket);
+	auto epEv = std::make_unique<MockEpollEvent>();
+	MockEpollEvent *mockEpEv = epEv.get();
+	acceptor->m_epollEvent = std::move(epEv);
 
+	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(1);
+	EXPECT_CALL(loop, addEventHandlerToLoop).Times(1);
+	EXPECT_CALL(*mockEpEv, active(netpp::internal::epoll::EpollEv::OUT)).Times(1);
+	EXPECT_CALL(*mockSocket, listen).Times(1);
 	acceptor->listen();
-	loop.m_runInLoop->handleIn();
+	EXPECT_EQ(acceptor->m_state, netpp::internal::socket::TcpState::Listen);
 }
 
 TEST_F(AcceptorTest, StopListenTest)
 {
-	netpp::EventLoopDispatcher dispatcher(1);
-	netpp::EventLoop *loop = dispatcher.dispatchEventLoop();
+	MockEventLoop loop;
+	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+	);
+	auto epEv = std::make_unique<MockEpollEvent>();
+	MockEpollEvent *mockEpEv = epEv.get();
+	acceptor->m_epollEvent = std::move(epEv);
 
-	EXPECT_CALL(mock, mock_socket)
-		.Times(1);
-	std::shared_ptr<netpp::internal::handlers::Acceptor> acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
-		);
-
+	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(1);
+	EXPECT_CALL(loop, removeEventHandlerFromLoop).Times(1);
+	EXPECT_CALL(*mockEpEv, disable).Times(1);
 	acceptor->stop();
 	acceptor->listen();
 	acceptor->stop();
-
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, testing::_))
-		.Times(0);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, testing::_))
-		.Times(1);
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
-		.Times(1);
-	loop->m_runInLoop->handleIn();
-
-	// destruction
-	EXPECT_CALL(mock, mock_epoll_ctl);
+	EXPECT_EQ(acceptor->m_state, netpp::internal::socket::TcpState::Closed);
 }
 
 TEST_F(AcceptorTest, AcceptConnectionTest)
 {
-	netpp::EventLoopDispatcher dispatcher(1);
-	std::shared_ptr<netpp::internal::handlers::Acceptor> acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
-		);
-	EXPECT_CALL(mock, mock_accept4);
+	MockEventLoop loop;
+	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+	);
+	auto socket = std::make_unique<MockSocket>();
+	MockSocket *mockSocket = socket.get();
+	acceptor->m_socket = std::move(socket);
+
+	EXPECT_CALL(*mockSocket, accept);
 	acceptor->handleIn();
 	EXPECT_EQ(AcceptorTest::onConnectedCount, 1);
 }
 
 TEST_F(AcceptorTest, AbortConnectionTest)
 {
-	netpp::EventLoopDispatcher dispatcher(1);
-	std::shared_ptr<netpp::internal::handlers::Acceptor> acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&dispatcher, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>())
-		);
-	EXPECT_CALL(mock, mock_accept4)
-		.WillOnce(testing::DoAll(testing::Assign(&errno, ECONNABORTED), testing::Return(-1)))
-		.WillOnce(testing::DoAll(testing::Assign(&errno, EMFILE), testing::Return(-1)));
+	MockEventLoop loop;
+	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
+			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+	);
+	auto socket = std::make_unique<MockSocket>();
+	MockSocket *mockSocket = socket.get();
+	acceptor->m_socket = std::move(socket);
+
+	EXPECT_CALL(*mockSocket, accept)
+		.WillOnce(testing::Throw(netpp::error::SocketException(0)))
+		.WillOnce(testing::Throw(netpp::error::SocketException(0)));
 	acceptor->handleIn();
-	EXPECT_EQ(onConnectedCount, 0);
 	acceptor->handleIn();
 	EXPECT_EQ(onConnectedCount, 0);
 }
-
-#pragma GCC diagnostic pop

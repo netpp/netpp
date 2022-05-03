@@ -2,7 +2,7 @@
 #include "internal/stub/Epoll.h"
 #include "internal/stub/IO.h"
 #include "internal/stub/Socket.h"
-#include "MockSysCallEnvironment.h"
+#include "mock/MockSysCallEnvironment.h"
 #include <gmock/gmock.h>
 #include "error/Exception.h"
 

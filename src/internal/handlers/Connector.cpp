@@ -15,8 +15,9 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::internal::handlers {
-Connector::Connector(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket)
-		: epoll::EventHandler(loop), m_socket{std::move(socket)}, m_state{socket::TcpState::Closed}, m_connectionEstablished{false}
+Connector::Connector(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket, Events eventsPrototype, ConnectionConfig config)
+		: epoll::EventHandler(loop), m_socket{std::move(socket)}, m_events{std::move(eventsPrototype)},
+		  m_config(config), m_state{socket::TcpState::Closed}, m_connectionEstablished{false}
 {}
 
 Connector::~Connector() = default;
@@ -47,6 +48,9 @@ void Connector::connect()
 
 void Connector::stopConnect()
 {
+	if (m_state != socket::TcpState::Connecting)
+		return;
+
 	auto connector = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([connector]{
 		// if connected, Connector was already cleaned, no need to remove again
@@ -109,6 +113,7 @@ void Connector::handleOut()
 		_connection = connection;
 		LOG_TRACE("Connected to server");
 		std::shared_ptr<Channel> channel = connection->getIOChannel();
+		m_state = socket::TcpState::Established;
 		m_events.onConnected(channel);
 
 		// extern life after remove
@@ -128,12 +133,8 @@ std::shared_ptr<Connector> Connector::makeConnector(eventloop::EventLoop *loop, 
 {
 	try
 	{
-		auto connector = make_shared<Connector>(loop, make_unique<socket::Socket>(serverAddr));
-		connector->m_events = eventsPrototype;
+		auto connector = make_shared<Connector>(loop, make_unique<socket::Socket>(serverAddr), eventsPrototype, config);
 		connector->m_epollEvent = make_unique<epoll::EpollEvent>(loop->getPoll(), connector, connector->m_socket->fd());
-		connector->m_state = socket::TcpState::Closed;
-		connector->m_config = config;
-
 		return connector;
 	}
 	catch (error::SocketException &se)

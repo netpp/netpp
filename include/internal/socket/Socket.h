@@ -46,7 +46,7 @@ public:
 	 * @brief Get socket fd, will not change once constructed
 	 * @return
 	 */
-	[[nodiscard]] inline int fd() const noexcept { return m_socketFd; }
+	[[nodiscard]] int fd() const noexcept { return m_socketFd; }
 
 	/**
 	 * @brief Bind address and start listen
@@ -75,7 +75,7 @@ public:
 	 * @brief Get socket error code
 	 */
 	[[nodiscard]] error::SocketError getError() const noexcept;
-	[[nodiscard]] inline Address getAddr() const noexcept { return m_addr; };
+	[[nodiscard]] Address getAddr() const noexcept { return m_addr; };
 
 	/**
 	 * @brief Shutdown write side of socket

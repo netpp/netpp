@@ -220,6 +220,7 @@ public:
 	 * @param connection connection bind to this channel
 	 */
 	explicit TcpChannel(std::weak_ptr<internal::handlers::TcpConnection> connection);
+	~TcpChannel() override;
 
 	/**
 	 * @brief TcpChannel's conversion method

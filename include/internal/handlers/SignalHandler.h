@@ -20,7 +20,7 @@ namespace netpp::internal::handlers {
 class SignalHandler : public epoll::EventHandler, public std::enable_shared_from_this<SignalHandler> {
 public:
 	/// @brief Use makeSignalHandler to create SignalHandler
-	explicit SignalHandler(eventloop::EventLoop *loop);
+	explicit SignalHandler(eventloop::EventLoop *loop, Events eventsPrototype);
 	~SignalHandler() override;
 
 	void startWatchSignal(signal::Signals signal);

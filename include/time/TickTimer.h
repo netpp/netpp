@@ -10,7 +10,7 @@
 #include "TimerType.h"
 
 namespace netpp::time {
-class WheelEntry;
+struct WheelEntry;
 class TimeWheel;
 /**
  * @brief The ticking timer, with limited duration and limited precision

@@ -30,9 +30,9 @@ void EventLoop::run()
 			return;
 		}
 		::thisEventLoopOnThread = this;
+		std::vector<internal::epoll::EpollEvent *> activeChannels{4};
 		while (true)
 		{
-			std::vector<internal::epoll::EpollEvent *> activeChannels{4};
 			using ChannelSize = std::vector<internal::epoll::EpollEvent *>::size_type;
 			ChannelSize activeCount = m_poll->poll(activeChannels);
 			for (ChannelSize i = 0; i < activeCount; ++i)

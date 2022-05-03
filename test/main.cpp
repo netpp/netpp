@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "MockSysCallEnvironment.h"
+#include "mock/MockSysCallEnvironment.h"
 
 int main(int argc, char *argv[])
 {

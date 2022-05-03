@@ -16,7 +16,7 @@ class Timer;
 }
 
 namespace internal::handlers {
-class AsyncDnsHandler : public epoll::EventHandler, public std::enable_shared_from_this<AsyncDnsHandler> {
+class AsyncDnsHandler : protected epoll::EventHandler, public std::enable_shared_from_this<AsyncDnsHandler> {
 public:
 	using ResolvedCallback = std::function<void(Address)>;
 	explicit AsyncDnsHandler(eventloop::EventLoop *loop);

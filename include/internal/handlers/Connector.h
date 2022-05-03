@@ -29,7 +29,7 @@ class TcpConnection;
 class Connector : public epoll::EventHandler, public std::enable_shared_from_this<Connector> {
 public:
 	/// @brief Use makeConnector to create a Connector
-	Connector(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket);
+	Connector(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket, Events eventsPrototype, ConnectionConfig config);
 	~Connector() override;
 
 	/**

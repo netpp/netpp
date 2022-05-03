@@ -4,7 +4,7 @@
 #include "internal/epoll/EpollEvent.h"
 #include <memory>
 #include <gmock/gmock.h>
-#include "../MockSysCallEnvironment.h"
+#include "../mock/MockSysCallEnvironment.h"
 
 class Handler : public netpp::internal::epoll::EventHandler {
 	friend class EpollEventTest;

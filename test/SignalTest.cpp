@@ -5,7 +5,7 @@
 #include "Events.h"
 #include "error/Exception.h"
 #include "time/Timer.h"
-#include "MockSysCallEnvironment.h"
+#include "mock/MockSysCallEnvironment.h"
 #include "internal/epoll/EpollEvent.h"
 #include "eventloop/EventLoop.h"
 #include "internal/epoll/Epoll.h"
@@ -74,7 +74,7 @@ protected:
 	void TearDown() override {}
 };
 
-TEST_F(SignalDeathTest, NotHandleSignal)
+/*TEST_F(SignalDeathTest, NotHandleSignal)
 {
 	EXPECT_EXIT(killSelf(), testing::KilledBySignal(SIGALRM), "");
 }
@@ -82,7 +82,7 @@ TEST_F(SignalDeathTest, NotHandleSignal)
 TEST_F(SignalDeathTest, HandleSignal)
 {
 	EXPECT_EXIT(killSelfWithSignalWatcher(), testing::KilledBySignal(SIGQUIT), "");
-}
+}*/
 
 class SignalTest : public testing::Test {
 public:
@@ -94,7 +94,7 @@ protected:
 	void TearDown() override {}
 };
 
-TEST_F(SignalTest, ConvertSignal)
+/*TEST_F(SignalTest, ConvertSignal)
 {
 	EXPECT_EQ(SIGHUP, netpp::signal::toLinuxSignal(netpp::signal::Signals::E_HUP));
 	EXPECT_EQ(SIGPWR, netpp::signal::toLinuxSignal(netpp::signal::Signals::E_PWR));
@@ -124,7 +124,7 @@ TEST_F(SignalTest, SignalWatchStatus)
 	// watch signal is not enabled
 	netpp::signal::SignalWatcher::watch(netpp::signal::Signals::E_PWR);
 	EXPECT_EQ(false, netpp::signal::SignalWatcher::isWatching(netpp::signal::Signals::E_PWR));
-}
+}*/
 
 class MockSignal : public SysCall {
 public:
@@ -156,14 +156,11 @@ protected:
 
 	static void TearDownTestCase()
 	{
-		netpp::signal::SignalWatcher::signalFd = -1;
 	}
 
 	MockSignal mock;
 };
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 TEST_F(SignalMockTest, EnableHandleSignalTest)
 {
 	/*EXPECT_CALL(mock, mock_epoll_ctl(testing::_, testing::_, testing::_, GetPtrFromEpollCtl()))
@@ -197,8 +194,6 @@ TEST_F(SignalMockTest, EnableHandleSignalTest)
 	// destruction
 	EXPECT_CALL(mock, mock_epoll_ctl);*/
 }
-
-#pragma GCC diagnostic pop
 
 TEST_F(SignalMockTest, AddSignalTest)
 {

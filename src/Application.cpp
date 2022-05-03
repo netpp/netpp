@@ -8,6 +8,7 @@
 #include "internal/support/Log.h"
 #include "eventloop/EventLoopManager.h"
 #include "signal/SignalWatcher.h"
+#include <cassert>
 
 namespace {
 netpp::Application *globalApp = nullptr;
@@ -17,6 +18,7 @@ namespace netpp {
 Application::Application(Config config)
 	: m_netppConfig{std::move(config)}
 {
+	assert(!globalApp);
 	::globalApp = this;
 	if (m_netppConfig.enableLog)
 		internal::initLogger();

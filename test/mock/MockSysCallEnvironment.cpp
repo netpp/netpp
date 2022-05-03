@@ -129,6 +129,7 @@ GetSockOpt MockSysCallEnvironment::real_getsockopt;
 
 TimerfdCreate MockSysCallEnvironment::real_timerfd_create;
 TimerfdSettime MockSysCallEnvironment::real_timerfd_settime;
+ClockGetTime MockSysCallEnvironment::real_clock_gettime;
 
 SigAddSet MockSysCallEnvironment::real_sigaddset;
 SignalFd MockSysCallEnvironment::real_signalfd;
@@ -138,11 +139,12 @@ SigEmptySet MockSysCallEnvironment::real_sigemptyset;
 SigFillSet MockSysCallEnvironment::real_sigfillset;
 PthreadSigMask MockSysCallEnvironment::real_pthread_sigmask;
 
-void MockSysCallEnvironment::SetUp()
+MockSysCallEnvironment::MockSysCallEnvironment()
 {
 	defaultSysMock = new SysCall();
 	sysMock = defaultSysMock;
-	// compiler will use custome defined functions firstly 
+
+	// compiler will use custome defined functions firstly
 	real_epoll_create = reinterpret_cast<EpollCreate>(::dlsym(RTLD_NEXT, "epoll_create"));
 	real_epoll_create1 = reinterpret_cast<EpollCreate>(::dlsym(RTLD_NEXT, "epoll_create1"));
 	real_epoll_wait = reinterpret_cast<EpollWait>(::dlsym(RTLD_NEXT, "epoll_wait"));
@@ -178,6 +180,10 @@ void MockSysCallEnvironment::SetUp()
 	real_sigemptyset = reinterpret_cast<SigEmptySet>(::dlsym(RTLD_NEXT, "sigemptyset"));
 	real_sigfillset = reinterpret_cast<SigFillSet>(::dlsym(RTLD_NEXT, "sigfillset"));
 	real_pthread_sigmask = reinterpret_cast<PthreadSigMask>(::dlsym(RTLD_NEXT, "pthread_sigmask"));
+}
+
+void MockSysCallEnvironment::SetUp()
+{
 }
 
 void MockSysCallEnvironment::registerMock(SysCall *mock)

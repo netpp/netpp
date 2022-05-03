@@ -195,6 +195,8 @@ TcpChannel::TcpChannel(std::weak_ptr<internal::handlers::TcpConnection> connecti
 		  m_sendBuffer{std::make_shared<ByteArray>()}, m_receiveArray{std::make_shared<ByteArray>()}
 {}
 
+TcpChannel::~TcpChannel() = default;
+
 std::unique_ptr<internal::buffer::ChannelBufferConversion> TcpChannel::createBufferConvertor()
 {
 	return std::make_unique<internal::buffer::TcpChannelConversion>();

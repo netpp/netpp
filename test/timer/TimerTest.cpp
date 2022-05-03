@@ -7,6 +7,8 @@
 #include "internal/epoll/EpollEvent.h"
 #include "internal/handlers/RunInLoopHandler.h"
 #include "internal/epoll/Epoll.h"
+#include "Application.h"
+
 #undef private
 #undef protected
 
@@ -86,8 +88,8 @@ MATCHER_P(SingleShotTimerEQ, msec, "")
 
 TEST_F(TimerTest, SetTimerPropertyTest)
 {
-	netpp::eventloop::EventLoop eventLoop;
-	netpp::time::Timer timer(&eventLoop);
+	netpp::Application app;
+	netpp::time::Timer timer(app.loopManager()->mainLoop());
 	EXPECT_EQ(timer.interval(), 1000);
 	EXPECT_EQ(timer.singleShot(), true);
 	EXPECT_EQ(timer.running(), false);

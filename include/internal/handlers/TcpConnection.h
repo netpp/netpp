@@ -37,7 +37,8 @@ namespace netpp::internal::handlers {
 class TcpConnection : public epoll::EventHandler, public std::enable_shared_from_this<TcpConnection> {
 public:
 	/// @brief Use makeTcpConnection to create TcpConnection
-	TcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket);
+	TcpConnection(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket,
+				  Events eventsPrototype, ConnectionConfig config);
 	~TcpConnection() override = default;
 
 	/**

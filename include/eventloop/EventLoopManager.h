@@ -14,7 +14,7 @@
 #include "eventloop/EventLoopData.h"
 
 namespace netpp {
-class Config;
+struct Config;
 namespace internal::handlers {
 class RunInLoopHandler;
 

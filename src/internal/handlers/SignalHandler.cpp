@@ -11,8 +11,8 @@ extern "C" {
 }
 
 namespace netpp::internal::handlers {
-SignalHandler::SignalHandler(eventloop::EventLoop *loop)
-	: epoll::EventHandler(loop), m_watchingSignals{new ::sigset_t}
+SignalHandler::SignalHandler(eventloop::EventLoop *loop, Events eventsPrototype)
+	: epoll::EventHandler(loop), m_events(std::move(eventsPrototype)), m_watchingSignals{new ::sigset_t}
 {
 	::sigemptyset(m_watchingSignals);
 	m_signalFd = ::signalfd(-1, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
@@ -69,8 +69,7 @@ void SignalHandler::handleIn()
 
 std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(eventloop::EventLoop *loop, Events eventsPrototype)
 {
-	auto signalHandler = std::make_shared<SignalHandler>(loop);
-	signalHandler->m_events = std::move(eventsPrototype);
+	auto signalHandler = std::make_shared<SignalHandler>(loop, std::move(eventsPrototype));
 
 	signalHandler->m_epollEvent = std::make_unique<epoll::EpollEvent>(
 			loop->getPoll(), signalHandler,

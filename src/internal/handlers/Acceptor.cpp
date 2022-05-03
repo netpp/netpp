@@ -1,4 +1,6 @@
 #include "internal/handlers/Acceptor.h"
+
+#include <utility>
 #include "internal/handlers/TcpConnection.h"
 #include "internal/support/Log.h"
 #include "eventloop/EventLoopManager.h"
@@ -13,8 +15,9 @@ using std::make_unique;
 using std::make_shared;
 
 namespace netpp::internal::handlers {
-Acceptor::Acceptor(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket)
-		: epoll::EventHandler(loop), m_socket{std::move(socket)}, m_state{socket::TcpState::Closed}
+Acceptor::Acceptor(eventloop::EventLoop *loop, std::unique_ptr<socket::Socket> &&socket, Events eventsPrototype, ConnectionConfig config)
+		: epoll::EventHandler(loop), m_socket{std::move(socket)}, m_events{std::move(eventsPrototype)},
+		  m_config{config}, m_state{socket::TcpState::Closed}
 {}
 
 Acceptor::~Acceptor() = default;
@@ -46,6 +49,7 @@ void Acceptor::stop()
 	// extern life after remove
 	auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([externLife]{
+		// fixme close socket
 		externLife->m_epollEvent->disable();
 		externLife->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(externLife);
 		externLife->m_state = socket::TcpState::Closed;
@@ -60,7 +64,8 @@ void Acceptor::handleIn()
 		auto connection = TcpConnection::makeTcpConnection(Application::loopManager()->dispatch(),
 																	std::move(comingConnection),
 																	m_events, m_config);
-		std::shared_ptr<Channel> channel = connection->getIOChannel();	// connection ptr will not expire here
+		// fixme connection can be nullptr
+		std::shared_ptr<Channel> channel = connection->getIOChannel();
 		LOG_TRACE("New connection on Socket {}", m_socket->fd());
 		m_events.onConnected(channel);
 	}
@@ -79,13 +84,8 @@ std::shared_ptr<Acceptor> Acceptor::makeAcceptor(eventloop::EventLoop *loop, con
 {
 	try
 	{
-		auto acceptor = make_shared<Acceptor>(loop, make_unique<socket::Socket>(listenAddr));
-		auto event = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor, acceptor->m_socket->fd());
-		acceptor->m_events = eventsPrototype;
-		acceptor->m_epollEvent = std::move(event);
-		acceptor->m_state = socket::TcpState::Closed;
-		acceptor->m_config = config;
-
+		auto acceptor = make_shared<Acceptor>(loop, make_unique<socket::Socket>(listenAddr), eventsPrototype, config);
+		acceptor->m_epollEvent = make_unique<epoll::EpollEvent>(loop->getPoll(), acceptor, acceptor->m_socket->fd());
 		return acceptor;
 	}
 	catch (error::SocketException &se)
