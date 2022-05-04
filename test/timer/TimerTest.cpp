@@ -131,8 +131,12 @@ TEST_F(TimerTest, RepeatedlyTimerTest)
 		netpp::time::Timer timer(&eventLoop);
 
 		timer.setInterval(10);
-		timer.setSingleShot(true);
-		timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; if (timerTriggerCount > 5) throw std::runtime_error("quit"); });
+		timer.setSingleShot(false);
+		timer.setOnTimeout([&timerTriggerCount]{
+			++timerTriggerCount;
+			if (timerTriggerCount > 5)
+				throw std::runtime_error("quit");
+		});
 		timer.start();
 		eventLoop.run();
 	} catch (const std::runtime_error &e) {

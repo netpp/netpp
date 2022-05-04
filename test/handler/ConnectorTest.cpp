@@ -117,7 +117,7 @@ TEST_F(ConnectorTest, ConnectRequestTest)
 	connector->m_epollEvent = std::move(epEv);
 
 	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(1);
-	EXPECT_CALL(*mockEpEv, active(netpp::internal::epoll::EpollEv::OUT)).Times(1);
+	EXPECT_CALL(*mockEpEv, activeEvents(netpp::internal::epoll::EpollEv::OUT)).Times(1);
 	EXPECT_CALL(*mockSocket, connect);
 	connector->connect();
 	EXPECT_EQ(connector->m_state, netpp::internal::socket::TcpState::Connecting);
@@ -125,9 +125,11 @@ TEST_F(ConnectorTest, ConnectRequestTest)
 
 TEST_F(ConnectorTest, StopConnectTest)
 {
-	MockEventLoop loop;
+	netpp::Application app;
+	app.m_loopManager->m_mainEventLoop = std::make_unique<MockEventLoop>();
+	auto *loop = static_cast<MockEventLoop *>(app.m_loopManager->m_mainEventLoop.get());
 	auto connector = netpp::internal::handlers::Connector::makeConnector(
-			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+			loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
 	);
 	auto socket = std::make_unique<MockSocket>();
 	MockSocket *mockSocket = socket.get();
@@ -136,17 +138,17 @@ TEST_F(ConnectorTest, StopConnectTest)
 	MockEpollEvent *mockEpEv = epEv.get();
 	connector->m_epollEvent = std::move(epEv);
 
-	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(0);
+	EXPECT_CALL(*loop, runInLoop(RunFunctor())).Times(0);
 	connector->stopConnect();	// do nothing
 
-	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(1);
-	EXPECT_CALL(*mockEpEv, active(netpp::internal::epoll::EpollEv::OUT)).Times(1);
+	EXPECT_CALL(*loop, runInLoop(RunFunctor())).Times(1);
+	EXPECT_CALL(*mockEpEv, activeEvents(netpp::internal::epoll::EpollEv::OUT)).Times(1);
 	EXPECT_CALL(*mockSocket, connect);
 	connector->connect();		// connect
 	EXPECT_EQ(connector->m_state, netpp::internal::socket::TcpState::Connecting);
 
-	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(1);
-	EXPECT_CALL(*mockEpEv, active(netpp::internal::epoll::EpollEv::OUT)).Times(1);
+	EXPECT_CALL(*loop, runInLoop(RunFunctor())).Times(1);
+	EXPECT_CALL(*mockEpEv, activeEvents(netpp::internal::epoll::EpollEv::OUT)).Times(1);
 	EXPECT_CALL(*mockSocket, connect);
 	connector->stopConnect();	// not connected yet, stop connect
 	EXPECT_EQ(connector->m_state, netpp::internal::socket::TcpState::Connecting);
@@ -155,19 +157,20 @@ TEST_F(ConnectorTest, StopConnectTest)
 		.WillOnce(testing::Return(netpp::error::SocketError::E_NOERROR));
 	connector->handleOut();
 	EXPECT_EQ(connector->m_state, netpp::internal::socket::TcpState::Established);
-	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(0);
+	EXPECT_CALL(*loop, runInLoop(RunFunctor())).Times(0);
 	connector->stopConnect();	// connected, do nothing
 }
 
 TEST_F(ConnectorTest, ConnectFailedTest)
 {
-	MockEventLoop loop;
+	netpp::Application app;
+	app.m_loopManager->m_mainEventLoop = std::make_unique<MockEventLoop>();
+	auto *loop = static_cast<MockEventLoop *>(app.m_loopManager->m_mainEventLoop.get());
 	auto connector = netpp::internal::handlers::Connector::makeConnector(
-			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+			loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
 	);
-	auto socket = std::make_unique<MockSocket>();
-	MockSocket *mockSocket = socket.get();
-	connector->m_socket = std::move(socket);
+	connector->m_socket = std::make_unique<MockSocket>();
+	auto mockSocket = static_cast<MockSocket *>(connector->m_socket.get());
 
 	EXPECT_CALL(*mockSocket, getError)
 			.WillOnce(testing::Return(netpp::error::SocketError::E_INPROGRESS))
@@ -177,8 +180,8 @@ TEST_F(ConnectorTest, ConnectFailedTest)
 	// connecting
 	connector->handleOut();
 	// retry
-	connector->handleOut();
+	/*connector->handleOut();
 	connector->handleOut();
 	// connect
-	connector->handleOut();
+	connector->handleOut();*/
 }

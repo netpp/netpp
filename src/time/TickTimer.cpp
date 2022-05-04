@@ -2,23 +2,27 @@
 // Created by gaojian on 2022/4/7.
 //
 
+#include <cassert>
 #include "time/TickTimer.h"
 #include "eventloop/EventLoopManager.h"
 #include "time/TimeWheel.h"
 #include "Application.h"
+#include "eventloop/EventLoop.h"
+#include "eventloop/EventLoopData.h"
 
 namespace netpp::time {
 TickTimer::TickTimer(std::weak_ptr<TimeWheel> wheel)
 		: m_wheel{std::move(wheel)}, m_wheelEntry{std::make_shared<WheelEntry>()}, m_running{false}
 {
 	m_wheelEntry->singleShot = true;
-	m_wheelEntry->timeoutTick = 100;
+	m_wheelEntry->timeoutTick = 60;
 	// if not specified wheel, run in main loop
 	if (m_wheel.expired())
 	{
+		assert(Application::instance());
 		auto manager = Application::loopManager();
-		auto mainLoop = dynamic_cast<eventloop::MainEventLoopData *>(manager->getLoopData(manager->mainLoop()));
-		m_wheel = mainLoop->wheel;
+		auto mainLoopData = manager->mainLoop()->loopData();
+		m_wheel = mainLoopData->wheel;
 	}
 }
 

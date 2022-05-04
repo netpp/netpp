@@ -7,16 +7,21 @@
 
 #include <gmock/gmock.h>
 #include "internal/epoll/EpollEvent.h"
+#include "MockEpoll.h"
 
 class MockEpollEvent : public netpp::internal::epoll::EpollEvent {
 public:
-	MockEpollEvent() : EpollEvent(nullptr, std::weak_ptr<netpp::internal::epoll::EventHandler>(), 0) {}
+	MockEpollEvent(std::unique_ptr<MockEpoll> mockEpoll = std::unique_ptr<MockEpoll>(new MockEpoll))
+	: EpollEvent(
+			mockEpoll.get(),
+			std::weak_ptr<netpp::internal::epoll::EventHandler>(),
+			0)
+	{}
+
 	MOCK_METHOD(int, fd, ());
 	MOCK_METHOD(void, disable, ());
-	MOCK_METHOD(void, active, (netpp::internal::epoll::EpollEv));
-	MOCK_METHOD(void, deactivate, (netpp::internal::epoll::EpollEv));
-	MOCK_METHOD(void, active, (std::initializer_list<netpp::internal::epoll::EpollEv>));
-	MOCK_METHOD(void, deactivate, (std::initializer_list<netpp::internal::epoll::EpollEv>));
+	MOCK_METHOD(void, activeEvents, (uint32_t));
+	MOCK_METHOD(void, deactivateEvents, (uint32_t));
 	MOCK_METHOD(void, handleEvents, ());
 	MOCK_METHOD(::epoll_event, watchingEvent, ());
 	MOCK_METHOD(void, setActiveEvents, (uint32_t));

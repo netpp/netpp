@@ -21,7 +21,7 @@ TEST_F(TickTimerTest, SetTimerPropertyTest)
 	auto wheel = std::make_shared<netpp::time::TimeWheel>(&eventLoop, 10, 10);
 	netpp::time::TickTimer timer(wheel);
 
-	EXPECT_EQ(timer.interval(), 1000);
+	EXPECT_EQ(timer.interval(), 60);
 	EXPECT_EQ(timer.singleShot(), true);
 	EXPECT_EQ(timer.running(), false);
 

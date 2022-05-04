@@ -116,7 +116,7 @@ private:
 	 *                      |         (idle)          |    |   (half close timeout)  |
 	 *                      |                         |    |                         |
 	 * * -------> Established ---------->---------- HalfClose ----------->--------- Closed --> *
-	 * (construct)        | |    (active shutdown)    |    |   (write completed)     |
+	 * (construct)        | |    (activeEvents shutdown)    |    |   (write completed)     |
 	 *                    | |                         |    |                         |
 	 *                    | +------------->-----------+    |                         |
 	 *                    |      (pear shutdown)           |                         |

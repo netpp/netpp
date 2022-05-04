@@ -66,64 +66,67 @@ TEST_F(EpollEventTest, ActiveAndDeactiveEvent)
 {
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLERR)))
 		.Times(1);
-	event->active(netpp::internal::epoll::EpollEv::ERR);
+	event->activeEvents(netpp::internal::epoll::EpollEv::ERR);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP)))
 		.Times(1);
-	event->active(netpp::internal::epoll::EpollEv::HUP);
+	event->activeEvents(netpp::internal::epoll::EpollEv::HUP);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN)))
 		.Times(1);
-	event->active(netpp::internal::epoll::EpollEv::IN);
+	event->activeEvents(netpp::internal::epoll::EpollEv::IN);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN | EPOLLOUT)))
 		.Times(1);
-	event->active(netpp::internal::epoll::EpollEv::OUT);
+	event->activeEvents(netpp::internal::epoll::EpollEv::OUT);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN | EPOLLOUT | EPOLLPRI)))
 		.Times(1);
-	event->active(netpp::internal::epoll::EpollEv::PRI);
+	event->activeEvents(netpp::internal::epoll::EpollEv::PRI);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->active(netpp::internal::epoll::EpollEv::RDHUP);
+	event->activeEvents(netpp::internal::epoll::EpollEv::RDHUP);
 
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactivate(netpp::internal::epoll::EpollEv::ERR);
+	event->deactivateEvents(netpp::internal::epoll::EpollEv::ERR);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactivate(netpp::internal::epoll::EpollEv::HUP);
+	event->deactivateEvents(netpp::internal::epoll::EpollEv::HUP);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLOUT | EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactivate(netpp::internal::epoll::EpollEv::IN);
+	event->deactivateEvents(netpp::internal::epoll::EpollEv::IN);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLPRI | EPOLLRDHUP)))
 		.Times(1);
-	event->deactivate(netpp::internal::epoll::EpollEv::OUT);
+	event->deactivateEvents(netpp::internal::epoll::EpollEv::OUT);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLRDHUP)))
 		.Times(1);
-	event->deactivate(netpp::internal::epoll::EpollEv::PRI);
+	event->deactivateEvents(netpp::internal::epoll::EpollEv::PRI);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(0u)))
 		.Times(1);
-	event->deactivate(netpp::internal::epoll::EpollEv::RDHUP);
+	event->deactivateEvents(netpp::internal::epoll::EpollEv::RDHUP);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(0u)))
 		.Times(1);
-	event->deactivate(netpp::internal::epoll::EpollEv::RDHUP);
+	event->deactivateEvents(netpp::internal::epoll::EpollEv::RDHUP);
 }
 
 TEST_F(EpollEventTest, RemoveEvent)
 {
-	// not add to epoll by default
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
-		.Times(0);
-	event->disable();
+			.Times(0);
+	{
+		auto epoll = std::make_unique<netpp::internal::epoll::Epoll>();
+		auto handler = std::make_shared<Handler>();
+		auto epollEvent = std::make_unique<netpp::internal::epoll::EpollEvent>(epoll.get(), handler, 0);
+	}
 
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLERR)))
-		.Times(1);
-	event->active(netpp::internal::epoll::EpollEv::ERR);
+			.Times(1);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
-		.Times(1);
-	event->disable();
-
-	// remove again
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
-		.Times(0);
-	event->disable();
+			.Times(1);
+	{
+		auto epoll = std::make_unique<netpp::internal::epoll::Epoll>();
+		auto handler = std::make_shared<Handler>();
+		auto epollEvent = std::make_unique<netpp::internal::epoll::EpollEvent>(epoll.get(), handler, 0);
+		auto event = epollEvent.get();
+		event->activeEvents(netpp::internal::epoll::EpollEv::ERR);
+	}
 }
 
 #pragma GCC diagnostic push
@@ -140,7 +143,7 @@ TEST_F(EpollEventTest, PollEvent)
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLPRI), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLHUP), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)))
 		.WillOnce(testing::DoAll(testing::Assign(&ev[0].events, EPOLLIN | EPOLLOUT), testing::SetArrayArgument<1>(ev, ev + 1), testing::Return(1)));
-	event->active(netpp::internal::epoll::EpollEv::ERR);
+	event->activeEvents(netpp::internal::epoll::EpollEv::ERR);
 	Handler &h = *handler;
 
 	EXPECT_CALL(h, handleErr).Times(1);

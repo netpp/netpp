@@ -39,25 +39,24 @@ public:
 	 */
 	std::vector<internal::epoll::EpollEvent *>::size_type poll(std::vector<internal::epoll::EpollEvent *> &channels);
 
+	void addEvent(EpollEvent *eventAdapter) const;
 	/**
 	 * @brief Add or update epoll watching events
 	 * 
 	 * @param channelEvent	Pending update event
 	 */
-	void updateEvent(EpollEvent *channelEvent);
+	void updateEvent(EpollEvent *eventAdapter) const;
 
 	/**
 	 * @brief Remove event from epoll
 	 * 
 	 * @param channelEvent 
 	 */
-	void removeEvent(EpollEvent *channelEvent);
+	void removeEvent(EpollEvent *eventAdapter) const;
 
 private:
 	int m_epollFd;
 	std::vector<::epoll_event> m_activeEvents;
-	// TODO: remove this for better performance
-	std::map<int, EpollEvent *> _events;
 };
 }
 

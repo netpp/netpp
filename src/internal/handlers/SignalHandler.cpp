@@ -76,7 +76,7 @@ std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(eventloop::Event
 			signalHandler->m_signalFd
 	);
 	loop->addEventHandlerToLoop(signalHandler);
-	signalHandler->m_epollEvent->active(epoll::EpollEv::IN);
+	signalHandler->m_epollEvent->activeEvents(epoll::EpollEv::IN);
 	LOG_TRACE("signal handler ready, fd {}", signal::SignalWatcher::signalFd);
 	return signalHandler;
 }

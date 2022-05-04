@@ -19,22 +19,23 @@ class EventHandler;
  * @brief Supported epoll events
  * 
  */
-enum class EpollEv {
+enum EpollEv {
+	NOEV = 0,
 	/** @brief EPOLLIN event */
-	IN		= 0x01,
+	IN		= EPOLLIN,
 	/** @brief EPOLLOUT event */
-	OUT		= 0x02,
+	OUT		= EPOLLOUT,
 	/** @brief EPOLLRDHUP event */
-	RDHUP	= 0x04,
+	RDHUP	= EPOLLRDHUP,
 	/**
 	 * @brief EPOLLPRI event
 	 * @todo out-of-band data are not handled
 	 * */
-	PRI		= 0x08,
+	PRI		= EPOLLPRI,
 	/** @brief EPOLLERR event */
-	ERR		= 0x10,
+	ERR		= EPOLLERR,
 	/** @brief EPOLLHUP event */
-	HUP		= 0x20
+	HUP		= EPOLLHUP
 };
 
 /**
@@ -44,43 +45,27 @@ class EpollEvent {
 	friend class Epoll;
 public:
 	EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd);
-	~EpollEvent() = default;
+	~EpollEvent();
 
 	/**
 	 * @brief Get watching fd of this event
 	 * @return file descriptor
 	 */
 	[[nodiscard]] int fd() const { return _watchingFd; }
-	
-	/**
-	 * @brief Remove epoll_event from epoll
-	 * @note Must call this to remove event from epoll before destruction
-	 */
-	void disable();
 
 	/**
 	 * @brief Active watch event
 	 * @param event Interested event
 	 */
-	void active(EpollEv event) { active({event}); }
+	void activeEvents(uint32_t event);
 
 	/**
 	 * @brief Deactivate watch event
 	 * @param event Event to be deactivated
 	 */
-	void deactivate(EpollEv event) { deactivate({event}); }
+	void deactivateEvents(uint32_t event);
 
-	/**
-	 * @brief Active watch serial event
-	 * @param events Interested events
-	 * @todo use | operator to improve performance
-	 */
-	void active(std::initializer_list<EpollEv> events);
-	/**
-	 * @brief Deactivate watch serial event
-	 * @param events Events to be deactivated
-	 */
-	void deactivate(std::initializer_list<EpollEv> events);
+	void setEvents(uint32_t event);
 
 	/**
 	 * @brief Called when interested event happened, dispatch event
@@ -90,23 +75,23 @@ public:
 // for Epoll
 private:
 	/**
-	 * @brief Return current active epoll events
+	 * @brief Return current activeEvents epoll events
 	 */
 	[[nodiscard]] inline ::epoll_event watchingEvent() const { return m_watchingEvents; }
 
 	/**
-	 * @brief Set active events, used by poller
+	 * @brief Set activeEvents events, used by poller
 	 * 
-	 * @param events active events
+	 * @param events activeEvents events
 	 */
-	void setActiveEvents(uint32_t events) { activeEvents = events; }
+	void setActiveEvents(uint32_t events) { m_activeEvents = events; }
 
 private:
 	Epoll *_poll;
 	std::weak_ptr<EventHandler> _eventHandler;
 	int _watchingFd;
 	::epoll_event m_watchingEvents;
-	uint32_t activeEvents;
+	uint32_t m_activeEvents;
 };
 }
 

@@ -6,8 +6,8 @@
 #include "internal/epoll/EpollEvent.h"
 #include "internal/support/Log.h"
 #include "internal/epoll/Epoll.h"
-#include "Application.h"
 #include "internal/handlers/RunInLoopHandler.h"
+#include "eventloop/EventLoopData.h"
 
 namespace {
 thread_local netpp::eventloop::EventLoop *thisEventLoopOnThread = nullptr;
@@ -16,7 +16,8 @@ thread_local netpp::eventloop::EventLoop *thisEventLoopOnThread = nullptr;
 namespace netpp::eventloop {
 EventLoop::EventLoop()
 	: m_loopRunning{false}, m_poll{std::make_unique<internal::epoll::Epoll>()}
-{}
+{
+}
 
 EventLoop::~EventLoop() = default;
 
@@ -75,8 +76,10 @@ EventLoop *EventLoop::thisLoop()
 
 void EventLoop::runInLoop(std::function<void()> task)
 {
-	auto loopData = Application::loopManager()->getLoopData(this);
-	if (loopData)
-		loopData->runInLoopHandler->addPendingFunction(std::move(task));
+	if (m_loopData)
+	{
+		if (m_loopData->runInLoopHandler)
+			m_loopData->runInLoopHandler->addPendingFunction(std::move(task));
+	}
 }
 }

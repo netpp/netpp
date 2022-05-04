@@ -37,7 +37,7 @@ set(netpp_source
         src/time/Timer.cpp
         src/channel/Channel.cpp src/channel/TcpChannel.cpp
         src/Address.cpp src/ByteArray.cpp src/channel/Channel.cpp src/eventloop/EventLoop.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp include/support/PooledTask.hpp
-        src/uri/Uri.cpp src/Application.cpp include/Application.h src/eventloop/EventLoopManager.cpp include/eventloop/EventLoopManager.h src/eventloop/EventLoopData.cpp include/eventloop/EventLoopData.h src/time/TickTimer.cpp include/time/TickTimer.h include/time/TimerType.h)
+        src/uri/Uri.cpp src/Application.cpp include/Application.h src/eventloop/EventLoopManager.cpp include/eventloop/EventLoopManager.h src/eventloop/EventLoopData.cpp include/eventloop/EventLoopData.h src/time/TickTimer.cpp include/time/TickTimer.h include/time/TimerType.h src/eventloop/EventLoopFactory.cpp include/eventloop/EventLoopFactory.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 

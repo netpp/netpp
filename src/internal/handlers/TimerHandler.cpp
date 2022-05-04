@@ -40,10 +40,9 @@ void TimerHandler::remove()
 {
 	auto timer = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([timer] {
-										  timer->m_epollEvent->disable();
-										  timer->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(timer);
-									  }
-	);
+		timer->m_epollEvent->setEvents(epoll::NOEV);
+		timer->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(timer);
+	});
 }
 
 void TimerHandler::stopTimer() const
@@ -91,7 +90,7 @@ std::shared_ptr<TimerHandler> TimerHandler::makeTimerHandler(eventloop::EventLoo
 {
 	auto handler = std::make_shared<TimerHandler>(loop);
 	handler->m_epollEvent = make_unique<internal::epoll::EpollEvent>(loop->getPoll(), handler, handler->m_timerFd);
-	handler->m_epollEvent->active(internal::epoll::EpollEv::IN);
+	handler->m_epollEvent->activeEvents(internal::epoll::EpollEv::IN);
 	return handler;
 }
 }

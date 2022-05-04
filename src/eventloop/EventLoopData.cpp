@@ -7,14 +7,8 @@
 
 namespace netpp::eventloop {
 EventLoopData::EventLoopData()
-		: eventLoop{std::make_unique<EventLoop>()}, runInLoopHandler{nullptr}
+		: runInLoopHandler{nullptr}, wheel{nullptr}, signalHandler{nullptr}
 {}
 
 EventLoopData::~EventLoopData() noexcept = default;
-
-MainEventLoopData::MainEventLoopData()
-		: EventLoopData(), wheel{nullptr}, signalHandler{nullptr}
-{}
-
-MainEventLoopData::~MainEventLoopData() noexcept = default;
 }

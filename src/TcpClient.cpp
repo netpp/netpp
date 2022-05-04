@@ -2,6 +2,7 @@
 // Created by gaojian on 2020/7/20.
 //
 
+#include <cassert>
 #include "TcpClient.h"
 #include "internal/handlers/Connector.h"
 #include "internal/handlers/TcpConnection.h"
@@ -13,6 +14,7 @@ namespace netpp {
 TcpClient::TcpClient(Address address)
 	: m_address{std::move(address)}
 {
+	assert(Application::instance());
 	Config config = Application::appConfig();
 	m_config = config.connection;
 	m_eventsPrototype = config.eventHandler;
@@ -25,6 +27,7 @@ TcpClient::~TcpClient()
 
 void TcpClient::connect()
 {
+	assert(Application::instance());
 	auto connector = internal::handlers::Connector::makeConnector(Application::loopManager()->dispatch(), m_address, m_eventsPrototype, m_config);
 	connector->connect();
 }

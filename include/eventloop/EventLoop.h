@@ -16,12 +16,14 @@ class EventHandler;
 class Epoll;
 }
 namespace eventloop {
+struct EventLoopData;
 /**
  * @brief The event loop wait/dispatch/handle events.
  *
  * Event loop runs only in one thread, and a thread can only run one event loop
  */
 class EventLoop {
+	friend class EventLoopFactory;
 public:
 	/**
 	 * @brief Handler type
@@ -73,12 +75,16 @@ public:
 	static EventLoop *thisLoop();
 	void runInLoop(std::function<void()> task);
 
+	const EventLoopData *loopData() const { return m_loopData.get(); }
+
 private:
 	std::atomic_flag m_loopRunning;
 	std::unique_ptr<internal::epoll::Epoll> m_poll;
 
 	std::mutex m_handlersMutex;    // guard m_handlers
 	std::unordered_set<EventLoop::Handler> m_handlers;    // epoll events handlers
+
+	std::unique_ptr<EventLoopData> m_loopData;
 };
 }
 }

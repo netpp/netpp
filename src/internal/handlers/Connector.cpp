@@ -1,3 +1,4 @@
+#include <cassert>
 #include "internal/handlers/Connector.h"
 #include "internal/support/Log.h"
 #include "internal/handlers/TcpConnection.h"
@@ -32,7 +33,7 @@ void Connector::connect()
 			{
 				connector->_loopThisHandlerLiveIn->addEventHandlerToLoop(connector);
 				// connect may success immediately, manually enable read
-				connector->m_epollEvent->active(epoll::EpollEv::OUT);
+				connector->m_epollEvent->activeEvents(epoll::EpollEv::OUT);
 				connector->m_socket->connect();
 				connector->m_state = socket::TcpState::Connecting;
 			}
@@ -61,7 +62,7 @@ void Connector::stopConnect()
 				connector->m_retryTimer->stop();
 				connector->m_retryTimer = nullptr;
 			}
-			connector->m_epollEvent->disable();
+			connector->m_epollEvent->setEvents(epoll::NOEV);
 			connector->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(connector);
 			connector->m_state = socket::TcpState::Closed;
 		}
@@ -82,7 +83,7 @@ void Connector::handleOut()
 			m_retryTimer->setOnTimeout([this]{
 				auto oldSocket = std::move(m_socket);
 				m_socket = make_unique<socket::Socket>(oldSocket->getAddr());
-				m_epollEvent->disable();
+				m_epollEvent->setEvents(epoll::NOEV);
 				m_epollEvent = make_unique<epoll::EpollEvent>(_loopThisHandlerLiveIn->getPoll(), weak_from_this(), m_socket->fd());
 				connect();
 			});
@@ -104,8 +105,9 @@ void Connector::handleOut()
 			m_retryTimer = nullptr;
 		}
 		// clean up this first
-		m_epollEvent->disable();
+		m_epollEvent->setEvents(epoll::NOEV);
 
+		assert(Application::instance());
 		auto connection = TcpConnection::makeTcpConnection(Application::loopManager()->dispatch(),
 																   std::move(m_socket),
 																   m_events, m_config);
@@ -150,7 +152,7 @@ std::shared_ptr<Connector> Connector::makeConnector(eventloop::EventLoop *loop, 
 
 void Connector::reconnect()
 {
-	m_epollEvent->disable();
+	m_epollEvent->setEvents(epoll::NOEV);
 	time::TimerInterval currentInterval = m_retryTimer->interval();
 	if (currentInterval < 4000)
 		m_retryTimer->setInterval(currentInterval * 2);

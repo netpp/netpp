@@ -35,7 +35,7 @@ std::vector<internal::epoll::EpollEvent *>::size_type Epoll::poll(std::vector<in
 	// if event vector is full, expand it, limit vector's max size is less than INT_MAX
 	if ((nums == currentVectorSize) && ((currentVectorSize * 2) < INT_MAX))
 	{
-		LOG_INFO("active events array resize to {}", m_activeEvents.size() * 2);
+		LOG_INFO("activeEvents events array resize to {}", m_activeEvents.size() * 2);
 		m_activeEvents.resize(m_activeEvents.size() * 2);
 		channels.resize(m_activeEvents.size() * 2);
 	}
@@ -51,31 +51,29 @@ std::vector<internal::epoll::EpollEvent *>::size_type Epoll::poll(std::vector<in
 	return active;
 }
 
-void Epoll::updateEvent(EpollEvent *channelEvent)
+void Epoll::addEvent(EpollEvent *eventAdapter) const
 {
 	try
 	{
-		int channelFd = channelEvent->fd();
-		::epoll_event event = channelEvent->watchingEvent();
-		int op;
-		auto evIt = _events.find(channelFd);
-		if (evIt == _events.end())		// add channel
-		{
-			LOG_TRACE("add channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
-			_events.insert({channelFd, channelEvent});
-			op = EPOLL_CTL_ADD;
-		}
-		else	// update channel
-		{
-			if (evIt->second != channelEvent)
-			{
-				LOG_WARN("Channel for fd {} is changed", channelFd);
-				_events.insert_or_assign(channelFd, channelEvent);
-			}
-			LOG_TRACE("update channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
-			op = EPOLL_CTL_MOD;
-		}
-		stub::epoll_ctl(m_epollFd, op, channelFd, &event);
+		LOG_TRACE("add channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
+		int channelFd = eventAdapter->fd();
+		::epoll_event event = eventAdapter->watchingEvent();
+		stub::epoll_ctl(m_epollFd, EPOLL_CTL_ADD, channelFd, &event);
+	}
+	catch (error::ResourceLimitException &rle)
+	{
+		LOG_ERROR("Exception while add events");
+	}
+}
+
+void Epoll::updateEvent(EpollEvent *eventAdapter) const
+{
+	try
+	{
+		int channelFd = eventAdapter->fd();
+		::epoll_event event = eventAdapter->watchingEvent();
+		LOG_TRACE("update channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
+		stub::epoll_ctl(m_epollFd, EPOLL_CTL_MOD, channelFd, &event);
 	}
 	catch (error::ResourceLimitException &rle)
 	{
@@ -83,23 +81,13 @@ void Epoll::updateEvent(EpollEvent *channelEvent)
 	}
 }
 
-void Epoll::removeEvent(EpollEvent *channelEvent)
+void Epoll::removeEvent(EpollEvent *eventAdapter) const
 {
 	try
 	{
-		int channelFd = channelEvent->fd();
-		auto evIt = _events.find(channelFd);
-		if (evIt != _events.end())		// add channel
-		{
-			LOG_TRACE("remove channel id:{}", channelFd);
-			_events.erase(evIt);
-			if (stub::epoll_ctl(m_epollFd, EPOLL_CTL_DEL, channelFd, nullptr) != 0)
-				LOG_ERROR("Failed to remove channel: {} id:{}", std::strerror(errno), channelFd);
-		}
-		else
-		{
-			LOG_INFO("No such a channel {}, failed to remove", channelFd);
-		}
+		int channelFd = eventAdapter->fd();
+		if (stub::epoll_ctl(m_epollFd, EPOLL_CTL_DEL, channelFd, nullptr) != 0)
+			LOG_ERROR("Failed to remove channel: {} id:{}", std::strerror(errno), channelFd);
 	}
 	catch (error::ResourceLimitException &rle)
 	{

@@ -3,11 +3,13 @@
 #include "internal/support/Log.h"
 #include <mutex>
 #include <cstring>
+#include <cassert>
 #include "Events.h"
 #include "signal/Signals.h"
 #include "eventloop/EventLoopManager.h"
 #include "Application.h"
 #include "eventloop/EventLoop.h"
+#include "eventloop/EventLoopData.h"
 extern "C" {
 #include <unistd.h>
 #include <csignal>
@@ -22,9 +24,10 @@ void SignalWatcher::watch(Signals signal)
 {
 	std::lock_guard lck(m_signalMutex);
 	::sigaddset(m_watchingSignals, toLinuxSignal(signal));
+	assert(Application::instance());
 	auto manager = Application::loopManager();
 	auto mainLoop = manager->mainLoop();
-	auto loopData = dynamic_cast<eventloop::MainEventLoopData *>(manager->getLoopData(mainLoop));
+	auto loopData = mainLoop->loopData();
 	auto handler = loopData->signalHandler->weak_from_this();
 	mainLoop->runInLoop([signal, handler]{
 		auto signalHandler = handler.lock();
@@ -37,9 +40,10 @@ void SignalWatcher::restore(Signals signal)
 {
 	std::lock_guard lck(m_signalMutex);
 	::sigdelset(m_watchingSignals, toLinuxSignal(signal));
+	assert(Application::instance());
 	auto manager = Application::loopManager();
 	auto mainLoop = manager->mainLoop();
-	auto loopData = dynamic_cast<eventloop::MainEventLoopData *>(manager->getLoopData(mainLoop));
+	auto loopData = mainLoop->loopData();
 	auto handler = loopData->signalHandler->weak_from_this();
 	mainLoop->runInLoop([signal, handler]{
 		auto signalHandler = handler.lock();

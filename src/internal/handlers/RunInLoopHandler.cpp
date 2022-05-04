@@ -17,7 +17,6 @@ RunInLoopHandler::~RunInLoopHandler()
 {
 	// no need to consider thread safety here, 
 	// this handler will always live with event loop
-	m_epollEvent->disable();
 	if (m_wakeUpFd != -1)
 		stub::close(m_wakeUpFd);
 }
@@ -59,7 +58,7 @@ std::shared_ptr<RunInLoopHandler> RunInLoopHandler::makeRunInLoopHandler(eventlo
 	auto handler = std::make_shared<RunInLoopHandler>(loop);
 	handler->m_epollEvent = std::make_unique<epoll::EpollEvent>(loop->getPoll(), handler, handler->m_wakeUpFd);
 	loop->addEventHandlerToLoop(handler);
-	handler->m_epollEvent->active(epoll::EpollEv::IN);
+	handler->m_epollEvent->activeEvents(epoll::EpollEv::IN);
 	return handler;
 }
 }

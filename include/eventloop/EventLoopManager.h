@@ -11,7 +11,6 @@
 #include <thread>
 #include <memory>
 #include <unordered_map>
-#include "eventloop/EventLoopData.h"
 
 namespace netpp {
 struct Config;
@@ -62,24 +61,13 @@ public:
 	 */
 	void startLoop();
 
-	/**
-	 * @brief Get property of given loop
-	 * @param loop target event loop
-	 * @return loop own data
-	 */
-	EventLoopData *getLoopData(EventLoop *loop) const;
-
 private:
-	static void setUpEventLoop(EventLoopData *loopData, const Config &config, bool mainEventLoop);
-
-	std::unique_ptr<EventLoopData> m_mainEventLoop;
-	using EventLoopVector = std::vector<std::unique_ptr<EventLoopData>>;
+	std::unique_ptr<EventLoop> m_mainEventLoop;
+	using EventLoopVector = std::vector<std::unique_ptr<EventLoop>>;
 	mutable std::mutex m_indexMutex;
 	EventLoopVector::size_type m_dispatchIndex;    // guarded by m_indexMutex
 	EventLoopVector m_loops;
 	std::vector<std::thread> m_loopsThreads;
-
-	std::unordered_map<EventLoop *, EventLoopData *> m_loopData;
 };
 }
 }

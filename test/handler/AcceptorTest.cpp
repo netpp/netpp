@@ -11,6 +11,8 @@
 #include "error/Exception.h"
 #include "Address.h"
 #include "internal/socket/SocketEnums.h"
+#include "Application.h"
+
 #undef private
 #undef protected
 
@@ -103,7 +105,7 @@ TEST_F(AcceptorTest, ListenTest)
 
 	EXPECT_CALL(loop, runInLoop(RunFunctor())).Times(1);
 	EXPECT_CALL(loop, addEventHandlerToLoop).Times(1);
-	EXPECT_CALL(*mockEpEv, active(netpp::internal::epoll::EpollEv::OUT)).Times(1);
+	EXPECT_CALL(*mockEpEv, activeEvents(netpp::internal::epoll::EpollEv::OUT)).Times(1);
 	EXPECT_CALL(*mockSocket, listen).Times(1);
 	acceptor->listen();
 	EXPECT_EQ(acceptor->m_state, netpp::internal::socket::TcpState::Listen);
@@ -130,9 +132,11 @@ TEST_F(AcceptorTest, StopListenTest)
 
 TEST_F(AcceptorTest, AcceptConnectionTest)
 {
-	MockEventLoop loop;
+	netpp::Application app;
+	app.m_loopManager->m_mainEventLoop = std::make_unique<MockEventLoop>();
+	auto loop = app.m_loopManager->m_mainEventLoop.get();
 	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+			loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
 	);
 	auto socket = std::make_unique<MockSocket>();
 	MockSocket *mockSocket = socket.get();
@@ -145,9 +149,11 @@ TEST_F(AcceptorTest, AcceptConnectionTest)
 
 TEST_F(AcceptorTest, AbortConnectionTest)
 {
-	MockEventLoop loop;
+	netpp::Application app;
+	app.m_loopManager->m_mainEventLoop = std::make_unique<MockEventLoop>();
+	auto loop = app.m_loopManager->m_mainEventLoop.get();
 	auto acceptor = netpp::internal::handlers::Acceptor::makeAcceptor(
-			&loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
+			loop, netpp::Address(), netpp::Events(std::make_shared<EmptyHandler>()), netpp::ConnectionConfig()
 	);
 	auto socket = std::make_unique<MockSocket>();
 	MockSocket *mockSocket = socket.get();

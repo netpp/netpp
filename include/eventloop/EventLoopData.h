@@ -18,20 +18,12 @@ class TimeWheel;
 }
 
 namespace netpp::eventloop {
-class EventLoop;
 struct EventLoopData {
 	EventLoopData();
 
 	virtual ~EventLoopData() noexcept;
 
-	std::unique_ptr<EventLoop> eventLoop;
 	std::shared_ptr<netpp::internal::handlers::RunInLoopHandler> runInLoopHandler;
-};
-
-struct MainEventLoopData : public EventLoopData {
-	MainEventLoopData();
-
-	~MainEventLoopData() noexcept override;
 
 	std::shared_ptr<netpp::time::TimeWheel> wheel;
 	std::shared_ptr<netpp::internal::handlers::SignalHandler> signalHandler;

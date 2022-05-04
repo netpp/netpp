@@ -8,20 +8,17 @@
 #include "internal/handlers/RunInLoopHandler.h"
 #include "internal/handlers/SignalHandler.h"
 #include "time/TimeWheel.h"
+#include "eventloop/EventLoopFactory.h"
 
 namespace netpp::eventloop {
 EventLoopManager::EventLoopManager(const Config &config)
 		: m_dispatchIndex{0}
 {
-	m_mainEventLoop = std::make_unique<MainEventLoopData>();
-	m_loopData[m_mainEventLoop->eventLoop.get()] = dynamic_cast<EventLoopData *>(m_mainEventLoop.get());
-	setUpEventLoop(m_mainEventLoop.get(), config, true);
+	m_mainEventLoop = EventLoopFactory::makeEventLoop(true, config.tickTimer.enable, config.enableDnsResolve, config);
 
 	for (unsigned i = 0; i < config.eventLoopNumber - 1; ++i)
 	{
-		auto el = std::make_unique<EventLoopData>();
-		m_loopData[el->eventLoop.get()] = dynamic_cast<EventLoopData *>(el.get());
-		setUpEventLoop(el.get(), config, false);
+		auto el = EventLoopFactory::makeEventLoop(true, false, false, config);
 		m_loops.emplace_back(std::move(el));
 	}
 }
@@ -30,61 +27,36 @@ EventLoop *EventLoopManager::dispatch()
 {
 	// TODO: load balance
 	if (m_loops.empty())
-		return m_mainEventLoop->eventLoop.get();
+		return m_mainEventLoop.get();
 	std::lock_guard lck(m_indexMutex);
 	if (++m_dispatchIndex >= m_loops.size())
 		m_dispatchIndex = 0;
-	return m_loops[m_dispatchIndex]->eventLoop.get();
+	return m_loops[m_dispatchIndex].get();
 }
 
 std::vector<EventLoop *> EventLoopManager::loops() const
 {
 	std::vector<EventLoop *> loop;
 	std::lock_guard lck(m_indexMutex);
-	loop.emplace_back(m_mainEventLoop->eventLoop.get());
+	loop.emplace_back(m_mainEventLoop.get());
 	for (auto &el : m_loops)
-		loop.emplace_back(el->eventLoop.get());
+		loop.emplace_back(el.get());
 	return loop;
 }
 
 EventLoop *EventLoopManager::mainLoop() const
 {
-	return m_mainEventLoop->eventLoop.get();
+	return m_mainEventLoop.get();
 }
 
 void EventLoopManager::startLoop()
 {
 	for (auto &l : m_loops)
 	{
-		std::thread t(&EventLoop::run, l->eventLoop.get());
+		std::thread t(&EventLoop::run, l.get());
 		t.detach();
 		m_loopsThreads.emplace_back(std::move(t));
 	}
-	m_mainEventLoop->eventLoop->run();
-}
-
-EventLoopData *EventLoopManager::getLoopData(EventLoop *loop) const
-{
-	auto it = m_loopData.find(loop);
-	if (it != m_loopData.end())
-		return it->second;
-	return nullptr;
-}
-
-void EventLoopManager::setUpEventLoop(EventLoopData *loopData, const Config &config, bool mainEventLoop)
-{
-	EventLoop *loop = loopData->eventLoop.get();
-	loopData->runInLoopHandler = netpp::internal::handlers::RunInLoopHandler::makeRunInLoopHandler(loop);
-
-	if (mainEventLoop)
-	{
-		auto mainLoop = dynamic_cast<MainEventLoopData *>(loopData);
-		if (config.tickTimer.enable)
-			mainLoop->wheel = std::make_unique<netpp::time::TimeWheel>(loop, config.tickTimer.tickInterval, config.tickTimer.maxLength);
-		if (config.enableDnsResolve)
-		{}
-		if (config.enableHandleSignal)
-			mainLoop->signalHandler = netpp::internal::handlers::SignalHandler::makeSignalHandler(loop, config.eventHandler);
-	}
+	m_mainEventLoop->run();
 }
 }

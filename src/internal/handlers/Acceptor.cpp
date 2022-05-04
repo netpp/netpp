@@ -1,6 +1,7 @@
 #include "internal/handlers/Acceptor.h"
 
 #include <utility>
+#include <cassert>
 #include "internal/handlers/TcpConnection.h"
 #include "internal/support/Log.h"
 #include "eventloop/EventLoopManager.h"
@@ -32,7 +33,7 @@ void Acceptor::listen()
 			if (acceptor->m_state == socket::TcpState::Closed)
 			{
 				acceptor->_loopThisHandlerLiveIn->addEventHandlerToLoop(acceptor);
-				acceptor->m_epollEvent->active(epoll::EpollEv::IN);
+				acceptor->m_epollEvent->activeEvents(epoll::EpollEv::IN);
 				acceptor->m_socket->listen();
 				acceptor->m_state = socket::TcpState::Listen;
 			}
@@ -50,7 +51,7 @@ void Acceptor::stop()
 	auto externLife = shared_from_this();
 	_loopThisHandlerLiveIn->runInLoop([externLife]{
 		// fixme close socket
-		externLife->m_epollEvent->disable();
+		externLife->m_epollEvent->setEvents(epoll::NOEV);
 		externLife->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(externLife);
 		externLife->m_state = socket::TcpState::Closed;
 	});
@@ -61,6 +62,7 @@ void Acceptor::handleIn()
 	try
 	{
 		std::unique_ptr<socket::Socket> comingConnection = m_socket->accept();
+		assert(Application::instance());
 		auto connection = TcpConnection::makeTcpConnection(Application::loopManager()->dispatch(),
 																	std::move(comingConnection),
 																	m_events, m_config);

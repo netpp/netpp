@@ -40,7 +40,7 @@ TEST_F(HandleEpollEventTest, HandleEventTest)
 
 	testing::InSequence s;
 
-	epollEvent.activeEvents = EPOLLERR | EPOLLRDHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLHUP;
+	epollEvent.m_activeEvents = EPOLLERR | EPOLLRDHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLHUP;
 	EXPECT_CALL(*handler, handleErr);
 	EXPECT_CALL(*handler, handleRdhup);
 	EXPECT_CALL(*handler, handleIn);
@@ -58,35 +58,31 @@ TEST_F(HandleEpollEventTest, ActiveEventTest)
 
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
-	epollEvent.active(EpollEv::IN);
+	epollEvent.activeEvents(EpollEv::IN);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLIN);
 	epollEvent.m_watchingEvents.events = 0;
 
-	epollEvent.active(EpollEv::OUT);
+	epollEvent.activeEvents(EpollEv::OUT);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLOUT);
 	epollEvent.m_watchingEvents.events = 0;
 
-	epollEvent.active(EpollEv::RDHUP);
+	epollEvent.activeEvents(EpollEv::RDHUP);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLRDHUP);
 	epollEvent.m_watchingEvents.events = 0;
 
-	epollEvent.active(EpollEv::PRI);
+	epollEvent.activeEvents(EpollEv::PRI);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLPRI);
 	epollEvent.m_watchingEvents.events = 0;
 
-	epollEvent.active(EpollEv::ERR);
+	epollEvent.activeEvents(EpollEv::ERR);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLERR);
 	epollEvent.m_watchingEvents.events = 0;
 
-	epollEvent.active(EpollEv::HUP);
+	epollEvent.activeEvents(EpollEv::HUP);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLHUP);
 	epollEvent.m_watchingEvents.events = 0;
 
-	epollEvent.active({ EpollEv::HUP });
-	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLHUP);
-	epollEvent.m_watchingEvents.events = 0;
-
-	epollEvent.active({ EpollEv::IN, EpollEv::OUT, EpollEv::RDHUP, EpollEv::PRI, EpollEv::ERR, EpollEv::HUP});
+	epollEvent.activeEvents(EpollEv::IN | EpollEv::OUT | EpollEv::RDHUP | EpollEv::PRI | EpollEv::ERR | EpollEv::HUP);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLPRI | EPOLLERR | EPOLLHUP);
 	epollEvent.m_watchingEvents.events = 0;
 }
@@ -99,35 +95,35 @@ TEST_F(HandleEpollEventTest, DeactiveEventTest)
 
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
-	epollEvent.deactivate(EpollEv::IN);
+	epollEvent.deactivateEvents(EpollEv::IN);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
-	epollEvent.deactivate(EpollEv::OUT);
+	epollEvent.deactivateEvents(EpollEv::OUT);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
-	epollEvent.deactivate(EpollEv::RDHUP);
+	epollEvent.deactivateEvents(EpollEv::RDHUP);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
-	epollEvent.deactivate(EpollEv::PRI);
+	epollEvent.deactivateEvents(EpollEv::PRI);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
-	epollEvent.deactivate(EpollEv::ERR);
+	epollEvent.deactivateEvents(EpollEv::ERR);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
-	epollEvent.deactivate(EpollEv::HUP);
+	epollEvent.deactivateEvents(EpollEv::HUP);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 
 	epollEvent.m_watchingEvents.events = EPOLLERR | EPOLLRDHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLHUP;
-	epollEvent.deactivate(EpollEv::ERR);
+	epollEvent.deactivateEvents(EpollEv::ERR);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLRDHUP | EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLHUP);
-	epollEvent.deactivate(EpollEv::RDHUP);
+	epollEvent.deactivateEvents(EpollEv::RDHUP);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLIN | EPOLLOUT | EPOLLPRI | EPOLLHUP);
-	epollEvent.deactivate(EpollEv::IN);
+	epollEvent.deactivateEvents(EpollEv::IN);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLOUT | EPOLLPRI | EPOLLHUP);
-	epollEvent.deactivate(EpollEv::OUT);
+	epollEvent.deactivateEvents(EpollEv::OUT);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLPRI | EPOLLHUP);
-	epollEvent.deactivate(EpollEv::PRI);
+	epollEvent.deactivateEvents(EpollEv::PRI);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, EPOLLHUP);
-	epollEvent.deactivate(EpollEv::HUP);
+	epollEvent.deactivateEvents(EpollEv::HUP);
 	EXPECT_EQ(epollEvent.m_watchingEvents.events, 0);
 }

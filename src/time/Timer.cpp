@@ -2,6 +2,7 @@
 // Created by gaojian on 2020/8/9.
 //
 
+#include <cassert>
 #include "time/Timer.h"
 #include "eventloop/EventLoop.h"
 #include "internal/support/Log.h"
@@ -20,7 +21,10 @@ Timer::Timer(eventloop::EventLoop *loop)
 		loop = eventloop::EventLoop::thisLoop();
 	// timer runs in main loop
 	if (!loop)
+	{
+		assert(Application::instance());
 		loop = Application::loopManager()->mainLoop();
+	}
 	m_handler = internal::handlers::TimerHandler::makeTimerHandler(loop);
 }
 
