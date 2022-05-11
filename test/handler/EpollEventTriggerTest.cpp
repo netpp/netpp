@@ -64,7 +64,7 @@ protected:
 
 TEST_F(EpollEventTest, ActiveAndDeactiveEvent)
 {
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLERR)))
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR)))
 		.Times(1);
 	event->activeEvents(netpp::internal::epoll::EpollEv::ERR);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, EpollEventEq(EPOLLERR | EPOLLHUP)))
@@ -108,25 +108,17 @@ TEST_F(EpollEventTest, ActiveAndDeactiveEvent)
 
 TEST_F(EpollEventTest, RemoveEvent)
 {
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
-			.Times(0);
-	{
-		auto epoll = std::make_unique<netpp::internal::epoll::Epoll>();
-		auto handler = std::make_shared<Handler>();
-		auto epollEvent = std::make_unique<netpp::internal::epoll::EpollEvent>(epoll.get(), handler, 0);
-	}
-
-	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, EpollEventEq(EPOLLERR)))
+	auto epoll = std::make_unique<netpp::internal::epoll::Epoll>();
+	auto handler = std::make_shared<Handler>();
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_ADD, testing::_, testing::_))
+		.Times(1);
+	auto epollEvent = new netpp::internal::epoll::EpollEvent(epoll.get(), handler, 0);
+	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_MOD, testing::_, testing::_))
 			.Times(1);
+	event->activeEvents(netpp::internal::epoll::EpollEv::ERR);
 	EXPECT_CALL(mock, mock_epoll_ctl(testing::_, EPOLL_CTL_DEL, testing::_, testing::_))
-			.Times(1);
-	{
-		auto epoll = std::make_unique<netpp::internal::epoll::Epoll>();
-		auto handler = std::make_shared<Handler>();
-		auto epollEvent = std::make_unique<netpp::internal::epoll::EpollEvent>(epoll.get(), handler, 0);
-		auto event = epollEvent.get();
-		event->activeEvents(netpp::internal::epoll::EpollEv::ERR);
-	}
+		.Times(1);
+	delete epollEvent;
 }
 
 #pragma GCC diagnostic push

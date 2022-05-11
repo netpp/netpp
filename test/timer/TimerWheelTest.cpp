@@ -58,21 +58,21 @@ TEST_F(TimerWheelTest, AddEntryTest)
 		auto entry = std::make_shared<WheelEntry>();
 		entry->timeoutTick = 0;
 		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 1);
+		EXPECT_EQ(entry->wheelIndex, 0);
 		EXPECT_EQ(entry->expire, false);
 	}
 	{
 		auto entry = std::make_shared<WheelEntry>();
 		entry->timeoutTick = 10;
 		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 1);
+		EXPECT_EQ(entry->wheelIndex, 9);
 		EXPECT_EQ(entry->expire, false);
 	}
 	{
 		auto entry = std::make_shared<WheelEntry>();
 		entry->timeoutTick = 11;
 		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 2);
+		EXPECT_EQ(entry->wheelIndex, 9);
 		EXPECT_EQ(entry->expire, false);
 	}
 }
@@ -88,11 +88,10 @@ TEST_F(TimerWheelTest, RemoveEntryTest)
 	entry1->callback = [&]{
 		static int i = 0;
 		++i;
-		if (i > 2)
+		if (i >= 2)
 		{
 			wheel.removeFromWheel(entry1);
 			EXPECT_TRUE(entry1->expire);
-			EXPECT_EQ(wheel.m_buckets[1].size(), 3);
 		}
 	};
 	wheel.addToWheel(entry1);
@@ -129,19 +128,22 @@ TEST_F(TimerWheelTest, RenewEntryTest)
 	EXPECT_EQ(wheel.m_buckets[1].size(), 1);
 
 	entry->timeoutTick = 3;
+	wheel.renew(entry);
 	EXPECT_EQ(entry->wheelIndex, 3);
 	EXPECT_EQ(wheel.m_buckets[1].size(), 0);
 	EXPECT_EQ(wheel.m_buckets[3].size(), 1);
 
 	entry->timeoutTick = 0;
-	EXPECT_EQ(entry->wheelIndex, 1);
-	EXPECT_EQ(wheel.m_buckets[1].size(), 1);
+	wheel.renew(entry);
+	EXPECT_EQ(entry->wheelIndex, 0);
+	EXPECT_EQ(wheel.m_buckets[0].size(), 1);
 	EXPECT_EQ(wheel.m_buckets[3].size(), 0);
 
 	entry->timeoutTick = 10;
-	EXPECT_EQ(entry->wheelIndex, 1);
-	EXPECT_EQ(wheel.m_buckets[1].size(), 1);
-	EXPECT_EQ(wheel.m_buckets[3].size(), 0);
+	wheel.renew(entry);
+	EXPECT_EQ(entry->wheelIndex, 9);
+	EXPECT_EQ(wheel.m_buckets[9].size(), 1);
+	EXPECT_EQ(wheel.m_buckets[0].size(), 0);
 }
 
 TEST_F(TimerWheelTest, TickTest)
@@ -152,6 +154,7 @@ TEST_F(TimerWheelTest, TickTest)
 	int triggerCount = 0;
 	auto entry = std::make_shared<WheelEntry>();
 	entry->timeoutTick = 1;
+	entry->singleShot = false;
 	entry->callback = [&triggerCount]{
 		++triggerCount;
 	};

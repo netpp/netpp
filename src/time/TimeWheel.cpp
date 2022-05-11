@@ -104,7 +104,10 @@ void TimeWheel::tick()
 		std::shared_ptr<WheelEntry> entry = (*it);
 		LOG_INFO("wheel entry time out");
 		if (!entry->expire)
-			entry->callback();
+		{
+			if (entry->callback)
+				entry->callback();
+		}
 		if (entry->expire || entry->singleShot)
 			it = bucket.erase(it);
 		else
