@@ -17,7 +17,7 @@ set(netpp_source
         include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
         include/time/TimeWheel.h
         include/internal/buffer/CowLink.hpp include/internal/buffer/BufferNode.h include/internal/buffer/ChannelBufferConversion.h
-        include/signal/Signals.h include/signal/SignalWatcher.h
+        include/signal/Signals.h
         include/error/Exception.h include/error/SocketError.h
         include/support/ThreadPool.hpp
         include/time/Timer.h
@@ -31,7 +31,7 @@ set(netpp_source
         src/internal/stub/IO.cpp src/internal/stub/Socket.cpp src/internal/stub/Epoll.cpp
         src/time/TimeWheel.cpp
         src/internal/buffer/BufferNode.cpp src/internal/buffer/ChannelBufferConversion.cpp
-        src/signal/Signals.cpp src/signal/SignalWatcher.cpp
+        src/signal/Signals.cpp
         src/error/Exception.cpp src/error/SocketError.cpp
         src/support/ThreadPool.cpp
         src/time/Timer.cpp

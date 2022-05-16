@@ -2,6 +2,7 @@
 #define NETPP_SIGNAL_H
 
 #include <string>
+#include <vector>
 
 #define NETPP_SINGAL(XX) \
 	XX(HUP)		\

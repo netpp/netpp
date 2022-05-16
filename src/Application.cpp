@@ -7,7 +7,7 @@
 #include "eventloop/EventLoop.h"
 #include "internal/support/Log.h"
 #include "eventloop/EventLoopManager.h"
-#include "signal/SignalWatcher.h"
+#include "signal/Signals.h"
 #include <cassert>
 
 namespace {
@@ -22,8 +22,6 @@ Application::Application(Config config)
 	::globalApp = this;
 	if (m_netppConfig.enableLog)
 		internal::initLogger();
-	if (m_netppConfig.enableHandleSignal)
-		signal::SignalWatcher::enableWatchSignal();
 	m_loopManager = std::make_unique<eventloop::EventLoopManager>(m_netppConfig);
 }
 

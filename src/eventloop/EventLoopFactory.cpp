@@ -21,7 +21,7 @@ std::unique_ptr<EventLoop> EventLoopFactory::makeEventLoop(bool enableRunInLoop,
 	if (enableTimeWheel)
 		loop->m_loopData->wheel = std::make_unique<netpp::time::TimeWheel>(loop.get(), config.tickTimer.tickInterval, config.tickTimer.maxLength);
 	if (enableHandleSignal)
-		loop->m_loopData->signalHandler = netpp::internal::handlers::SignalHandler::makeSignalHandler(loop.get(), config.eventHandler);
+		loop->m_loopData->signalHandler = netpp::internal::handlers::SignalHandler::makeSignalHandler(loop.get(), config.eventHandler, config.signal.interestedSignals);
 	return loop;
 }
 }

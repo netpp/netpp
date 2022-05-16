@@ -3,7 +3,6 @@
 #include "internal/epoll/EpollEvent.h"
 #include "signal/Signals.h"
 #include "internal/stub/IO.h"
-#include "signal/SignalWatcher.h"
 #include "internal/support/Log.h"
 extern "C" {
 #include <sys/signalfd.h>
@@ -11,33 +10,26 @@ extern "C" {
 }
 
 namespace netpp::internal::handlers {
-SignalHandler::SignalHandler(eventloop::EventLoop *loop, Events eventsPrototype)
-	: epoll::EventHandler(loop), m_events(std::move(eventsPrototype)), m_watchingSignals{new ::sigset_t}
+SignalHandler::SignalHandler(eventloop::EventLoop *loop, Events eventsPrototype, const std::vector<netpp::signal::Signals> &interestedSignals)
+	: epoll::EventHandler(loop), m_events(std::move(eventsPrototype))
 {
-	::sigemptyset(m_watchingSignals);
-	m_signalFd = ::signalfd(-1, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
+	static std::once_flag setupWatchSignalFlag;
+	::sigset_t blockThreadSignals;
+	::sigemptyset(&blockThreadSignals);
+	// block signals at very beginning, all thread will inherit this mask,
+	// no signal will send to thread create later
+	for (auto &s : interestedSignals)
+		::sigaddset(&blockThreadSignals, toLinuxSignal(s));
+	::pthread_sigmask(SIG_SETMASK, &blockThreadSignals, nullptr);
+	m_signalFd = ::signalfd(-1, &blockThreadSignals, SFD_NONBLOCK | SFD_CLOEXEC);
 }
 
 SignalHandler::~SignalHandler()
 {
 	::close(m_signalFd);
-	::sigemptyset(m_watchingSignals);
-	::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
-	delete m_watchingSignals;
-}
-
-void SignalHandler::startWatchSignal(signal::Signals signal)
-{
-	::sigaddset(m_watchingSignals, toLinuxSignal(signal));
-	::signalfd(m_signalFd, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
-	::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
-}
-
-void SignalHandler::stopWatchSignal(signal::Signals signal)
-{
-	::sigdelset(m_watchingSignals, toLinuxSignal(signal));
-	::signalfd(m_signalFd, m_watchingSignals, SFD_NONBLOCK | SFD_CLOEXEC);
-	::pthread_sigmask(SIG_SETMASK, m_watchingSignals, nullptr);
+	::sigset_t blockThreadSignals;
+	::sigemptyset(&blockThreadSignals);
+	::pthread_sigmask(SIG_SETMASK, &blockThreadSignals, nullptr);
 }
 
 void SignalHandler::handleIn()
@@ -54,11 +46,7 @@ void SignalHandler::handleIn()
 		{
 			int signalNo = static_cast<int>(signals[i].ssi_signo);
 			LOG_TRACE("signal {} occurred", signal::signalAsString(signalNo));
-			// watching this signal
-			if (signal::SignalWatcher::isWatching(signalNo))
-				m_events.onSignal(signal::toNetppSignal(signalNo));// TODO: can pass more signal info to user
-			else
-				LOG_ERROR("not watching signal {}, but signal handler received it", signal::signalAsString(signalNo));
+			m_events.onSignal(signal::toNetppSignal(signalNo));// TODO: can pass more signal info to user
 		}
 	}
 	else
@@ -67,9 +55,9 @@ void SignalHandler::handleIn()
 	}
 }
 
-std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(eventloop::EventLoop *loop, Events eventsPrototype)
+std::shared_ptr<SignalHandler> SignalHandler::makeSignalHandler(eventloop::EventLoop *loop, Events eventsPrototype, const std::vector<netpp::signal::Signals> &interestedSignals)
 {
-	auto signalHandler = std::make_shared<SignalHandler>(loop, std::move(eventsPrototype));
+	auto signalHandler = std::make_shared<SignalHandler>(loop, std::move(eventsPrototype), interestedSignals);
 
 	signalHandler->m_epollEvent = std::make_unique<epoll::EpollEvent>(
 			loop->getPoll(), signalHandler,
