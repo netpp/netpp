@@ -12,6 +12,7 @@ EpollEvent::EpollEvent(Epoll *poll, std::weak_ptr<EventHandler> handler, int fd)
 	: _poll{poll}, _eventHandler{std::move(handler)},
 	  _watchingFd{fd}, m_watchingEvents{0, {this}}, m_activeEvents{0}
 {
+	// TODO: add event when modify, avoid system call
 	_poll->addEvent(this);
 }
 

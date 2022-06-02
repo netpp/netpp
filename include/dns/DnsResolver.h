@@ -19,6 +19,11 @@ class AsyncDnsHandler;
 }
 namespace dns {
 using DnsResolvedCallback = std::function<void(Address)>;
+enum class ResolveResult {
+	E_Timeout,
+	E_DnsResolverMissed,
+	E_NotFound
+};
 class DnsResolver {
 public:
 	DnsResolver();
@@ -27,7 +32,6 @@ public:
 	void resolve(const uri::Uri &uri, const DnsResolvedCallback &callback);
 
 private:
-	std::shared_ptr<internal::handlers::AsyncDnsHandler> m_asyncDnsHandler;
 };
 }
 }

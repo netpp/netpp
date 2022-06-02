@@ -10,11 +10,6 @@ HttpBaseRequest::HttpBaseRequest()
 : m_version{ProtocolVersion::Http2_0}
 {}
 
-void HttpBaseRequest::setHeader(std::map<std::string, std::string> header)
-{
-	m_header = std::move(header);
-}
-
 void HttpBaseRequest::setHeader(std::map<std::string, std::string> &&header)
 {
 	m_header = std::move(header);
@@ -26,31 +21,9 @@ void HttpBaseRequest::addHeader(KnownHeader header, const std::string &value)
 	addRawHeader(std::string(headerString), std::string(value));
 }
 
-void HttpBaseRequest::addHeader(KnownHeader header, std::string &&value)
-{
-	const std::string_view &headerString = getHeaderAsString(header);
-	addRawHeader(std::string(headerString), std::move(value));
-}
-
 void HttpBaseRequest::addRawHeader(const std::string &header, const std::string &value)
 {
-	addRawHeader(std::string(header), std::string(value));
-}
-
-void HttpBaseRequest::addRawHeader(const std::string &header, std::string &&value)
-{
-	addRawHeader(std::string(header), std::move(value));
-}
-
-void HttpBaseRequest::addRawHeader(std::string &&header, const std::string &value)
-{
-	addRawHeader(std::move(header), std::string(value));
-}
-
-void HttpBaseRequest::addRawHeader(std::string &&header, std::string &&value)
-{
-	// add header implement here
-	m_header.emplace(std::move(header), std::move(value));
+	m_header.emplace(header, value);
 }
 
 std::string HttpBaseRequest::getHeader(KnownHeader header) const
@@ -59,11 +32,6 @@ std::string HttpBaseRequest::getHeader(KnownHeader header) const
 }
 
 std::string HttpBaseRequest::getHeader(const std::string &header) const
-{
-	return getHeader(std::string(header));
-}
-
-std::string HttpBaseRequest::getHeader(std::string &&header) const
 {
 	auto it = m_header.find(header);
 	if (it != m_header.end())
@@ -77,11 +45,6 @@ bool HttpBaseRequest::hasHeader(KnownHeader header) const
 }
 
 bool HttpBaseRequest::hasHeader(const std::string &header) const
-{
-	return hasHeader(std::string(header));
-}
-
-bool HttpBaseRequest::hasHeader(std::string &&header) const
 {
 	auto it = m_header.find(header);
 	return it != m_header.end();

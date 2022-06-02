@@ -11,7 +11,7 @@ option(NETPP_EXAMPLE "build examples" ON)
 
 set(netpp_source
         include/internal/epoll/Epoll.h include/internal/epoll/EpollEvent.h include/internal/epoll/EventHandler.h
-        include/internal/handlers/Acceptor.h include/internal/handlers/Connector.h include/internal/handlers/TcpConnection.h include/internal/handlers/TimerHandler.h include/internal/handlers/SignalHandler.h include/internal/handlers/RunInLoopHandler.h
+        include/internal/handlers/Acceptor.h include/internal/handlers/Connector.h include/internal/handlers/TcpConnection.h include/internal/handlers/TimerHandler.h include/internal/handlers/SignalHandler.h include/internal/handlers/RunInLoopHandler.h include/internal/handlers/AsyncDnsHandler.h
         include/support/ThreadSafeQueue.hpp include/internal/support/Log.h
         include/internal/socket/Socket.h include/internal/socket/SocketIO.h
         include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
@@ -25,7 +25,7 @@ set(netpp_source
         include/Address.h include/ByteArray.h include/eventloop/EventLoop.h include/Events.h include/TcpClient.h include/TcpServer.h include/Config.h
         include/uri/Uri.h include/uri/Types.h include/uri/UriException.h include/uri/UriCodec.h
         src/internal/epoll/Epoll.cpp src/internal/epoll/EpollEvent.cpp
-        src/internal/handlers/Acceptor.cpp src/internal/handlers/Connector.cpp src/internal/handlers/TcpConnection.cpp src/internal/handlers/TimerHandler.cpp src/internal/handlers/SignalHandler.cpp src/internal/handlers/RunInLoopHandler.cpp
+        src/internal/handlers/Acceptor.cpp src/internal/handlers/Connector.cpp src/internal/handlers/TcpConnection.cpp src/internal/handlers/TimerHandler.cpp src/internal/handlers/SignalHandler.cpp src/internal/handlers/RunInLoopHandler.cpp src/internal/handlers/AsyncDnsHandler.cpp
         src/internal/support/Log.cpp
         src/internal/socket/Socket.cpp src/internal/socket/SocketIO.cpp
         src/internal/stub/IO.cpp src/internal/stub/Socket.cpp src/internal/stub/Epoll.cpp

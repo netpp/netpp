@@ -27,14 +27,9 @@ public:
 	 */
 	[[nodiscard]] ProtocolVersion httpVersion() const { return m_version; }
 
-	void setHeader(std::map<std::string, std::string> header);
 	void setHeader(std::map<std::string, std::string> &&header);
 	void addHeader(KnownHeader header, const std::string &value);
-	void addHeader(KnownHeader header, std::string &&value);
 	void addRawHeader(const std::string &header, const std::string &value);
-	void addRawHeader(const std::string &header, std::string &&value);
-	void addRawHeader(std::string &&header, const std::string &value);
-	void addRawHeader(std::string &&header, std::string &&value);
 	/**
 	 * @brief Get request headers in key-value
 	 * @return headers
@@ -43,11 +38,9 @@ public:
 
 	std::string getHeader(KnownHeader header) const;
 	std::string getHeader(const std::string &header) const;
-	std::string getHeader(std::string &&header) const;
 
 	bool hasHeader(KnownHeader header) const;
 	bool hasHeader(const std::string &header) const;
-	bool hasHeader(std::string &&header) const;
 
 	void setBody(std::shared_ptr<ByteArray> body);
 	/**

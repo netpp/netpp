@@ -23,11 +23,6 @@ public:
 	 * @param port	The port
 	 */
 	explicit Address(const std::string &ip = "0.0.0.0", unsigned port = 11111);
-	/**
-	 * @brief Create from linux address
-	 * @param address linux address
-	 */
-	explicit Address(std::shared_ptr<::sockaddr_in> address);
 
 	/**
 	 * @brief Get ip address

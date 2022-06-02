@@ -12,9 +12,6 @@ extern "C" {
 using std::string;
 
 namespace netpp {
-	
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
 Address::Address(const std::string &ip, unsigned port)
 	: m_addr{std::make_shared<::sockaddr_in>()}
 {
@@ -26,11 +23,6 @@ Address::Address(const std::string &ip, unsigned port)
 		m_addr->sin_addr.s_addr = ::inet_addr(ip.c_str());
 	m_addr->sin_port = ::htons(port);
 }
-#pragma GCC diagnostic pop
-
-Address::Address(std::shared_ptr<::sockaddr_in> address)
-	: m_addr{std::move(address)}
-{}
 
 std::string Address::ip() const
 {

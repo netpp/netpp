@@ -61,7 +61,7 @@ public:
 
 };
 
-INSTANTIATE_TEST_SUITE_P(ttt,
+INSTANTIATE_TEST_SUITE_P(signal_params,
 						SignalTest,
 						testing::Values(
 								std::tuple<int, netpp::signal::Signals>{SIGINT, netpp::signal::Signals::E_INT},
