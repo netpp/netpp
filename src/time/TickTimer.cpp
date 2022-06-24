@@ -10,7 +10,7 @@
 #include "eventloop/EventLoop.h"
 #include "eventloop/EventLoopData.h"
 
-namespace netpp::time {
+namespace netpp {
 TickTimer::TickTimer(std::weak_ptr<TimeWheel> wheel)
 		: m_wheel{std::move(wheel)}, m_wheelEntry{std::make_shared<WheelEntry>()}, m_running{false}
 {

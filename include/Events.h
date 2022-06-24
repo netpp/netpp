@@ -57,18 +57,6 @@ class ThreadPool;
  */
 class Events final {
 public:
-	/** @brief Callback type when new connecting accepted */
-	using ConnectedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
-	/** @brief Callback type when message received */
-	using MessageReceivedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
-	/** @brief Callback type when write finished */
-	using WriteCompletedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
-	/** @brief Callback type when disconnected */
-	using DisconnectedCallBack = std::function<void(std::shared_ptr<netpp::Channel>)>;
-	/** @brief Callback type when some error occurred */
-	using ErrorCallBack = std::function<void(error::SocketError)>;
-	/** @brief Callback type when signal emits */
-	using SignalCallBack = std::function<void(signal::Signals)>;
 
 private:
 	NETPP_ASSERT_HAS_EVENT_METHOD(Connected, std::shared_ptr<netpp::Channel>)

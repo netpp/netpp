@@ -1,9 +1,8 @@
 #include "support/ThreadPool.hpp"
-#include "internal/support/Log.h"
+#include "support/Log.h"
 #include "support/ThreadSafeQueue.hpp"
 
-namespace netpp::support {
-
+namespace netpp {
 ThreadPool::~ThreadPool()
 {
 	waitTask.notify_all();

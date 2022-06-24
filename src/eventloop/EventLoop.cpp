@@ -3,9 +3,9 @@
 //
 
 #include "eventloop/EventLoop.h"
-#include "internal/epoll/EpollEvent.h"
-#include "internal/support/Log.h"
-#include "internal/epoll/Epoll.h"
+#include "epoll/EpollEventHandler.h"
+#include "support/Log.h"
+#include "epoll/Epoll.h"
 #include "internal/handlers/RunInLoopHandler.h"
 #include "eventloop/EventLoopData.h"
 
@@ -23,32 +23,15 @@ EventLoop::~EventLoop() = default;
 
 void EventLoop::run()
 {
-	try
+	if (m_loopRunning.test_and_set(std::memory_order_consume))
 	{
-		if (m_loopRunning.test_and_set(std::memory_order_consume))
-		{
-			LOG_INFO("Event loop is running in this thread");
-			return;
-		}
-		::thisEventLoopOnThread = this;
-		std::vector<internal::epoll::EpollEvent *> activeChannels{4};
-		while (true)
-		{
-			using ChannelSize = std::vector<internal::epoll::EpollEvent *>::size_type;
-			ChannelSize activeCount = m_poll->poll(activeChannels);
-			for (ChannelSize i = 0; i < activeCount; ++i)
-				activeChannels[i]->handleEvents();
-//			for (auto &c : activeChannels)
-//				c->handleEvents();
-			activeChannels.clear();
-		}
+		LOG_INFO("Event loop is running in this thread");
+		return;
 	}
-	catch (...)
+	::thisEventLoopOnThread = this;
+	while (true)
 	{
-		::thisEventLoopOnThread = nullptr;
-		m_loopRunning.clear(std::memory_order_release);
-		LOG_CRITICAL("Exception from event loop");
-		throw;
+		m_poll->poll();
 	}
 }
 

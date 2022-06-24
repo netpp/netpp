@@ -7,18 +7,11 @@
 
 #include <memory>
 #include <functional>
-#include "TimerType.h"
+#include "support/Types.h"
 
 namespace netpp {
-namespace eventloop {
 class EventLoop;
-}
-namespace internal::handlers {
 class TimerHandler;
-}
-}
-
-namespace netpp::time {
 /**
  * @brief Timer runs in EventLoop, but the ownership belongs to user,
  * the timer never be triggered if user delete the timer.
@@ -34,7 +27,7 @@ public:
 	 * By default nullptr passed, timer will try to find event loop in creating thread,
 	 * if no event loop runs in current thread, then main loop is it.
 	 */
-	explicit Timer(eventloop::EventLoop *loop = nullptr);
+	explicit Timer(EventLoop *loop = nullptr);
 	~Timer();
 
 	/**
@@ -77,7 +70,7 @@ private:
 	std::function<void()> m_callback;
 
 	// event and handler
-	std::shared_ptr<internal::handlers::TimerHandler> m_handler;
+	std::shared_ptr<TimerHandler> m_handler;
 };
 }
 

@@ -2,14 +2,14 @@
 #define NETPP_CONFIG_H
 
 #include "Events.h"
-#include "time/TimerType.h"
+#include "support/Types.h"
 
 namespace netpp {
 struct ConnectionConfig {
 	/** @brief Enable time wheel to close idle connection */
 	bool enableAutoClose;
-	time::TimerInterval idleConnectionTimeout;
-	time::TimerInterval halfCloseConnectionTimeout;
+	TimerInterval idleConnectionTimeout;
+	TimerInterval halfCloseConnectionTimeout;
 	// enable retry connect, max retry count
 };
 
@@ -29,9 +29,9 @@ struct Config {
 		/** @brief Enable TickTimer */
 		bool enable;
 		/** @brief Wheel tick interval, in second */
-		time::TimerInterval tickInterval;
+		TimerInterval tickInterval;
 		/** @brief The size of Wheel */
-		time::TimerInterval maxLength;
+		TimerInterval maxLength;
 	} tickTimer;
 	struct SignalConfig {
 		/** @brief Enable handle signal */

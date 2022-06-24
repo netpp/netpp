@@ -2,9 +2,10 @@
 #define NETPP_EXCEPTION_H
 
 #include <exception>
+#include <string>
+#include "Error.h"
 
-namespace netpp::error {
-enum class SocketError;
+namespace netpp {
 /**
  * @brief The interface of netpp exceptions
  * 
@@ -23,43 +24,16 @@ public:
 };
 
 /**
- * @brief Resources is limited
- * @example
- * - memory not enough
- * - fd limitation
- */
-class ResourceLimitException : public Exception {
-public:
-	/**
-	 * @brief Create new resource exception
-	 * @param errCode error code that indicates limited
-	 */
-	explicit ResourceLimitException(int errCode) noexcept : m_errnoCode{errCode} {}
-	/**
-	 * @brief Exception info
-	 * @return string that tells what's wrong
-	 */
-	[[nodiscard]] const char* what() const noexcept override;
-	/**
-	 * @brief Get as socket error
-	 * @return SocketError
-	 */
-	[[nodiscard]] error::SocketError getSocketErrorCode() const noexcept;
-private:
-	int m_errnoCode;
-};
-
-/**
- * @brief Error happened on socket
+ * @brief The netpp internal exception
  * 
  */
-class SocketException : public Exception {
+class InternalException : public Exception {
 public:
 	/**
 	 * @brief Create new socket exception
 	 * @param errCode error code that indicates socket goes wrong
 	 */
-	explicit SocketException(int errCode) noexcept : m_errnoCode{errCode} {}
+	explicit InternalException(Error errCode) noexcept : m_errCode{errCode} {}
 	/**
 	 * @brief Exception info
 	 * @return string that tells what's wrong
@@ -69,9 +43,25 @@ public:
 	 * @brief Get as socket error
 	 * @return SocketError
 	 */
-	[[nodiscard]] error::SocketError getErrorCode() const noexcept;
+	[[nodiscard]] Error getErrorCode() const noexcept { return m_errCode; }
 private:
-	int m_errnoCode;
+	Error m_errCode;
+};
+
+/**
+ * @brief A single exception type to represent errors in parsing, encoding, and decoding URIs.
+ *
+ */
+class UriException : public Exception {
+public:
+	explicit UriException(std::string msg) : m_msg(std::move(msg))
+	{}
+
+	[[nodiscard]] const char *what() const noexcept override
+	{ return m_msg.c_str(); }
+
+private:
+	std::string m_msg;
 };
 }
 

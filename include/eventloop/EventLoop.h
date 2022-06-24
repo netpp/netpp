@@ -11,12 +11,9 @@
 #include <mutex>
 
 namespace netpp {
-namespace internal::epoll {
-class EventHandler;
-class Epoll;
-}
-namespace eventloop {
 struct EventLoopData;
+class EpollEventHandler;
+class Epoll;
 /**
  * @brief The event loop wait/dispatch/handle events.
  *
@@ -28,7 +25,7 @@ public:
 	/**
 	 * @brief Handler type
 	 */
-	using Handler = std::shared_ptr<internal::epoll::EventHandler>;
+	using Handler = std::shared_ptr<EpollEventHandler>;
 
 	/**
 	 * @brief Default EventLoop, will not create time wheel
@@ -66,7 +63,7 @@ public:
 	void removeEventHandlerFromLoop(const Handler &handler);
 
 	/// @brief Get poller object in this loop
-	internal::epoll::Epoll *getPoll();
+	Epoll *getPoll();
 
 	/**
 	 * @brief Get the event loop running on current thread
@@ -79,14 +76,13 @@ public:
 
 private:
 	std::atomic_flag m_loopRunning;
-	std::unique_ptr<internal::epoll::Epoll> m_poll;
+	std::unique_ptr<Epoll> m_poll;
 
 	std::mutex m_handlersMutex;    // guard m_handlers
 	std::unordered_set<EventLoop::Handler> m_handlers;    // epoll events handlers
 
 	std::unique_ptr<EventLoopData> m_loopData;
 };
-}
 }
 
 #endif //NETPP_EVENTLOOP_H

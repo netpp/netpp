@@ -14,16 +14,10 @@
 
 namespace netpp {
 struct Config;
-namespace internal::handlers {
-class RunInLoopHandler;
-
-class SignalHandler;
-}
-namespace time {
-class TimeWheel;
-}
-namespace eventloop {
 class EventLoop;
+class RunInLoopHandler;
+class SignalHandler;
+class TimeWheel;
 
 /**
  * @brief A singleton managers ever EventLoop. The EventLoopManager will be initialized in Application
@@ -69,7 +63,6 @@ private:
 	EventLoopVector m_loops;
 	std::vector<std::thread> m_loopsThreads;
 };
-}
 }
 
 #endif //NETPP_EVENTLOOPMANAGER_H

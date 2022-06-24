@@ -4,10 +4,10 @@
 #include <unordered_set>
 #include <memory>
 #include "time/Timer.h"
-#include "TimerType.h"
+#include "support/Types.h"
 #include <string>
 
-namespace netpp::time {
+namespace netpp {
 struct WheelEntry {
 private:
 	friend class TimeWheel;
@@ -42,7 +42,7 @@ public:
 	 * @param tickInterval	Wheel rotate interval, by milliseconds
 	 * @param bucketCount	Contains n buckets
 	 */
-	TimeWheel(eventloop::EventLoop *loop, TimerInterval tickInterval, TimerInterval bucketCount);
+	TimeWheel(EventLoop *loop, TimerInterval tickInterval, TimerInterval bucketCount);
 
 	void addToWheel(const std::shared_ptr<WheelEntry> &entry);
 	void removeFromWheel(const std::shared_ptr<WheelEntry> &entry);
@@ -51,7 +51,7 @@ public:
 private:
 	void tick();
 
-	netpp::time::Timer m_tickTimer;
+	Timer m_tickTimer;
 	unsigned m_timeOutBucketIndex;
 
 	std::vector<std::unordered_set<std::shared_ptr<WheelEntry>>> m_buckets;

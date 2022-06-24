@@ -5,7 +5,7 @@
 #include <queue>
 #include <condition_variable>
 
-namespace netpp::support {
+namespace netpp {
 /**
  * @brief The thread safe queue
  * 

@@ -7,9 +7,9 @@
 
 #include <functional>
 #include <memory>
-#include "TimerType.h"
+#include "support/Types.h"
 
-namespace netpp::time {
+namespace netpp {
 struct WheelEntry;
 class TimeWheel;
 /**

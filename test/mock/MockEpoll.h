@@ -7,7 +7,7 @@
 #define NETPP_MOCKEPOLL_H
 
 #include <gmock/gmock.h>
-#include "internal/epoll/Epoll.h"
+#include "epoll/Epoll.h"
 
 class MockEpoll : public netpp::internal::epoll::Epoll {
 public:

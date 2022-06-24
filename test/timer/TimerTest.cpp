@@ -6,7 +6,7 @@
 #include "eventloop/EventLoop.h"
 #include "internal/epoll/EpollEvent.h"
 #include "internal/handlers/RunInLoopHandler.h"
-#include "internal/epoll/Epoll.h"
+#include "epoll/Epoll.h"
 #include "Application.h"
 
 #undef private

@@ -9,7 +9,7 @@
 #include <type_traits>
 #include "PooledTask.hpp"
 
-namespace netpp::support {
+namespace netpp {
 template <typename T>
 class ThreadSafeQueue;
 /**
@@ -17,7 +17,7 @@ class ThreadSafeQueue;
  * 
  */
 class ThreadPool {
-	using TaskType = support::RunnableWrapper;
+	using TaskType = RunnableWrapper;
 public:
 	/**
 	 * @brief Create a thread pool, threads will not be created before start() is called

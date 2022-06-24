@@ -35,7 +35,7 @@
 	XX(PWR)		\
 	XX(SYS)
 
-namespace netpp::signal {
+namespace netpp {
 /**
  * @brief enumerate Signals that can be handled(SIGKILL and SIGSTOP not included),
  * prefer use this than signal number

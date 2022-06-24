@@ -11,7 +11,7 @@
 
 namespace netpp {
 namespace internal::handlers {
-class Connector;
+class SocketConnectorHandler;
 }
 /**
  * @brief The top level tcp client, a client can connection to only one server
@@ -37,7 +37,7 @@ public:
 
 private:
 	Address m_address;
-	std::shared_ptr<internal::handlers::Connector> m_connector;
+	std::shared_ptr<internal::handlers::SocketConnectorHandler> m_connector;
 	ConnectionConfig m_config;
 	Events m_eventsPrototype;
 };

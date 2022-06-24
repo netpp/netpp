@@ -5,9 +5,8 @@
 #include "Application.h"
 #include <utility>
 #include "eventloop/EventLoop.h"
-#include "internal/support/Log.h"
+#include "support/Log.h"
 #include "eventloop/EventLoopManager.h"
-#include "signal/Signals.h"
 #include <cassert>
 
 namespace {
@@ -21,8 +20,8 @@ Application::Application(Config config)
 	assert(!globalApp);
 	::globalApp = this;
 	if (m_netppConfig.enableLog)
-		internal::initLogger();
-	m_loopManager = std::make_unique<eventloop::EventLoopManager>(m_netppConfig);
+		initLogger();
+	m_loopManager = std::make_unique<EventLoopManager>(m_netppConfig);
 }
 
 Application::~Application()
@@ -40,7 +39,7 @@ Application *Application::instance()
 	return ::globalApp;
 }
 
-eventloop::EventLoopManager *Application::loopManager()
+EventLoopManager *Application::loopManager()
 {
 	return ::globalApp->m_loopManager.get();
 }

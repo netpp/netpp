@@ -28,7 +28,7 @@ TcpClient::~TcpClient()
 void TcpClient::connect()
 {
 	assert(Application::instance());
-	auto connector = internal::handlers::Connector::makeConnector(Application::loopManager()->dispatch(), m_address, m_eventsPrototype, m_config);
+	auto connector = internal::handlers::SocketConnectorHandler::makeConnector(Application::loopManager()->dispatch(), m_address, m_eventsPrototype, m_config);
 	connector->connect();
 }
 

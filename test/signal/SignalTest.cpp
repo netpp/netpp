@@ -7,7 +7,7 @@
 #include "../mock/MockSysCallEnvironment.h"
 #include "internal/epoll/EpollEvent.h"
 #include "eventloop/EventLoop.h"
-#include "internal/epoll/Epoll.h"
+#include "epoll/Epoll.h"
 #include "Application.h"
 #undef private
 extern "C" {

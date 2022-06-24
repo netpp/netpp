@@ -8,25 +8,18 @@
 #include <memory>
 
 namespace netpp {
-namespace internal::handlers {
 class RunInLoopHandler;
 class SignalHandler;
-}
-namespace time {
 class TimeWheel;
-}
-}
-
-namespace netpp::eventloop {
 struct EventLoopData {
 	EventLoopData();
 
 	virtual ~EventLoopData() noexcept;
 
-	std::shared_ptr<netpp::internal::handlers::RunInLoopHandler> runInLoopHandler;
+	std::shared_ptr<RunInLoopHandler> runInLoopHandler;
 
-	std::shared_ptr<netpp::time::TimeWheel> wheel;
-	std::shared_ptr<netpp::internal::handlers::SignalHandler> signalHandler;
+	std::shared_ptr<TimeWheel> wheel;
+	std::shared_ptr<SignalHandler> signalHandler;
 };
 }
 

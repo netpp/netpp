@@ -6,9 +6,9 @@
 #define NETPP_APPLICATION_H
 
 #include "Config.h"
-#include "eventloop/EventLoopManager.h"
 
 namespace netpp {
+class EventLoopManager;
 /**
  * @brief An Application take care of global resources in netpp, such as event loops, there should be only on instance of Application.
  */
@@ -27,12 +27,12 @@ public:
 	void exec();
 
 	static Application *instance();
-	static eventloop::EventLoopManager *loopManager();
+	static EventLoopManager *loopManager();
 	static Config appConfig();
 
 private:
 	Config m_netppConfig;
-	std::unique_ptr<eventloop::EventLoopManager> m_loopManager;
+	std::unique_ptr<EventLoopManager> m_loopManager;
 };
 }
 

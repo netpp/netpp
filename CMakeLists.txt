@@ -4,40 +4,45 @@ project(netpp)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror")
 
-option(NETPP_ENABLE_TEST "build test" ON)
-option(NETPP_LOG_SUPPORT "enable log output" ON)
-option(NETPP_HTTP_SUPPORT "enable http support" ON)
+option(NETPP_ENABLE_TEST "build test" OFF)
+option(NETPP_LOG_SUPPORT "enable log output" OFF)
+option(NETPP_HTTP_SUPPORT "enable http support" OFF)
 option(NETPP_EXAMPLE "build examples" ON)
 
 set(netpp_source
-        include/internal/epoll/Epoll.h include/internal/epoll/EpollEvent.h include/internal/epoll/EventHandler.h
-        include/internal/handlers/Acceptor.h include/internal/handlers/Connector.h include/internal/handlers/TcpConnection.h include/internal/handlers/TimerHandler.h include/internal/handlers/SignalHandler.h include/internal/handlers/RunInLoopHandler.h include/internal/handlers/AsyncDnsHandler.h
-        include/support/ThreadSafeQueue.hpp include/internal/support/Log.h
-        include/internal/socket/Socket.h include/internal/socket/SocketIO.h
-        include/internal/stub/IO.h include/internal/stub/Socket.h include/internal/stub/Epoll.h
-        include/time/TimeWheel.h
-        include/internal/buffer/CowLink.hpp include/internal/buffer/BufferNode.h include/internal/buffer/ChannelBufferConversion.h
+        include/buffer/BufferIOConversion.h include/buffer/BufferNode.h include/buffer/ByteArray.h include/buffer/Channel.h include/buffer/ChannelBufferConversion.h include/buffer/CowLink.hpp include/buffer/HttpChannel.h include/buffer/TcpChannel.h
+        include/error/Error.h include/error/Exception.h
+        include/eventloop/EventLoop.h include/eventloop/EventLoopData.h include/eventloop/EventLoopFactory.h include/eventloop/EventLoopManager.h
+        include/epoll/Epoll.h include/epoll/EpollEventHandler.h
+        include/epoll/handlers/SocketAcceptorHandler.h include/epoll/handlers/SocketConnectorHandler.h include/epoll/handlers/SocketConnectionHandler.h include/epoll/handlers/TimerHandler.h include/epoll/handlers/SignalHandler.h include/epoll/handlers/RunInLoopHandler.h
+        include/iodevice/IODevice.h include/iodevice/SocketDevice.h include/iodevice/TcpSocket.h include/iodevice/UdpSocket.h
+        include/location/uri/Uri.h include/location/uri/UriCodec.h
+        include/location/Address.h include/location/DnsResolver.h
         include/signal/Signals.h
-        include/error/Exception.h include/error/SocketError.h
-        include/support/ThreadPool.hpp
-        include/time/Timer.h
-        include/channel/Channel.h include/channel/TcpChannel.h
-        include/Address.h include/ByteArray.h include/eventloop/EventLoop.h include/Events.h include/TcpClient.h include/TcpServer.h include/Config.h
-        include/uri/Uri.h include/uri/Types.h include/uri/UriException.h include/uri/UriCodec.h
-        src/internal/epoll/Epoll.cpp src/internal/epoll/EpollEvent.cpp
-        src/internal/handlers/Acceptor.cpp src/internal/handlers/Connector.cpp src/internal/handlers/TcpConnection.cpp src/internal/handlers/TimerHandler.cpp src/internal/handlers/SignalHandler.cpp src/internal/handlers/RunInLoopHandler.cpp src/internal/handlers/AsyncDnsHandler.cpp
-        src/internal/support/Log.cpp
-        src/internal/socket/Socket.cpp src/internal/socket/SocketIO.cpp
-        src/internal/stub/IO.cpp src/internal/stub/Socket.cpp src/internal/stub/Epoll.cpp
-        src/time/TimeWheel.cpp
-        src/internal/buffer/BufferNode.cpp src/internal/buffer/ChannelBufferConversion.cpp
+        include/support/ThreadSafeQueue.hpp include/support/Log.h include/support/ThreadPool.hpp include/support/PooledTask.hpp include/support/Util.h include/support/Types.h
+        include/time/Timer.h include/time/TimeWheel.h include/time/TickTimer.h
+        include/Application.h
+        include/Config.h
+        include/Events.h
+        include/TcpClient.h
+        include/TcpServer.h
+
+        src/buffer/BufferIOConversion.cpp src/buffer/BufferNode.cpp src/buffer/ByteArray.cpp src/buffer/Channel.cpp src/buffer/ChannelBufferConversion.cpp src/buffer/HttpChannel.cpp src/buffer/TcpChannel.cpp
+        src/error/Error.cpp src/error/Exception.cpp
+        src/eventloop/EventLoop.cpp src/eventloop/EventLoopData.cpp src/eventloop/EventLoopFactory.cpp src/eventloop/EventLoopManager.cpp
+        src/epoll/Epoll.cpp src/epoll/EpollEventHandler.cpp
+        src/epoll/handlers/SocketAcceptorHandler.cpp src/epoll/handlers/SocketConnectorHandler.cpp src/epoll/handlers/SocketConnectionHandler.cpp src/epoll/handlers/TimerHandler.cpp src/epoll/handlers/SignalHandler.cpp src/epoll/handlers/RunInLoopHandler.cpp
+        src/iodevice/SocketDevice.cpp src/iodevice/TcpSocket.cpp src/iodevice/UdpSocket.cpp
+        src/location/uri/Uri.cpp
+        src/location/Address.cpp src/location/DnsResolver.cpp
         src/signal/Signals.cpp
-        src/error/Exception.cpp src/error/SocketError.cpp
-        src/support/ThreadPool.cpp
-        src/time/Timer.cpp
-        src/channel/Channel.cpp src/channel/TcpChannel.cpp
-        src/Address.cpp src/ByteArray.cpp src/channel/Channel.cpp src/eventloop/EventLoop.cpp src/TcpClient.cpp src/TcpServer.cpp src/Events.cpp include/support/PooledTask.hpp
-        src/uri/Uri.cpp src/Application.cpp include/Application.h src/eventloop/EventLoopManager.cpp include/eventloop/EventLoopManager.h src/eventloop/EventLoopData.cpp include/eventloop/EventLoopData.h src/time/TickTimer.cpp include/time/TickTimer.h include/time/TimerType.h src/eventloop/EventLoopFactory.cpp include/eventloop/EventLoopFactory.h)
+        src/support/Log.cpp src/support/ThreadPool.cpp src/support/Util.cpp
+        src/time/Timer.cpp src/time/TimeWheel.cpp src/time/TickTimer.cpp
+        src/Application.cpp
+        src/Events.cpp
+        src/TcpClient.cpp
+        src/TcpServer.cpp
+)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
@@ -60,11 +65,13 @@ if(NETPP_HTTP_SUPPORT)
             include/http/HttpCode.h include/http/HttpRequest.h include/http/HttpClient.h include/http/HttpServer.h
             src/http/HttpRequest.cpp src/http/HttpClient.cpp src/http/HttpServer.cpp src/http/HttpCode.cpp
             include/internal/http/Route.h include/internal/http/HttpPackage.h
-            src/internal/http/Route.cpp src/internal/http/HttpPackage.cpp src/internal/http/channel/HttpChannelConversion.cpp include/internal/http/channel/HttpChannelConversion.h
-            include/internal/http/channel/HttpChannel.h src/internal/http/channel/HttpChannel.cpp src/internal/http/handler/ServerEvents.cpp include/internal/http/handler/ServerEvents.h src/internal/http/handler/ClientEvents.cpp include/internal/http/handler/ClientEvents.h)
+            src/internal/http/Route.cpp src/internal/http/HttpPackage.cpp src/internal/http/channel/HttpChannelConversion.cpp
+            include/buffer/HttpChannel.h src/buffer/HttpChannel.cpp src/internal/http/handler/ServerEvents.cpp include/internal/http/handler/ServerEvents.h src/internal/http/handler/ClientEvents.cpp include/internal/http/handler/ClientEvents.h)
     set(netpp_source ${netpp_source} ${netpp_http_source})
     set(netpp_http_test_source http/HttpRequestParseTest.cpp http/HttpResponseParseTest.cpp http/HttpBaseRequestTest.cpp)
     include_directories(${PROJECT_SOURCE_DIR}/thirdParty/llhttp/include)
+    add_subdirectory(thirdParty/llhttp)
+    target_compile_options(llhttp PRIVATE -fPIC)
 endif()
 
 if(NETPP_ENABLE_TEST)
@@ -72,14 +79,9 @@ if(NETPP_ENABLE_TEST)
     add_subdirectory(test)
 endif()
 
-add_subdirectory(thirdParty/c-ares)
-target_compile_options(c-ares PRIVATE -fPIC)
-add_subdirectory(thirdParty/llhttp)
-target_compile_options(llhttp PRIVATE -fPIC)
-
 add_library(netpp SHARED ${netpp_source})
-target_link_libraries(netpp c-ares llhttp)
+#target_link_libraries(netpp llhttp)
 
 add_library(netpp_static STATIC ${netpp_source})
-target_link_libraries(netpp_static c-ares llhttp)
+target_link_libraries(netpp_static)
 SET_TARGET_PROPERTIES(netpp_static PROPERTIES OUTPUT_NAME "netpp")

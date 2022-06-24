@@ -8,7 +8,7 @@
 #include <memory>
 #include <functional>
 
-namespace netpp::support {
+namespace netpp {
 /**
  * @brief Wrap runnable, make it type less
  *
