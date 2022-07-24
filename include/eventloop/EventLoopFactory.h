@@ -8,14 +8,10 @@
 #include <memory>
 
 namespace netpp {
-}
-namespace netpp {
 class EventLoop;
-struct Config;
 class EventLoopFactory {
 public:
-	static std::unique_ptr<EventLoop> makeEventLoop(bool enableRunInLoop, bool enableTimeWheel, bool enableHandleSignal,
-													const Config &config);
+	static std::unique_ptr<EventLoop> makeEventLoop(bool enableRunInLoop, bool enableTimeWheel);
 };
 }
 

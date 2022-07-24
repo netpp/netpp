@@ -22,6 +22,8 @@ namespace netpp {
 	else
 		sockAddress.sin_addr.s_addr = ::inet_addr(ip.c_str());
 	sockAddress.sin_port = ::htons(address.port());
+
+	return sockAddress;
 }
 
 Address toAddress(const ::sockaddr_in &address)
@@ -32,10 +34,5 @@ Address toAddress(const ::sockaddr_in &address)
 	std::string ip(::inet_ntoa(address.sin_addr));
 	uint16_t port = ::ntohs(address.sin_port);
 	return Address(ip, port);
-}
-
-const std::string_view &getErrorDescription(Error error) noexcept
-{
-
 }
 }

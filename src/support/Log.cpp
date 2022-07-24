@@ -2,15 +2,16 @@
 // Created by gaojian on 2020/7/11.
 //
 
-#include "internal/support/Log.h"
+#include "support/Log.h"
 
+
+namespace netpp {
 #ifdef NETPP_LOG_SUPPORT
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/async.h"
 #include <iostream>
 
-namespace netpp::internal {
 std::shared_ptr<spdlog::logger> logger = nullptr;
 
 void initLogger(std::string logfile)
@@ -42,7 +43,6 @@ void initLogger(std::string logfile)
 }
 #else
 
-namespace netpp::internal {
 void initLogger([[maybe_unused]] std::string logfile)
 {}
 }

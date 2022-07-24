@@ -61,7 +61,7 @@ void Epoll::poll()
 		}
 		return;
 	}
-	for (int i = 0; i < nums; ++i)
+	for (unsigned i = 0; i < static_cast<unsigned>(nums); ++i)
 	{
 		uint32_t event = m_activeEvents[i].events;
 		auto evHandler = static_cast<EpollEventHandler *>(m_activeEvents[i].data.ptr);
@@ -73,14 +73,14 @@ void Epoll::addEvent(EpollEventHandler *eventAdapter)
 {
 	LOG_TRACE("add channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
 	int channelFd = eventAdapter->fileDescriptor();
-	::epoll_event *event = eventAdapter->watchingEvent();
+	::epoll_event *event = eventAdapter->interestedEvent();
 	realCtl(m_epollFd, EPOLL_CTL_ADD, channelFd, event);
 }
 
 void Epoll::updateEvent(EpollEventHandler *eventAdapter)
 {
 	int channelFd = eventAdapter->fileDescriptor();
-	::epoll_event *event = eventAdapter->watchingEvent();
+	::epoll_event *event = eventAdapter->interestedEvent();
 	LOG_TRACE("update channel id {} with event {}", channelFd, static_cast<uint32_t>(event.events));
 	realCtl(m_epollFd, EPOLL_CTL_MOD, channelFd, event);
 }
@@ -112,5 +112,6 @@ int Epoll::realCtl(int epfd, int op, int fd, struct ::epoll_event *event)
 				break;
 		}
 	}
+	return ret;
 }
 }

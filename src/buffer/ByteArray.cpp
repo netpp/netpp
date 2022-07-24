@@ -274,7 +274,7 @@ void ByteArray::unlockedMoveBufferHead()
 	if (m_readNode == 0)
 		return;
 
-	m_nodes->moveToTail(m_readNode, [](internal::buffer::BufferNode &node) { node.start = 0; node.end = 0; });
+	m_nodes->moveToTail(m_readNode, [](BufferNode &node) { node.start = 0; node.end = 0; });
 	m_availableSizeToWrite += m_readNode * BufferNodeSize;
 	m_writeNode -= m_readNode;
 	m_readNode = 0;

@@ -16,7 +16,6 @@ namespace netpp {
 struct Config;
 class EventLoop;
 class RunInLoopHandler;
-class SignalHandler;
 class TimeWheel;
 
 /**
@@ -26,9 +25,10 @@ class EventLoopManager {
 public:
 	/**
 	 * @brief Create and init event loops with configure
-	 * @param config netpp global configure
+	 * @param loopsCount the number of event loop runs
 	 */
-	explicit EventLoopManager(const Config &config);
+	explicit EventLoopManager(unsigned loopsCount);
+	~EventLoopManager();
 
 	/**
 	 * @brief Dispatch an event loop, used generally when assign one more task to loop.

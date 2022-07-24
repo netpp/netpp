@@ -8,20 +8,19 @@
 #include "support/Log.h"
 #include "eventloop/EventLoopManager.h"
 #include <cassert>
+#include "epoll/handlers/SignalHandler.h"
 
 namespace {
 netpp::Application *globalApp = nullptr;
 }
 
 namespace netpp {
-Application::Application(Config config)
-	: m_netppConfig{std::move(config)}
+Application::Application()
 {
 	assert(!globalApp);
 	::globalApp = this;
-	if (m_netppConfig.enableLog)
-		initLogger();
-	m_loopManager = std::make_unique<EventLoopManager>(m_netppConfig);
+	initLogger();
+	m_loopManager = std::make_unique<EventLoopManager>(std::thread::hardware_concurrency());
 }
 
 Application::~Application()
@@ -34,6 +33,15 @@ void Application::exec()
 	m_loopManager->startLoop();
 }
 
+void Application::bindSignalHandler(SignalCallBack cb, std::initializer_list<Signals> interestedSignals)
+{
+	auto mainLoop = m_loopManager->mainLoop();
+
+	auto signalHandler = std::make_shared<SignalHandler>(mainLoop, interestedSignals);
+	signalHandler->setSignalCallback(cb);
+	mainLoop->addEventHandlerToLoop(signalHandler);
+}
+
 Application *Application::instance()
 {
 	return ::globalApp;
@@ -42,10 +50,5 @@ Application *Application::instance()
 EventLoopManager *Application::loopManager()
 {
 	return ::globalApp->m_loopManager.get();
-}
-
-Config Application::appConfig()
-{
-	return ::globalApp->m_netppConfig;
 }
 }

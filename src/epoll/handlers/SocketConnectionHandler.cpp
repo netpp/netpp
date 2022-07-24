@@ -1,13 +1,14 @@
 #include "epoll/handlers/SocketConnectionHandler.h"
+
+#include <utility>
 #include "support/Log.h"
 #include "eventloop/EventLoop.h"
 #include "error/Exception.h"
-#include "buffer/TcpChannel.h"
-#include "buffer/ChannelBufferConversion.h"
+#include "buffer/TcpBuffer.h"
 #include "time/TickTimer.h"
-#include "eventloop/EventLoopManager.h"
 #include "iodevice/SocketDevice.h"
 #include "buffer/BufferIOConversion.h"
+#include "channel/TcpChannel.h"
 
 using std::make_unique;
 using std::make_shared;
@@ -20,15 +21,17 @@ SocketConnectionHandler::SocketConnectionHandler(EventLoop *loop, std::unique_pt
 		  m_idleTimeInterval{idleTime}, m_halfCloseTimeInterval{halfCloseTime}
 {}
 
+SocketConnectionHandler::~SocketConnectionHandler() = default;
+
 int SocketConnectionHandler::fileDescriptor() const
 {
 	return m_socket->fileDescriptor();
 }
 
-void SocketConnectionHandler::init()
+void SocketConnectionHandler::init(std::shared_ptr<Channel> channelToBind, std::shared_ptr<Buffer> buffer)
 {
-	m_connectionBufferChannel = std::make_shared<TcpChannel>(weak_from_this());
-	m_bufferConvertor = m_connectionBufferChannel->createBufferConvertor();
+	m_bindChannel = std::move(channelToBind);
+	m_connectionBuffer = std::move(buffer);
 
 	// set up events
 	activeEvents(EpollEv::IN | EpollEv::RDHUP);
@@ -57,10 +60,10 @@ void SocketConnectionHandler::handleIn()
 	try
 	{
 		renewWheel();
-		m_socket->read(m_bufferConvertor->writeBufferConvert(m_connectionBufferChannel.get()));
+		m_socket->read(m_connectionBuffer->receiveBufferForIO());
 		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
 		if (m_receivedCallback)
-			m_receivedCallback(m_connectionBufferChannel);
+			m_receivedCallback(m_bindChannel);
 	}
 	catch (InternalException &e)
 	{
@@ -90,13 +93,13 @@ void SocketConnectionHandler::handleOut()
 		renewWheel();
 		// may not write all data this round, keep OUT event on and wait for next round
 		// TODO: handle read/write timeout
-		bool writeCompleted = m_socket->write(m_bufferConvertor->readBufferConvert(m_connectionBufferChannel.get()));
+		bool writeCompleted = m_socket->write(m_connectionBuffer->sendBufferForIO());
 		if (writeCompleted)
 		{
 			deactivateEvents(EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?
 			if (m_writeCompletedCallback)
-				m_writeCompletedCallback(m_connectionBufferChannel);
+				m_writeCompletedCallback(m_bindChannel);
 			m_isWaitWriting = false;
 			// if write completed, and we are half-closing, force close this connection
 			if (m_state.load(std::memory_order_acquire) == TcpState::HalfClose)
@@ -212,7 +215,35 @@ void SocketConnectionHandler::closeAfterWriteCompleted()
 
 std::shared_ptr<Channel> SocketConnectionHandler::getIOChannel()
 {
-	return m_connectionBufferChannel;
+	return m_bindChannel;
+}
+
+void SocketConnectionHandler::setMessageReceivedCallBack(const MessageReceivedCallBack &cb)
+{
+	_loopThisHandlerLiveIn->runInLoop([this, connection{shared_from_this()}, cb] {
+		m_receivedCallback = cb;
+	});
+}
+
+void SocketConnectionHandler::setWriteCompletedCallBack(const WriteCompletedCallBack &cb)
+{
+	_loopThisHandlerLiveIn->runInLoop([this, connection{shared_from_this()}, cb] {
+		m_writeCompletedCallback = cb;
+	});
+}
+
+void SocketConnectionHandler::setDisconnectedCallBack(const DisconnectedCallBack &cb)
+{
+	_loopThisHandlerLiveIn->runInLoop([this, connection{shared_from_this()}, cb] {
+		m_disconnectedCallback = cb;
+	});
+}
+
+void SocketConnectionHandler::setErrorCallBack(const ErrorCallBack &cb)
+{
+	_loopThisHandlerLiveIn->runInLoop([this, connection{shared_from_this()}, cb] {
+		m_errorCallback = cb;
+	});
 }
 
 void SocketConnectionHandler::renewWheel()
@@ -225,21 +256,22 @@ void SocketConnectionHandler::renewWheel()
 
 void SocketConnectionHandler::forceClose()
 {
-	_loopThisHandlerLiveIn->runInLoop([this, connectionWeak{weak_from_this()}] {
-		auto connection = connectionWeak.lock();
-		if (connection)
-		{
-			LOG_TRACE("Force close socket {}", m_socket->fd());
-			if (m_idleConnectionWheel)
-				m_idleConnectionWheel->stop();
-			if (m_halfCloseWheel)
-				m_halfCloseWheel->stop();
-			if (m_disconnectedCallback)
-				m_disconnectedCallback(m_connectionBufferChannel);
-			setEvents(NOEV);
-			_loopThisHandlerLiveIn->removeEventHandlerFromLoop(connection);
-			m_state.store(TcpState::Closed, std::memory_order_release);
-		}
-	});
+	if (m_state.load(std::memory_order_acquire) != TcpState::Closed)
+	{
+		// catch shared ptr to extend life
+		_loopThisHandlerLiveIn->runInLoop([this, connection{shared_from_this()}] {
+											  LOG_TRACE("Force close socket {}", m_socket->fd());
+											  disableEvent();
+											  if (m_idleConnectionWheel)
+												  m_idleConnectionWheel->stop();
+											  if (m_halfCloseWheel)
+												  m_halfCloseWheel->stop();
+											  if (m_disconnectedCallback)
+												  m_disconnectedCallback(m_bindChannel);
+											  m_state.store(TcpState::Closed, std::memory_order_release);
+											  _loopThisHandlerLiveIn->removeEventHandlerFromLoop(connection);
+										  }
+		);
+	}
 }
 }

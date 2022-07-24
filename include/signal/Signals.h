@@ -53,7 +53,7 @@ NETPP_SINGAL(SIGNAL_DEF)
  * @param signal	enumerated signal
  * @return int		signal number
  */
-int toLinuxSignal(Signals signal);
+extern int toLinuxSignal(Signals signal);
 
 /**
  * @brief Convert signal number to Signals
@@ -62,11 +62,11 @@ int toLinuxSignal(Signals signal);
  * @return Signals	enumerated signal
  */
 
-Signals toNetppSignal(int signal);
+extern Signals toNetppSignal(int signal);
 
 /// @brief Convert signal to string
-std::string signalAsString(int signal);
-std::string signalAsString(Signals signal);
+extern std::string signalAsString(int signal);
+extern std::string signalAsString(Signals signal);
 }
 
 #endif

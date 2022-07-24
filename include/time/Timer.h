@@ -71,6 +71,7 @@ private:
 
 	// event and handler
 	std::shared_ptr<TimerHandler> m_handler;
+	EventLoop *m_timerLoop;
 };
 }
 

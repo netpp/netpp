@@ -6,16 +6,16 @@
 #include "epoll/EpollEventHandler.h"
 #include "support/Log.h"
 #include "epoll/Epoll.h"
-#include "internal/handlers/RunInLoopHandler.h"
+#include "epoll/handlers/RunInLoopHandler.h"
 #include "eventloop/EventLoopData.h"
 
 namespace {
-thread_local netpp::eventloop::EventLoop *thisEventLoopOnThread = nullptr;
+thread_local netpp::EventLoop *thisEventLoopOnThread = nullptr;
 }
 
-namespace netpp::eventloop {
+namespace netpp {
 EventLoop::EventLoop()
-	: m_loopRunning{false}, m_poll{std::make_unique<internal::epoll::Epoll>()}
+	: m_loopRunning{false}, m_poll{std::make_unique<Epoll>()}
 {
 }
 
@@ -47,7 +47,7 @@ void EventLoop::removeEventHandlerFromLoop(const Handler &handler)
 	m_handlers.erase(handler);
 }
 
-internal::epoll::Epoll *EventLoop::getPoll()
+Epoll *EventLoop::getPoll()
 {
 	return m_poll.get();
 }
@@ -59,10 +59,15 @@ EventLoop *EventLoop::thisLoop()
 
 void EventLoop::runInLoop(std::function<void()> task)
 {
-	if (m_loopData)
+	if (EventLoop::thisLoop() == this)
+		task();
+	else
 	{
-		if (m_loopData->runInLoopHandler)
-			m_loopData->runInLoopHandler->addPendingFunction(std::move(task));
+		if (m_loopData)
+		{
+			if (m_loopData->runInLoopHandler)
+				m_loopData->runInLoopHandler->addPendingFunction(std::move(task));
+		}
 	}
 }
 }

@@ -6,6 +6,7 @@
 #include "time/Timer.h"
 #include "support/Types.h"
 #include <string>
+#include <limits>
 
 namespace netpp {
 struct WheelEntry {
@@ -37,12 +38,10 @@ class TimeWheel {
 public:
 	/**
 	 * @brief Construct a TimeWheel
-	 * 
+	 *
 	 * @param loop			The event loop live in
-	 * @param tickInterval	Wheel rotate interval, by milliseconds
-	 * @param bucketCount	Contains n buckets
 	 */
-	TimeWheel(EventLoop *loop, TimerInterval tickInterval, TimerInterval bucketCount);
+	explicit TimeWheel(EventLoop *loop);
 
 	void addToWheel(const std::shared_ptr<WheelEntry> &entry);
 	void removeFromWheel(const std::shared_ptr<WheelEntry> &entry);
@@ -54,7 +53,7 @@ private:
 	Timer m_tickTimer;
 	unsigned m_timeOutBucketIndex;
 
-	std::vector<std::unordered_set<std::shared_ptr<WheelEntry>>> m_buckets;
+	std::array<std::unordered_set<std::shared_ptr<WheelEntry>>, 600> m_buckets;
 };
 }
 

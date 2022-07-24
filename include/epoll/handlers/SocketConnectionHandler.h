@@ -12,8 +12,7 @@ class ByteArray;
 class TickTimer;
 enum class TcpState;
 class SocketDevice;
-class ChannelBufferConversion;
-class Channel;
+class Buffer;
 /**
  * @brief The SocketConnectionHandler class represent a connection, using @see ByteArray as buffer,
  * provide an io @see Channel to read/write.
@@ -31,9 +30,9 @@ public:
 	 */
 	SocketConnectionHandler(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket,
 							TimerInterval idleTime = -1, TimerInterval halfCloseTime = -1);
-	~SocketConnectionHandler() override = default;
+	~SocketConnectionHandler() override;
 
-	void init();
+	void init(std::shared_ptr<Channel> channelToBind, std::shared_ptr<Buffer> buffer);
 
 	/**
 	 * @brief After write some data to ByteArray, use this to send.
@@ -65,6 +64,11 @@ public:
 	std::shared_ptr<Channel> getIOChannel();
 
 	TcpState currentState() const { return m_state.load(std::memory_order_acquire); }
+
+	void setMessageReceivedCallBack(const MessageReceivedCallBack &cb);
+	void setWriteCompletedCallBack(const WriteCompletedCallBack &cb);
+	void setDisconnectedCallBack(const DisconnectedCallBack &cb);
+	void setErrorCallBack(const ErrorCallBack &cb);
 
 protected:
 	/**
@@ -118,9 +122,9 @@ private:
 	/// @brief If any data wait for writing, close operation should be done later
 	bool m_isWaitWriting;
 	std::unique_ptr<SocketDevice> m_socket;
+	std::shared_ptr<Channel> m_bindChannel;
 	/// @brief Buffer for prepend write data
-	std::shared_ptr<Channel> m_connectionBufferChannel;
-	std::unique_ptr<ChannelBufferConversion> m_bufferConvertor;
+	std::shared_ptr<Buffer> m_connectionBuffer;
 
 	MessageReceivedCallBack m_receivedCallback;
 	WriteCompletedCallBack m_writeCompletedCallback;

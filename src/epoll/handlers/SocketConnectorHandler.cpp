@@ -9,6 +9,7 @@
 #include "time/Timer.h"
 #include "Application.h"
 #include "iodevice/TcpSocket.h"
+#include "support/Util.h"
 
 using std::make_unique;
 using std::make_shared;
@@ -97,7 +98,7 @@ void SocketConnectorHandler::handleOut()
 											   disableEvent();
 											   m_socket = std::make_unique<TcpSocket>();
 											   m_socket->open();
-											   connect();
+											   connect(m_address);
 										   }
 									   }
 			);
@@ -105,7 +106,13 @@ void SocketConnectorHandler::handleOut()
 			m_retryTimer->setInterval(1000);
 			m_retryTimer->start();
 		}
-		reconnect();
+		else
+		{
+			TimerInterval currentInterval = m_retryTimer->interval();
+			if (currentInterval < 4000)
+				m_retryTimer->setInterval(currentInterval * 2);
+			LOG_INFO("Connector error on fd {}, retry in {} ms", m_socket->fd(), currentInterval);
+		}
 	}
 	else if (state == SocketState::E_InProgress)
 	{
@@ -118,7 +125,7 @@ void SocketConnectorHandler::handleOut()
 			m_retryTimer->stop();
 			m_retryTimer = nullptr;
 		}
-		assert(Application::instance());
+		APPLICATION_INSTANCE_REQUIRED();
 		auto connection = std::make_shared<SocketConnectionHandler>(
 				Application::loopManager()->dispatch(),
 				std::move(m_socket)
@@ -138,14 +145,5 @@ int SocketConnectorHandler::fileDescriptor() const
 	if (m_socket)
 		m_socket->fileDescriptor();
 	return -1;
-}
-
-void SocketConnectorHandler::reconnect()
-{
-	setEvents(NOEV);
-	TimerInterval currentInterval = m_retryTimer->interval();
-	if (currentInterval < 4000)
-		m_retryTimer->setInterval(currentInterval * 2);
-	LOG_INFO("Connector error on fd {}, retry in {} ms", m_socket->fd(), currentInterval);
 }
 }

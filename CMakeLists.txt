@@ -10,39 +10,34 @@ option(NETPP_HTTP_SUPPORT "enable http support" OFF)
 option(NETPP_EXAMPLE "build examples" ON)
 
 set(netpp_source
-        include/buffer/BufferIOConversion.h include/buffer/BufferNode.h include/buffer/ByteArray.h include/buffer/Channel.h include/buffer/ChannelBufferConversion.h include/buffer/CowLink.hpp include/buffer/HttpChannel.h include/buffer/TcpChannel.h
+        include/buffer/BufferIOConversion.h include/buffer/BufferNode.h include/buffer/ByteArray.h include/buffer/Buffer.h include/buffer/CowLink.hpp include/buffer/TcpBuffer.h
+        include/channel/Channel.h include/channel/TcpChannel.h
         include/error/Error.h include/error/Exception.h
         include/eventloop/EventLoop.h include/eventloop/EventLoopData.h include/eventloop/EventLoopFactory.h include/eventloop/EventLoopManager.h
         include/epoll/Epoll.h include/epoll/EpollEventHandler.h
         include/epoll/handlers/SocketAcceptorHandler.h include/epoll/handlers/SocketConnectorHandler.h include/epoll/handlers/SocketConnectionHandler.h include/epoll/handlers/TimerHandler.h include/epoll/handlers/SignalHandler.h include/epoll/handlers/RunInLoopHandler.h
         include/iodevice/IODevice.h include/iodevice/SocketDevice.h include/iodevice/TcpSocket.h include/iodevice/UdpSocket.h
         include/location/uri/Uri.h include/location/uri/UriCodec.h
-        include/location/Address.h include/location/DnsResolver.h
+        include/location/Address.h
         include/signal/Signals.h
         include/support/ThreadSafeQueue.hpp include/support/Log.h include/support/ThreadPool.hpp include/support/PooledTask.hpp include/support/Util.h include/support/Types.h
         include/time/Timer.h include/time/TimeWheel.h include/time/TickTimer.h
-        include/Application.h
-        include/Config.h
-        include/Events.h
-        include/TcpClient.h
-        include/TcpServer.h
+        include/Application.h include/Acceptor.h
 
-        src/buffer/BufferIOConversion.cpp src/buffer/BufferNode.cpp src/buffer/ByteArray.cpp src/buffer/Channel.cpp src/buffer/ChannelBufferConversion.cpp src/buffer/HttpChannel.cpp src/buffer/TcpChannel.cpp
+        src/buffer/BufferIOConversion.cpp src/buffer/BufferNode.cpp src/buffer/ByteArray.cpp src/buffer/TcpBuffer.cpp
+        src/channel/Channel.cpp src/channel/TcpChannel.cpp
         src/error/Error.cpp src/error/Exception.cpp
         src/eventloop/EventLoop.cpp src/eventloop/EventLoopData.cpp src/eventloop/EventLoopFactory.cpp src/eventloop/EventLoopManager.cpp
         src/epoll/Epoll.cpp src/epoll/EpollEventHandler.cpp
         src/epoll/handlers/SocketAcceptorHandler.cpp src/epoll/handlers/SocketConnectorHandler.cpp src/epoll/handlers/SocketConnectionHandler.cpp src/epoll/handlers/TimerHandler.cpp src/epoll/handlers/SignalHandler.cpp src/epoll/handlers/RunInLoopHandler.cpp
         src/iodevice/SocketDevice.cpp src/iodevice/TcpSocket.cpp src/iodevice/UdpSocket.cpp
         src/location/uri/Uri.cpp
-        src/location/Address.cpp src/location/DnsResolver.cpp
+        src/location/Address.cpp
         src/signal/Signals.cpp
         src/support/Log.cpp src/support/ThreadPool.cpp src/support/Util.cpp
         src/time/Timer.cpp src/time/TimeWheel.cpp src/time/TickTimer.cpp
-        src/Application.cpp
-        src/Events.cpp
-        src/TcpClient.cpp
-        src/TcpServer.cpp
-)
+        src/Application.cpp src/Acceptor.cpp
+        )
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 

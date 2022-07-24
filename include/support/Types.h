@@ -10,6 +10,7 @@
 #include <functional>
 #include "error/Error.h"
 #include "signal/Signals.h"
+#include <memory>
 
 namespace netpp {
 class Channel;

@@ -19,7 +19,6 @@ class Epoll;
  *
  */
 enum EpollEv {
-	NOEV = 0,
 	/** @brief EPOLLIN event */
 	IN		= 0x001,
 	/** @brief EPOLLOUT event */

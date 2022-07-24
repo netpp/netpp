@@ -1,6 +1,6 @@
 #include "time/TimeWheel.h"
 #include "eventloop/EventLoop.h"
-#include "internal/support/Log.h"
+#include "support/Log.h"
 
 namespace {
 /**
@@ -8,7 +8,7 @@ namespace {
  * @param interval Time interval
  * @return Value in bucket length type
  */
-unsigned long interval_cast(netpp::time::TimerInterval interval)
+unsigned long interval_cast(netpp::TimerInterval interval)
 {
 	return static_cast<unsigned long>(interval);
 }
@@ -18,20 +18,20 @@ unsigned long interval_cast(netpp::time::TimerInterval interval)
  * @param size bucket length
  * @return Value in time interval
  */
-netpp::time::TimerInterval bucket_size_cast(unsigned long size)
+netpp::TimerInterval bucket_size_cast(unsigned long size)
 {
-	return static_cast<netpp::time::TimerInterval>(size);
+	return static_cast<netpp::TimerInterval>(size);
 }
 }
 
-namespace netpp::time {
-TimeWheel::TimeWheel(eventloop::EventLoop *loop, TimerInterval tickInterval, TimerInterval bucketCount)
-	: m_tickTimer(loop), m_timeOutBucketIndex(0), m_buckets(::interval_cast(bucketCount))
+namespace netpp {
+TimeWheel::TimeWheel(EventLoop *loop)
+	: m_tickTimer(loop), m_timeOutBucketIndex(0)
 {
 	if (!m_buckets.empty())
 	{
 		m_tickTimer.setOnTimeout(std::bind(&TimeWheel::tick, this));
-		m_tickTimer.setInterval(tickInterval);
+		m_tickTimer.setInterval(1000);
 		m_tickTimer.setSingleShot(false);
 		m_tickTimer.start();
 	}

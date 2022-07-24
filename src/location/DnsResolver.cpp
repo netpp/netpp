@@ -2,11 +2,10 @@
 // Created by gaojian on 2022/3/29.
 //
 
-#include "dns/DnsResolver.h"
-#include "uri/Uri.h"
+#include "location/DnsResolver.h"
 #include "internal/handlers/AsyncDnsHandler.h"
 
-namespace netpp::dns {
+namespace netpp {
 DnsResolver::DnsResolver()
 {}
 

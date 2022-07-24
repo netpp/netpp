@@ -35,6 +35,8 @@ utf8string toUtf8String(const Source& val)
 
 extern ::sockaddr_in toSockAddress(const Address &address);
 extern Address toAddress(const ::sockaddr_in &address);
+
+#define APPLICATION_INSTANCE_REQUIRED() assert(Application::instance())
 }
 
 #endif //NETPP_UTIL_H

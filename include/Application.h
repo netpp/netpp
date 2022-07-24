@@ -5,7 +5,8 @@
 #ifndef NETPP_APPLICATION_H
 #define NETPP_APPLICATION_H
 
-#include "Config.h"
+#include <memory>
+#include "support/Types.h"
 
 namespace netpp {
 class EventLoopManager;
@@ -18,7 +19,7 @@ public:
 	 * @brief Create an application, and init global resources
 	 * @param config The m_config to init resource
 	 */
-	explicit Application(Config config = {});
+	explicit Application();
 	~Application();
 
 	/**
@@ -26,12 +27,12 @@ public:
 	 */
 	void exec();
 
+	void bindSignalHandler(SignalCallBack cb, std::initializer_list<Signals> interestedSignals);
+
 	static Application *instance();
 	static EventLoopManager *loopManager();
-	static Config appConfig();
 
 private:
-	Config m_netppConfig;
 	std::unique_ptr<EventLoopManager> m_loopManager;
 };
 }

@@ -2,7 +2,7 @@
 #define NETPP_SIGNAL_HANDLER_H
 
 #include "epoll/EpollEventHandler.h"
-#include "Events.h"
+#include "support/Types.h"
 
 namespace netpp {
 class EventLoop;
@@ -14,8 +14,10 @@ enum class Signals;
 class SignalHandler : public EpollEventHandler, public std::enable_shared_from_this<SignalHandler> {
 public:
 	/// @brief Use makeSignalHandler to create SignalHandler
-	explicit SignalHandler(EventLoop *loop, Events eventsPrototype, const std::vector<netpp::Signals> &interestedSignals);
+	explicit SignalHandler(EventLoop *loop, const std::initializer_list<netpp::Signals> &interestedSignals);
 	~SignalHandler() override;
+
+	void setSignalCallback(SignalCallBack cb);
 
 protected:
 	/**
@@ -30,7 +32,8 @@ protected:
 
 private:
 	int m_signalFd;
-	Events m_events;
+	std::mutex m_callBackMutex;
+	SignalCallBack m_callback;
 };
 }
 

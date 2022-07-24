@@ -20,9 +20,10 @@ RunInLoopHandler::RunInLoopHandler(EventLoop *loop)
 				break;
 			case EMFILE:
 			case ENFILE:
+				throw InternalException(Error::FileDescriptorLimited);
 			case ENODEV:
 			case ENOMEM:
-				throw ResourceLimitException(errno);
+				throw InternalException(Error::MemoryUnavailable);
 		}
 	}
 	activeEvents(EpollEv::IN);
@@ -33,7 +34,7 @@ RunInLoopHandler::~RunInLoopHandler()
 	// no need to consider thread safety here, 
 	// this handler will always live with event loop
 	if (m_wakeUpFd != -1)
-		stub::close(m_wakeUpFd);
+		::close(m_wakeUpFd);
 }
 
 void RunInLoopHandler::handleIn()

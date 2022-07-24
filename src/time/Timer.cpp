@@ -5,32 +5,35 @@
 #include <cassert>
 #include "time/Timer.h"
 #include "eventloop/EventLoop.h"
-#include "internal/support/Log.h"
-#include "internal/handlers/TimerHandler.h"
+#include "support/Log.h"
+#include "epoll/handlers/TimerHandler.h"
 #include "Application.h"
+#include "eventloop/EventLoopManager.h"
+#include "support/Util.h"
 
 using std::make_unique;
 using std::make_shared;
 
-namespace netpp::time {
-Timer::Timer(eventloop::EventLoop *loop)
+namespace netpp {
+Timer::Timer(EventLoop *loop)
 	: m_interval(1000), m_singleShot{true}, m_running{false}
 {
 	// timer runs in creating thread
 	if (!loop)
-		loop = eventloop::EventLoop::thisLoop();
+		loop = EventLoop::thisLoop();
 	// timer runs in main loop
 	if (!loop)
 	{
-		assert(Application::instance());
+		APPLICATION_INSTANCE_REQUIRED();
 		loop = Application::loopManager()->mainLoop();
 	}
-	m_handler = internal::handlers::TimerHandler::makeTimerHandler(loop);
+	m_handler = make_shared<TimerHandler>(loop);
+	m_timerLoop = loop;
 }
 
 Timer::~Timer()
 {
-	m_handler->remove();
+	m_timerLoop->removeEventHandlerFromLoop(m_handler);
 }
 
 void Timer::setInterval(TimerInterval mSec)

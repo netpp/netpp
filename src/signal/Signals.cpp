@@ -5,7 +5,7 @@ extern "C" {
 #include <cstring>
 }
 
-namespace netpp::signal {
+namespace netpp {
 int toLinuxSignal(Signals signal)
 {
 #define SIGNAL_DEF(type)		case Signals::E_##type: sig = SIG##type; break;

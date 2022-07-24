@@ -3,24 +3,29 @@
 //
 
 #include "eventloop/EventLoopManager.h"
-#include "Config.h"
 #include "eventloop/EventLoop.h"
-#include "internal/handlers/RunInLoopHandler.h"
-#include "internal/handlers/SignalHandler.h"
-#include "time/TimeWheel.h"
 #include "eventloop/EventLoopFactory.h"
 
-namespace netpp::eventloop {
-EventLoopManager::EventLoopManager(const Config &config)
+namespace netpp {
+EventLoopManager::EventLoopManager(unsigned loopsCount)
 		: m_dispatchIndex{0}
 {
-	m_mainEventLoop = EventLoopFactory::makeEventLoop(true, config.tickTimer.enable, config.enableDnsResolve, config);
+	m_mainEventLoop = EventLoopFactory::makeEventLoop(true, true);
 
-	for (unsigned i = 0; i < config.eventLoopNumber - 1; ++i)
+	for (unsigned i = 0; i < loopsCount - 1; ++i)
 	{
-		auto el = EventLoopFactory::makeEventLoop(true, false, false, config);
+		auto el = EventLoopFactory::makeEventLoop(true, false);
 		m_loops.emplace_back(std::move(el));
 	}
+}
+
+EventLoopManager::~EventLoopManager()
+{
+	// todo: let loop quit
+	for (auto &l : m_loops)
+		l->runInLoop(std::function<void()>());	// wake up loop, so we can quit
+	for (auto &t : m_loopsThreads)
+		t.join();
 }
 
 EventLoop *EventLoopManager::dispatch()

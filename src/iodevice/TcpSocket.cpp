@@ -250,6 +250,7 @@ std::size_t TcpSocket::realSend(::msghdr *msg)
 			case ENOMEM: throw InternalException(Error::MemoryUnavailable);
 		}
 	}
+	return static_cast<std::size_t>(ret);
 }
 
 void TcpSocket::realClose()

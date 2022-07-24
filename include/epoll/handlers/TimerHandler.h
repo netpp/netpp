@@ -20,12 +20,6 @@ public:
 	explicit TimerHandler(EventLoop *loop);
 	~TimerHandler() override;
 
-	/**
-	 * @brief Remove timer handler from event loop
-	 * 
-	 */
-	void remove();
-
 	void stopTimer() const;
 	void setIntervalAndRun(TimerInterval intervalInMSec, bool repeat, std::function<void()> callback);
 

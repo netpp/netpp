@@ -5,9 +5,9 @@
 #include "eventloop/EventLoopData.h"
 #include "eventloop/EventLoop.h"
 
-namespace netpp::eventloop {
+namespace netpp {
 EventLoopData::EventLoopData()
-		: runInLoopHandler{nullptr}, wheel{nullptr}, signalHandler{nullptr}
+		: runInLoopHandler{nullptr}, wheel{nullptr}
 {}
 
 EventLoopData::~EventLoopData() noexcept = default;

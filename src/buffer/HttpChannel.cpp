@@ -2,14 +2,14 @@
 // Created by gaojian on 2022/3/24.
 //
 
-#include "internal/http/channel/HttpChannel.h"
-#include "ByteArray.h"
-#include "internal/http/channel/HttpChannelConversion.h"
+#include "buffer/HttpChannel.h"
+#include "buffer/ByteArray.h"
+#include "buffer/ChannelBufferConversion.h"
 #include "internal/http/HttpPackage.h"
 #include "http/HttpRequest.h"
 
-namespace netpp::internal::http::channel {
-HttpChannel::HttpChannel(std::weak_ptr<internal::handlers::TcpConnection> connection)
+namespace netpp {
+HttpChannel::HttpChannel(std::weak_ptr<SocketConnectionHandler> connection)
 		: Channel(std::move(connection)),
 		  m_httpParser{std::make_unique<HttpParser>()},
 		  m_receiveArray{std::make_shared<ByteArray>()}

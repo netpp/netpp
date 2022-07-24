@@ -13,7 +13,7 @@ class Address;
 class BufferIOConversion;
 class IODevice {
 public:
-	virtual ~IODevice() noexcept = 0;
+	virtual ~IODevice() noexcept = default;
 
 	virtual void open() = 0;
 	virtual void close() = 0;

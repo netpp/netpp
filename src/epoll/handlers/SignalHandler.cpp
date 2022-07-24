@@ -3,16 +3,16 @@
 #include "signal/Signals.h"
 #include "internal/stub/IO.h"
 #include "support/Log.h"
+#include <utility>
 extern "C" {
 #include <sys/signalfd.h>
 #include <csignal>
 }
 
 namespace netpp {
-SignalHandler::SignalHandler(EventLoop *loop, Events eventsPrototype, const std::vector<netpp::Signals> &interestedSignals)
-	: EpollEventHandler(loop), m_events(std::move(eventsPrototype))
+SignalHandler::SignalHandler(EventLoop *loop, const std::initializer_list<netpp::Signals> &interestedSignals)
+	: EpollEventHandler(loop)
 {
-	static std::once_flag setupWatchSignalFlag;
 	::sigset_t blockThreadSignals;
 	::sigemptyset(&blockThreadSignals);
 	// block signals at very beginning, all thread will inherit this mask,
@@ -33,12 +33,18 @@ SignalHandler::~SignalHandler()
 	::pthread_sigmask(SIG_SETMASK, &blockThreadSignals, nullptr);
 }
 
+void SignalHandler::setSignalCallback(SignalCallBack cb)
+{
+	std::lock_guard lck(m_callBackMutex);
+	m_callback = std::move(cb);
+}
+
 void SignalHandler::handleIn()
 {
 	static constexpr int maxSignalRead = 20;
 	static constexpr int readSize = sizeof(::signalfd_siginfo) * maxSignalRead;
 	::signalfd_siginfo signals[maxSignalRead];
-	::ssize_t readBytes = stub::read(m_signalFd, signals, readSize);
+	::ssize_t readBytes = ::read(m_signalFd, signals, readSize);
 	if (readBytes != -1)
 	{
 		auto bytes = static_cast<unsigned>(readBytes);
@@ -47,7 +53,13 @@ void SignalHandler::handleIn()
 		{
 			int signalNo = static_cast<int>(signals[i].ssi_signo);
 			LOG_TRACE("signal {} occurred", signal::signalAsString(signalNo));
-			m_events.onSignal(toNetppSignal(signalNo));// TODO: can pass more signal info to user
+			SignalCallBack cb;
+			{
+				std::lock_guard lck(m_callBackMutex);
+				cb = m_callback;
+			}
+			if (cb)
+				cb(toNetppSignal(signalNo));// TODO: can pass more signal info to user
 		}
 	}
 	else

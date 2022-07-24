@@ -210,14 +210,14 @@ public:
 	 * @brief Alloc more node in list, after allocation, at least @em length size is available
 	 * @param length The minimum size
 	 */
-	void allocMore(NodeContainerIndexer length)
+	void allocMore(NodeContainerIndexer nodes)
 	{
-		if (length < m_nodes.size())
+		if (nodes < m_nodes.size())
 			return;
-		length -= m_nodes.size();
+		nodes -= m_nodes.size();
 //		m_nodes.resize(length);
 //		NodeContainerIndexer capacity = m_nodes.capacity();
-		for (NodeContainerIndexer i = 0; i < length; ++i)
+		for (NodeContainerIndexer i = 0; i < nodes; ++i)
 			m_nodes.emplace_back(std::make_shared<Element>());
 	}
 

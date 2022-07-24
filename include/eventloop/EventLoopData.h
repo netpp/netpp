@@ -9,7 +9,6 @@
 
 namespace netpp {
 class RunInLoopHandler;
-class SignalHandler;
 class TimeWheel;
 struct EventLoopData {
 	EventLoopData();
@@ -19,7 +18,6 @@ struct EventLoopData {
 	std::shared_ptr<RunInLoopHandler> runInLoopHandler;
 
 	std::shared_ptr<TimeWheel> wheel;
-	std::shared_ptr<SignalHandler> signalHandler;
 };
 }
 

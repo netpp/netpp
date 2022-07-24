@@ -31,19 +31,10 @@ TimerHandler::~TimerHandler()
 void TimerHandler::handleIn()
 {
 	uint64_t triggerCount;
-	if (stub::read(m_timerFd, &triggerCount, sizeof(uint64_t)) != -1)
+	if (::read(m_timerFd, &triggerCount, sizeof(uint64_t)) != -1)
 	{
 		m_timeoutCallback();
 	}
-}
-
-void TimerHandler::remove()
-{
-	auto timer = shared_from_this();
-	_loopThisHandlerLiveIn->runInLoop([timer] {
-		timer->setEvents(NOEV);
-		timer->_loopThisHandlerLiveIn->removeEventHandlerFromLoop(timer);
-	});
 }
 
 void TimerHandler::stopTimer() const

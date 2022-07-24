@@ -9,6 +9,7 @@
 #include "Application.h"
 #include "eventloop/EventLoop.h"
 #include "eventloop/EventLoopData.h"
+#include "support/Util.h"
 
 namespace netpp {
 TickTimer::TickTimer(std::weak_ptr<TimeWheel> wheel)
@@ -19,7 +20,7 @@ TickTimer::TickTimer(std::weak_ptr<TimeWheel> wheel)
 	// if not specified wheel, run in main loop
 	if (m_wheel.expired())
 	{
-		assert(Application::instance());
+		APPLICATION_INSTANCE_REQUIRED();
 		auto manager = Application::loopManager();
 		auto mainLoopData = manager->mainLoop()->loopData();
 		m_wheel = mainLoopData->wheel;

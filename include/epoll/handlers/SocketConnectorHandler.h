@@ -56,12 +56,6 @@ protected:
 	int fileDescriptor() const override;
 
 private:
-	/**
-	 * @brief Try to reconnect later
-	 * 
-	 */
-	void reconnect();
-
 	std::weak_ptr<SocketConnectionHandler> _connection;
 
 	std::unique_ptr<SocketDevice> m_socket;

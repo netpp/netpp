@@ -22,7 +22,7 @@ public:
 	 * @param eventsPrototype			User-define event handler
 	 * @return std::weak_ptr<SocketAcceptorHandler>	The acceptor just created
 	 */
-	SocketAcceptorHandler(EventLoop *loop, Address address);
+	explicit SocketAcceptorHandler(EventLoop *loop);
 	~SocketAcceptorHandler() override;
 
 	/**
@@ -30,7 +30,10 @@ public:
 	 * can be used out side EventLoop, thread safe
 	 * 
 	 */
-	void listen();
+	void listen(const Address &address);
+
+	void setConnectedCallback(const ConnectedCallBack &cb);
+	void setErrorCallback(const ErrorCallBack &cb);
 
 protected:
 	/**
