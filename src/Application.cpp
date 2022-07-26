@@ -33,12 +33,12 @@ void Application::exec()
 	m_loopManager->startLoop();
 }
 
-void Application::bindSignalHandler(SignalCallBack cb, std::initializer_list<Signals> interestedSignals)
+void Application::bindSignalHandler(std::initializer_list<Signals> interestedSignals, SignalCallBack cb)
 {
 	auto mainLoop = m_loopManager->mainLoop();
 
 	auto signalHandler = std::make_shared<SignalHandler>(mainLoop, interestedSignals);
-	signalHandler->setSignalCallback(cb);
+	signalHandler->setSignalCallback(std::move(cb));
 	mainLoop->addEventHandlerToLoop(signalHandler);
 }
 

@@ -4,10 +4,8 @@
 
 int main()
 {
-	netpp::Config config;
-//	config.tickTimer.enable = false;
-	netpp::Application app(config);
-	netpp::time::Timer timer;
+	netpp::Application app;
+	netpp::Timer timer;
 	timer.setInterval(1000);
 	timer.setSingleShot(false);
 	timer.setOnTimeout([&timer]{

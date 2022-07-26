@@ -27,7 +27,7 @@ public:
 	 */
 	void exec();
 
-	void bindSignalHandler(SignalCallBack cb, std::initializer_list<Signals> interestedSignals);
+	void bindSignalHandler(std::initializer_list<Signals> interestedSignals, SignalCallBack cb);
 
 	static Application *instance();
 	static EventLoopManager *loopManager();
