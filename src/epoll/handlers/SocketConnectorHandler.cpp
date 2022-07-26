@@ -80,6 +80,20 @@ void SocketConnectorHandler::stopConnect()
 	);
 }
 
+void SocketConnectorHandler::setConnectedCallBack(const ConnectedCallBack &cb)
+{
+	_loopThisHandlerLiveIn->runInLoop([this, connection{shared_from_this()}, cb] {
+		m_connectedCallback = cb;
+	});
+}
+
+void SocketConnectorHandler::setErrorCallBack(const ErrorCallBack &cb)
+{
+	_loopThisHandlerLiveIn->runInLoop([this, connection{shared_from_this()}, cb] {
+		m_errorCallback = cb;
+	});
+}
+
 void SocketConnectorHandler::handleOut()
 {
 	LOG_TRACE("Connector write available");

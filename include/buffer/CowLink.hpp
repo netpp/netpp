@@ -77,7 +77,9 @@ public:
 		 * @param other iterator to be compared
 		 * @return weak order compare
 		 */
-		std::weak_ordering operator<=>(const ConstIterator &other) const { return m_current <=> other.m_current; }
+		bool operator!=(const ConstIterator &other) const { return m_current != other.m_current; }
+		bool operator>(const ConstIterator &other) const { return m_current > other.m_current; }
+		bool operator<(const ConstIterator &other) const { return m_current < other.m_current; }
 		/**
 		 * @brief Move to next
 		 * @return Next iterator
@@ -128,7 +130,10 @@ public:
 		using pointer_type = std::shared_ptr<Element>;
 		using difference_type = NodeContainerIndexer;
 
-		std::weak_ordering operator<=>(const CowIterator &other) const { return m_current <=> other.m_current; }
+		bool operator!=(const CowIterator &other) const { return m_current != other.m_current; }
+		bool operator>(const CowIterator &other) const { return m_current > other.m_current; }
+		bool operator<(const CowIterator &other) const { return m_current < other.m_current; }
+
 		CowIterator &operator++()
 		{
 			++m_current;
@@ -151,6 +156,24 @@ public:
 		NodeContainerIndexer m_current;
 	};
 
+	class RangedCow {
+	public:
+		using iterator = CowIterator;
+		using const_iterator = ConstIterator;
+
+		RangedCow(CowLink *link, NodeContainerIndexer begin, NodeContainerIndexer end)
+			: _link{link}, m_rangeBegin{begin}, m_rangeEnd{end}
+		{}
+
+		iterator begin() { return CowIterator(_link, m_rangeBegin, true); }
+		iterator end() { return CowIterator(_link, m_rangeEnd, false); }
+
+	private:
+		CowLink *_link;
+		NodeContainerIndexer m_rangeBegin;
+		NodeContainerIndexer m_rangeEnd;
+	};
+
 	CowLink()
 	{
 		for (NodeContainerIndexer i = 0; i < defaultNodeSize; ++i)
@@ -163,25 +186,32 @@ public:
 	 * @param index start at index
 	 * @return cow iterator
 	 */
-	iterator cowBegin(NodeContainerIndexer index) { return CowLink::CowIterator(this, index, true); }
+	iterator begin() { return CowLink::CowIterator(this, 0, true); }
 	/**
 	 * @brief End of copy on write iteration
 	 * @param index end at index
 	 * @return cow iterator
 	 */
-	iterator cowEnd(NodeContainerIndexer index) { return CowLink::CowIterator(this, index, false); }
+	iterator end() { return CowLink::CowIterator(this, m_nodes.size(), false); }
 	/**
 	 * @brief Start of readonly iteration
 	 * @param index start at index
 	 * @return readonly iterator
 	 */
-	const_iterator constBegin(NodeContainerIndexer index) { return CowLink::ConstIterator(this, index); }
+	const_iterator cbegin() { return CowLink::ConstIterator(this, 0); }
 	/**
 	 * @brief End of readonly iteration
 	 * @param index end at index
 	 * @return readonly iterator
 	 */
-	const_iterator constEnd(NodeContainerIndexer index) { return CowLink::ConstIterator(this, index); }
+	const_iterator cend() { return CowLink::ConstIterator(this, m_nodes.size()); }
+
+	RangedCow range(NodeContainerIndexer begin, NodeContainerIndexer end) { return RangedCow(this, begin, end); }
+
+	std::shared_ptr<Element> operator[](NodeContainerIndexer index)
+	{
+		return m_nodes[index];
+	}
 
 	/**
 	 *

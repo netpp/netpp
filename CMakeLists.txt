@@ -22,7 +22,7 @@ set(netpp_source
         include/signal/Signals.h
         include/support/ThreadSafeQueue.hpp include/support/Log.h include/support/ThreadPool.hpp include/support/PooledTask.hpp include/support/Util.h include/support/Types.h
         include/time/Timer.h include/time/TimeWheel.h include/time/TickTimer.h
-        include/Application.h include/Acceptor.h
+        include/Application.h include/Acceptor.h include/Connector.h
 
         src/buffer/BufferIOConversion.cpp src/buffer/BufferNode.cpp src/buffer/ByteArray.cpp src/buffer/TcpBuffer.cpp
         src/channel/Channel.cpp src/channel/TcpChannel.cpp
@@ -36,7 +36,7 @@ set(netpp_source
         src/signal/Signals.cpp
         src/support/Log.cpp src/support/ThreadPool.cpp src/support/Util.cpp
         src/time/Timer.cpp src/time/TimeWheel.cpp src/time/TickTimer.cpp
-        src/Application.cpp src/Acceptor.cpp
+        src/Application.cpp src/Acceptor.cpp src/Connector.cpp
         )
 
 include_directories(${PROJECT_SOURCE_DIR}/include)

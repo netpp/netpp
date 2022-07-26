@@ -44,6 +44,9 @@ public:
 	 */
 	bool connected() const { return m_connectionEstablished.load(std::memory_order_relaxed); }
 
+	void setConnectedCallBack(const ConnectedCallBack &cb);
+	void setErrorCallBack(const ErrorCallBack &cb);
+
 protected:
 	/**
 	 * @brief Handle EPOLLOUT triggered when connect state changed,

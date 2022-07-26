@@ -100,8 +100,8 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		unlockedAllocIfNotEnough(length);
 
 	std::size_t expectWrite = length;
-	auto end = m_nodes->cowEnd(m_nodes->size());
-	for (auto it = m_nodes->cowBegin(m_writeNode); length > 0 && (it <=> end) < 0; ++it)
+	auto range = m_nodes->range(m_writeNode, m_nodes->size());
+	for (auto it = range.begin(); length > 0 && it != range.end(); ++it)
 	{
 		std::size_t bytesToWrite = BufferNodeSize - it->end;
 		bytesToWrite = (bytesToWrite < length) ? bytesToWrite : length;
@@ -222,7 +222,8 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 	if (m_availableSizeToRead >= length)
 	{
 		ByteArray::CowBuffer::NodeContainerIndexer endOfRead = endOfReadNode();
-		for (auto it = m_nodes->cowBegin(m_readNode); length > 0 && (it <=> m_nodes->cowEnd(endOfRead)) < 0; ++it)
+		auto range = m_nodes->range(m_readNode, endOfRead);
+		for (auto it = range.begin(); length > 0 && it != range.end(); ++it)
 		{
 			std::size_t bytesToCopy = it->end - it->start;
 			bytesToCopy = (bytesToCopy < length) ? bytesToCopy : length;
@@ -289,8 +290,13 @@ ByteArray::CowBuffer::NodeContainerIndexer ByteArray::endOfReadNode() const
 	}
 	else
 	{
-		auto writeNode = m_nodes->constBegin(m_writeNode);
-		if (writeNode->end == 0)
+		LengthType writeEnd = 0;
+		if (m_writeNode < m_nodes->size())
+		{
+			auto writeNode = (*m_nodes)[m_writeNode];
+			writeEnd = writeNode->end;
+		}
+		if (writeEnd == 0)
 			endOfRead = m_writeNode;
 		else
 			endOfRead = m_writeNode + 1;

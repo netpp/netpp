@@ -3,6 +3,7 @@
 
 #include "epoll/EpollEventHandler.h"
 #include "support/Types.h"
+#include <mutex>
 
 namespace netpp {
 class EventLoop;
