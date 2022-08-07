@@ -8,7 +8,6 @@
 #include <vector>
 #include <memory>
 #include <type_traits>
-#include <functional>
 
 namespace netpp {
 /**
@@ -72,14 +71,12 @@ public:
 		/** @brief Distance of iterator */
 		using difference_type = NodeContainerIndexer;
 
-		/**
-		 * @brief Compare iterator
-		 * @param other iterator to be compared
-		 * @return weak order compare
-		 */
+		bool operator==(const ConstIterator &other) const { return m_current == other.m_current; }
 		bool operator!=(const ConstIterator &other) const { return m_current != other.m_current; }
 		bool operator>(const ConstIterator &other) const { return m_current > other.m_current; }
 		bool operator<(const ConstIterator &other) const { return m_current < other.m_current; }
+		bool operator>=(const ConstIterator &other) const { return m_current >= other.m_current; }
+		bool operator<=(const ConstIterator &other) const { return m_current <= other.m_current; }
 		/**
 		 * @brief Move to next
 		 * @return Next iterator
@@ -88,6 +85,35 @@ public:
 		{
 			++m_current;
 			return *this;
+		}
+		ConstIterator &operator--()
+		{
+			--m_current;
+			return *this;
+		}
+		ConstIterator &operator+(difference_type n)
+		{
+			m_current += n;
+			return *this;
+		}
+		ConstIterator &operator+=(difference_type n)
+		{
+			m_current += n;
+			return *this;
+		}
+		ConstIterator &operator-(difference_type n)
+		{
+			m_current -= n;
+			return *this;
+		}
+		ConstIterator &operator-=(difference_type n)
+		{
+			m_current -= n;
+			return *this;
+		}
+		difference_type operator-(const ConstIterator &other)
+		{
+			return m_current - other.m_current;
 		}
 		/**
 		 * @brief Dereference iterator
@@ -110,6 +136,12 @@ public:
 	 */
 	class CowIterator {
 	public:
+		CowIterator() = default;
+		CowIterator(const CowIterator &other) = default;
+		CowIterator(CowLink *link, const CowIterator &other)
+			: _link{link}, m_current{other.m_current}
+		{}
+
 		/**
 		 * Create an iterator for CowLink
 		 * @param link 			the link object
@@ -130,15 +162,52 @@ public:
 		using pointer_type = std::shared_ptr<Element>;
 		using difference_type = NodeContainerIndexer;
 
+		bool operator==(const CowIterator &other) const { return m_current == other.m_current; }
 		bool operator!=(const CowIterator &other) const { return m_current != other.m_current; }
 		bool operator>(const CowIterator &other) const { return m_current > other.m_current; }
 		bool operator<(const CowIterator &other) const { return m_current < other.m_current; }
+		bool operator>=(const CowIterator &other) const { return m_current >= other.m_current; }
+		bool operator<=(const CowIterator &other) const { return m_current <= other.m_current; }
 
 		CowIterator &operator++()
 		{
 			++m_current;
 			cowThisNode();
 			return *this;
+		}
+		CowIterator &operator--()
+		{
+			--m_current;
+			cowThisNode();
+			return *this;
+		}
+		CowIterator &operator+(difference_type n)
+		{
+			m_current += n;
+			cowThisNode();
+			return *this;
+		}
+		CowIterator &operator+=(difference_type n)
+		{
+			m_current += n;
+			cowThisNode();
+			return *this;
+		}
+		CowIterator &operator-(difference_type n)
+		{
+			m_current -= n;
+			cowThisNode();
+			return *this;
+		}
+		CowIterator &operator-=(difference_type n)
+		{
+			m_current -= n;
+			cowThisNode();
+			return *this;
+		}
+		difference_type operator-(const CowIterator &other)
+		{
+			return m_current - other.m_current;
 		}
 		reference_type operator*() { return *(_link->m_nodes[m_current].get()); }
 		pointer_type operator->() { return _link->m_nodes[m_current]; }
@@ -208,11 +277,6 @@ public:
 
 	RangedCow range(NodeContainerIndexer begin, NodeContainerIndexer end) { return RangedCow(this, begin, end); }
 
-	std::shared_ptr<Element> operator[](NodeContainerIndexer index)
-	{
-		return m_nodes[index];
-	}
-
 	/**
 	 *
 	 */
@@ -222,18 +286,16 @@ public:
 	 * move [0, end) to end of the link
 	 * @param end the last node to move(not contains this node)
 	 */
-	void moveToTail(NodeContainerIndexer end, std::function<void(Element &)> moveCallback)
+	void moveToTail(iterator end)
 	{
+		NodeContainerIndexer endIndex = end - begin();
 		NodeContainer container;
-		for (NodeContainerIndexer i = 0; i < end; ++i)
+		for (NodeContainerIndexer i = 0; i < endIndex; ++i)
 			container.emplace_back(m_nodes[i]);
-		for (NodeContainerIndexer i = end; i < m_nodes.size(); ++i)
-			m_nodes[i - end] = std::move(m_nodes[i]);
+		for (NodeContainerIndexer i = endIndex; i < m_nodes.size(); ++i)
+			m_nodes[i - endIndex] = std::move(m_nodes[i]);
 		for (NodeContainerIndexer i = 0; i < container.size(); ++i)
-		{
-			moveCallback(*container[i]);
-			m_nodes[m_nodes.size() - end + i] = std::move(container[i]);
-		}
+			m_nodes[m_nodes.size() - endIndex + i] = std::move(container[i]);
 	}
 
 	/**

@@ -1,21 +1,5 @@
 #include <gtest/gtest.h>
-#include <cstring>
-extern "C" {
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <endian.h>
-#include <sys/uio.h>
-}
-#define private public
-#define protected public
-#include "ByteArray.h"
-#include "internal/socket/SocketIO.h"
-#undef private
-#undef protected
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
+#include "buffer/ByteArray.h"
 
 using namespace netpp;
 
@@ -119,7 +103,7 @@ TEST_F(ByteArrayTest, WriteUInt64)
 TEST_F(ByteArrayTest, WriteFloat)
 {
 	ByteArray byteArray;
-	byteArray.writeFloat(9.1);
+	byteArray.writeFloat(static_cast<float>(9.1));
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(float));
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize - sizeof(float));
 	EXPECT_FLOAT_EQ(byteArray.retrieveFloat(), 9.1);
@@ -233,33 +217,25 @@ TEST_F(ByteArrayTest, ReadEmpty)
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
 }
 
-TEST_F(ByteArrayTest, MoveBufferNode)
+TEST_F(ByteArrayTest, MoveUnusedBufferNode)
 {
 	ByteArray byteArray;
 	char raw[ByteArray::BufferNodeSize] = {'\0'};
 	byteArray.writeRaw(raw, ByteArray::BufferNodeSize);	// alloc new node
 	EXPECT_EQ(byteArray.readableBytes(), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
-	EXPECT_EQ(byteArray.m_readNode, 0);
-	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, ByteArray::BufferNodeSize), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
-	EXPECT_EQ(byteArray.m_readNode, 1);
-	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	byteArray.writeRaw(raw, ByteArray::BufferNodeSize);	// head node will move to tail
 	EXPECT_EQ(byteArray.readableBytes(), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
-	EXPECT_EQ(byteArray.m_readNode, 0);
-	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	EXPECT_EQ(byteArray.retrieveRaw(raw, ByteArray::BufferNodeSize), ByteArray::BufferNodeSize);
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize);
-	EXPECT_EQ(byteArray.m_readNode, 1);
-	EXPECT_EQ(byteArray.m_writeNode, 1);
 
 	byteArray.writeInt8(1);
 	EXPECT_EQ(byteArray.readableBytes(), 1);
@@ -274,7 +250,7 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteBigEntry)
 {
 	ByteArray byteArray;
 	char raw[ByteArray::BufferNodeSize * 10] = {'\0'};
-	byteArray.writeRaw(raw, ByteArray::BufferNodeSize * 10);	// 16 m_nodes, last 6 is usable
+	byteArray.writeRaw(raw, ByteArray::BufferNodeSize * 10);	// 16 nodes, last 6 is usable
 	EXPECT_EQ(byteArray.readableBytes(), ByteArray::BufferNodeSize * 10);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize * 6);
 	EXPECT_EQ(byteArray.retrieveRaw(raw, ByteArray::BufferNodeSize * 10), ByteArray::BufferNodeSize * 10);
@@ -337,5 +313,3 @@ TEST_F(ByteArrayTest, CrossNodeReadWriteInt64)
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize - sizeof(int64_t) + 1);
 }
-
-#pragma GCC diagnostic pop

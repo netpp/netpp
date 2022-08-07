@@ -7,14 +7,16 @@
 
 #include <memory>
 #include "support/Types.h"
+#include "buffer/ByteArray.h"
 
 namespace netpp {
-class ByteArray;
 class Channel {
 public:
 	virtual ~Channel() = default;
 
 	virtual void send(const ByteArray &data) = 0;
+	virtual ByteArray peek(ByteArray::LengthType size) = 0;
+	virtual ByteArray read(ByteArray::LengthType size) = 0;
 
 	virtual void close() = 0;
 

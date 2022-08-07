@@ -21,7 +21,7 @@ std::atomic_int ThreadPoolTest::threadPoolSleepAddValue = 0;
 
 TEST_F(ThreadPoolTest, RunTaskTest)
 {
-	netpp::support::ThreadPool threadPool(1);
+	netpp::ThreadPool threadPool(1);
 	threadPool.start();
 	EXPECT_EQ(threadPool.queuedTask(), 0);
 	threadPool.run(&ThreadPoolTest::threadPoolSleepAdd, this, 1);

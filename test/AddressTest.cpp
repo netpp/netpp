@@ -1,31 +1,18 @@
 #include <gtest/gtest.h>
-#include "Address.h"
-#include "mock/MockSysCallEnvironment.h"
+#include "location/Address.h"
+#include "support/Util.h"
 extern "C" {
 #include <netinet/in.h>
 #include <arpa/inet.h>
 }
 
-// class MockSocket : public SysCall {
-// public:
-// 	~MockSocket() = default;
-
-// 	MOCK_METHOD(int, mock_socket, (int, int, int), (override));
-// 	MOCK_METHOD(int, mock_bind, (int, const struct ::sockaddr *, ::socklen_t), (override));
-// 	MOCK_METHOD(int, mock_listen, (int, int), (override));
-// 	MOCK_METHOD(int, mock_accept4, (int, struct ::sockaddr *, ::socklen_t *, int), (override));
-// 	MOCK_METHOD(int, mock_connect, (int, const struct ::sockaddr *, ::socklen_t), (override));
-// 	MOCK_METHOD(int, mock_shutdown, (int, int), (override));
-// 	MOCK_METHOD(int, mock_getsockopt, (int, int, int, void *, ::socklen_t *), (override));
-// };
-
-class SocketAndAddressTest : public testing::Test {
+class AddressTest : public testing::Test {
 protected:
 	void SetUp() override {}
 	void TearDown() override {}
 };
 
-TEST_F(SocketAndAddressTest, AddressInfoIpV4Test)
+TEST_F(AddressTest, IpV4AddressTest)
 {
 	netpp::Address addr;
 	EXPECT_EQ(std::string("0.0.0.0"), addr.ip());
@@ -44,10 +31,28 @@ TEST_F(SocketAndAddressTest, AddressInfoIpV4Test)
 	EXPECT_EQ(11, addr2.port());
 }
 
-TEST_F(SocketAndAddressTest, AddressInfoIpV6Test)
+TEST_F(AddressTest, IpV6AddressTest)
 {}
 
-TEST_F(SocketAndAddressTest, CreateSocketTest)
+TEST_F(AddressTest, IpV4AddressConvertionTest)
 {
-	// netpp::internal::socket::Socket(netpp::Address());
+	netpp::Address addr1("192.168.0.1", 10);
+	::sockaddr_in sockaddr1 = netpp::toSockAddress(addr1);
+	EXPECT_EQ(sockaddr1.sin_family, AF_INET);
+	EXPECT_EQ(sockaddr1.sin_addr.s_addr, ::inet_addr("192.168.0.1"));
+	EXPECT_EQ(sockaddr1.sin_port, ::htons(10));
+
+	netpp::Address addr2("0.0.0.0", 20);
+	::sockaddr_in sockaddr2 = netpp::toSockAddress(addr1);
+	EXPECT_EQ(sockaddr2.sin_family, AF_INET);
+	EXPECT_EQ(sockaddr2.sin_addr.s_addr, ::htons(INADDR_ANY));
+	EXPECT_EQ(sockaddr2.sin_port, ::htons(20));
+
+	auto addr3 = netpp::toAddress(sockaddr1);
+	EXPECT_EQ(std::string("192.168.0.1"), addr3.ip());
+	EXPECT_EQ(10, addr3.port());
+
+	auto addr4 = netpp::toAddress(sockaddr2);
+	EXPECT_EQ(std::string("0.0.0.0"), addr4.ip());
+	EXPECT_EQ(20, addr4.port());
 }

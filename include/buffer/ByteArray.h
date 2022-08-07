@@ -96,6 +96,7 @@ public:
 	 * @param other an other ByteArray
 	 */
 	ByteArray(ByteArray &&other) noexcept;
+	ByteArray(ByteArray &other, LengthType size, bool move);
 
 	/**
 	 * @brief Write an int8 value to ByteArray
@@ -290,14 +291,12 @@ private:
 	 */
 	void unlockedMoveBufferHead();
 
-	CowBuffer::NodeContainerIndexer endOfReadNode() const;
-
 	mutable std::mutex m_bufferMutex;
 	LengthType m_availableSizeToRead;
 	LengthType m_availableSizeToWrite;
 
-	CowBuffer::NodeContainerIndexer m_readNode;
-	CowBuffer::NodeContainerIndexer m_writeNode;
+	CowBuffer::iterator m_readNode;
+	CowBuffer::iterator m_writeNode;
 	std::unique_ptr<CowBuffer> m_nodes;
 };
 }

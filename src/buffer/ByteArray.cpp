@@ -5,17 +5,20 @@
 namespace netpp {
 ByteArray::ByteArray()
 	: m_availableSizeToRead{0}, m_availableSizeToWrite{CowBuffer::defaultNodeSize * BufferNodeSize},
-	m_readNode{0}, m_writeNode{0}, m_nodes{std::make_unique<CowBuffer>()}
-{}
+	m_nodes{std::make_unique<CowBuffer>()}
+{
+	m_readNode = m_nodes->begin();
+	m_writeNode = m_readNode;
+}
 
 ByteArray::ByteArray(const ByteArray &other)
 {
 	std::lock_guard lck(other.m_bufferMutex);
 	m_availableSizeToRead = other.m_availableSizeToRead;
 	m_availableSizeToWrite = other.m_availableSizeToWrite;
-	m_readNode = other.m_readNode;
-	m_writeNode = other.m_writeNode;
 	m_nodes = std::make_unique<CowBuffer>(*other.m_nodes);
+	m_readNode = CowBuffer::iterator(m_nodes.get(), other.m_readNode);
+	m_writeNode = CowBuffer::iterator(m_nodes.get(), other.m_writeNode);
 }
 
 ByteArray::ByteArray(ByteArray &&other) noexcept
@@ -26,6 +29,28 @@ ByteArray::ByteArray(ByteArray &&other) noexcept
 	m_readNode = other.m_readNode;
 	m_writeNode = other.m_writeNode;
 	m_nodes = std::move(other.m_nodes);
+}
+
+ByteArray::ByteArray(ByteArray &other, LengthType size, bool move)
+		: ByteArray(other)
+{
+	LengthType nodeMovement = (m_availableSizeToRead - size) / BufferNodeSize;
+
+	if (m_availableSizeToRead >= size)
+	{
+		m_availableSizeToWrite += m_availableSizeToRead - size;
+		m_availableSizeToRead = size;
+		m_writeNode = m_writeNode - nodeMovement;
+		m_writeNode->start = 0;
+		m_writeNode->end = size % BufferNodeSize;
+	}
+	if (move)
+	{
+		other.m_availableSizeToRead -= size;
+		other.m_readNode = m_readNode + nodeMovement;
+		other.m_writeNode->start = size % BufferNodeSize;
+		other.m_writeNode->end = size % BufferNodeSize;
+	}
 }
 
 void ByteArray::writeInt8(int8_t value)
@@ -100,8 +125,8 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		unlockedAllocIfNotEnough(length);
 
 	std::size_t expectWrite = length;
-	auto range = m_nodes->range(m_writeNode, m_nodes->size());
-	for (auto it = range.begin(); length > 0 && it != range.end(); ++it)
+	auto it = m_writeNode;
+	while (length > 0)
 	{
 		std::size_t bytesToWrite = BufferNodeSize - it->end;
 		bytesToWrite = (bytesToWrite < length) ? bytesToWrite : length;
@@ -110,9 +135,11 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		data += bytesToWrite;
 		length -= bytesToWrite;
 		// have next iteration
-		if ((m_writeNode + 1 < m_nodes->size()) && (it->end == BufferNodeSize))
-			++m_writeNode;
+		++it;
 	}
+	if (it->end == BufferNodeSize)	// this node is full, move to next
+		++it;
+	m_writeNode = it;
 	m_availableSizeToRead += (expectWrite - length);
 	m_availableSizeToWrite -= (expectWrite - length);
 }
@@ -221,9 +248,8 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 	std::lock_guard lck(m_bufferMutex);
 	if (m_availableSizeToRead >= length)
 	{
-		ByteArray::CowBuffer::NodeContainerIndexer endOfRead = endOfReadNode();
-		auto range = m_nodes->range(m_readNode, endOfRead);
-		for (auto it = range.begin(); length > 0 && it != range.end(); ++it)
+		auto it = m_readNode;
+		while (length > 0 && it <= m_writeNode)
 		{
 			std::size_t bytesToCopy = it->end - it->start;
 			bytesToCopy = (bytesToCopy < length) ? bytesToCopy : length;
@@ -231,14 +257,22 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 			it->start += bytesToCopy;
 			buffer += bytesToCopy;
 			length -= bytesToCopy;
-			// if this node is empty, and not the last node
-			if (it->start == BufferNodeSize && m_readNode + 1 < m_nodes->size())
-			{
-				// read and write point at same node, move write node also
-				if (m_readNode == m_writeNode)
-					++m_writeNode;
-				++m_readNode;
-			}
+			++it;
+		}
+
+		if (it->start == BufferNodeSize)	// this node is empty, move to next
+			++it;
+		bool nextIsEnd = false;
+		if (it == m_nodes->end())			// this node at end, move to last
+		{
+			--it;
+			nextIsEnd = true;
+		}
+		m_readNode = it;
+		if (m_readNode == m_writeNode)
+		{
+			if (!nextIsEnd)
+				++m_writeNode;
 		}
 		m_availableSizeToRead -= (expectToRead - length);
 	}
@@ -272,35 +306,17 @@ void ByteArray::unlockedAllocIfNotEnough(std::size_t size)
 
 void ByteArray::unlockedMoveBufferHead()
 {
-	if (m_readNode == 0)
+	if (m_readNode == m_nodes->begin())
 		return;
 
-	m_nodes->moveToTail(m_readNode, [](BufferNode &node) { node.start = 0; node.end = 0; });
-	m_availableSizeToWrite += m_readNode * BufferNodeSize;
-	m_writeNode -= m_readNode;
-	m_readNode = 0;
-}
-
-ByteArray::CowBuffer::NodeContainerIndexer ByteArray::endOfReadNode() const
-{
-	ByteArray::CowBuffer::NodeContainerIndexer endOfRead;
-	if (m_writeNode == m_readNode)
+	m_nodes->moveToTail(m_readNode);
+	for (auto it = m_nodes->begin(); it != m_readNode; ++it)
 	{
-		endOfRead = m_readNode + 1;
+		it->start = 0;
+		it->end = 0;
+		--m_writeNode;
+		m_availableSizeToWrite += BufferNodeSize;
 	}
-	else
-	{
-		LengthType writeEnd = 0;
-		if (m_writeNode < m_nodes->size())
-		{
-			auto writeNode = (*m_nodes)[m_writeNode];
-			writeEnd = writeNode->end;
-		}
-		if (writeEnd == 0)
-			endOfRead = m_writeNode;
-		else
-			endOfRead = m_writeNode + 1;
-	}
-	return endOfRead;
+	m_readNode = m_nodes->begin();
 }
 }

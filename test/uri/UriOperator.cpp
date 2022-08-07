@@ -3,9 +3,9 @@
 //
 
 #include <gtest/gtest.h>
-#include "uri/Uri.h"
+#include "location/uri/Uri.h"
 
-using namespace netpp::uri;
+using namespace netpp;
 
 class UriOperator : public testing::Test {
 public:

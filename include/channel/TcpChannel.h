@@ -23,6 +23,8 @@ public:
 	~TcpChannel() override;
 
 	void send(const ByteArray &data) override;
+	ByteArray peek(ByteArray::LengthType size) override;
+	ByteArray read(ByteArray::LengthType size) override;
 
 	void close() override;
 

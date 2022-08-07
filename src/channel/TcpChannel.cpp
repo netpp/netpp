@@ -15,6 +15,8 @@ public:
 	~TcpChannelImpl() override;
 
 	void send(const ByteArray &data) override;
+	ByteArray peek(ByteArray::LengthType size) override;
+	ByteArray read(ByteArray::LengthType size) override;
 
 	void close() override;
 
@@ -53,11 +55,27 @@ void TcpChannelImpl::send(const ByteArray &data)
 	auto buffer = _buffer.lock();
 	if (buffer)
 	{
-		buffer->addWriteBuffer(std::make_shared<ByteArray>(data));
+		buffer->addWriteBuffer(data);
 		auto connection = _connection.lock();
 		if (connection)
 			connection->sendInLoop();
 	}
+}
+
+ByteArray TcpChannelImpl::peek(ByteArray::LengthType size)
+{
+	auto buffer = _buffer.lock();
+	if (buffer)
+		return buffer->peekReadBuffer(size);
+	return {};
+}
+
+ByteArray TcpChannelImpl::read(ByteArray::LengthType size)
+{
+	auto buffer = _buffer.lock();
+	if (buffer)
+		return buffer->readBuffer(size);
+	return {};
 }
 
 void TcpChannelImpl::close()
@@ -103,10 +121,19 @@ TcpChannel::TcpChannel(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
 
 TcpChannel::~TcpChannel() = default;
 
-
 void TcpChannel::send(const ByteArray &data)
 {
 	m_impl->send(data);
+}
+
+ByteArray TcpChannel::peek(ByteArray::LengthType size)
+{
+	return m_impl->peek(size);
+}
+
+ByteArray TcpChannel::read(ByteArray::LengthType size)
+{
+	return m_impl->read(size);
 }
 
 void TcpChannel::close()

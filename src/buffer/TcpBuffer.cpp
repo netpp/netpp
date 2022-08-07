@@ -9,9 +9,19 @@
 namespace netpp {
 TcpBuffer::~TcpBuffer() = default;
 
-void TcpBuffer::addWriteBuffer(std::shared_ptr<ByteArray> buffer)
+void TcpBuffer::addWriteBuffer(const ByteArray &buffer)
 {
-	m_sendBuffers.emplace_back(std::move(buffer));
+	m_sendBuffers.emplace_back(std::make_shared<ByteArray>(buffer));
+}
+
+ByteArray TcpBuffer::peekReadBuffer(ByteArray::LengthType size)
+{
+	return ByteArray(*m_receiveArray, size, false);
+}
+
+ByteArray TcpBuffer::readBuffer(ByteArray::LengthType size)
+{
+	return ByteArray(*m_receiveArray, size, true);
 }
 
 std::unique_ptr<BufferIOConversion> TcpBuffer::sendBufferForIO()

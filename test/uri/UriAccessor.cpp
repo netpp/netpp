@@ -2,9 +2,9 @@
 // Created by gaojian on 2022/3/16.
 //
 #include <gtest/gtest.h>
-#include "uri/Uri.h"
+#include "location/uri/Uri.h"
 
-using namespace netpp::uri;
+using namespace netpp;
 
 class UriAccessor : public testing::Test {
 public:

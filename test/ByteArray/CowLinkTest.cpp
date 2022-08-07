@@ -3,18 +3,11 @@
 //
 
 #include <gtest/gtest.h>
+#include "buffer/CowLink.hpp"
+#include "buffer/BufferNode.h"
+#include <cstring>
 
-#define private public
-#define protected public
-#include "internal/buffer/CowLink.hpp"
-#include "internal/buffer/BufferNode.h"
-#undef private
-#undef protected
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
-
-using namespace netpp::internal::buffer;
+using namespace netpp;
 using CowBuffer = CowLink<BufferNode>;
 
 class CowLinkTest : public testing::Test {
@@ -23,31 +16,28 @@ protected:
 	void TearDown() override {}
 };
 
-TEST_F(CowLinkTest, Create)
+TEST_F(CowLinkTest, CreateCowBuffer)
 {
 	CowBuffer link;
 	EXPECT_EQ(link.size(), CowBuffer::defaultNodeSize);
-	EXPECT_EQ(link.m_nodes.size(), link.size());
-	EXPECT_EQ(reinterpret_cast<const void *>(link.constBegin(0)->buffer), reinterpret_cast<void *>(link.m_nodes[0]->buffer));
-	for (CowBuffer::NodeContainerIndexer i = 0; i < CowBuffer::defaultNodeSize; ++i)
-	{
-		EXPECT_NE(link.m_nodes[i].get(), nullptr);
-		EXPECT_TRUE(link.m_nodes[i].unique());
-	}
 }
 
 TEST_F(CowLinkTest, CopyLInk)
 {
 	CowBuffer link1;
+	std::string testBuffer("test buffer");
+	std::memcpy(link1.begin()->buffer, testBuffer.data(), testBuffer.length());
 	CowBuffer link2(link1);
 	EXPECT_EQ(link1.size(), link2.size());
-	for (CowBuffer::NodeContainerIndexer i = 0; i < CowBuffer::defaultNodeSize; ++i)
-	{
-		EXPECT_NE(link1.m_nodes[i].get(), nullptr);
-		EXPECT_NE(link2.m_nodes[i].get(), nullptr);
-		EXPECT_FALSE(link1.m_nodes[i].unique());
-		EXPECT_FALSE(link2.m_nodes[i].unique());
-	}
+	EXPECT_EQ(link1.begin()->start, link2.begin()->start);
+	EXPECT_EQ(link1.begin()->end, link2.begin()->end);
+	EXPECT_STREQ(link1.begin()->buffer, link2.begin()->buffer);
+
+	std::string testBuffer2("test buffer2");
+	std::memcpy(link2.begin()->buffer, testBuffer.data(), testBuffer.length());
+	EXPECT_STRNE(link1.begin()->buffer, link2.begin()->buffer);
+	EXPECT_STREQ(link1.begin()->buffer, testBuffer.c_str());
+	EXPECT_STREQ(link2.begin()->buffer, testBuffer2.c_str());
 }
 
 TEST_F(CowLinkTest, Iteration)

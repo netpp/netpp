@@ -3,10 +3,10 @@
 //
 
 #include <gtest/gtest.h>
-#include "uri/Uri.h"
-#include "uri/UriCodec.h"
+#include "location/uri/Uri.h"
+#include "location/uri/UriCodec.h"
 
-using namespace netpp::uri;
+using namespace netpp;
 
 class UriConversions : public testing::Test {
 public:

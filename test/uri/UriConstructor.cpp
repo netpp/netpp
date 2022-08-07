@@ -3,11 +3,11 @@
 //
 
 #include <gtest/gtest.h>
-#include "uri/Uri.h"
-#include "uri/UriCodec.h"
-#include "uri/UriException.h"
+#include "location/uri/Uri.h"
+#include "location/uri/UriCodec.h"
+#include "error/Exception.h"
 
-using namespace netpp::uri;
+using namespace netpp;
 
 class UriConstructor : public testing::Test {
 public:

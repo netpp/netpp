@@ -18,7 +18,10 @@ class TcpBuffer : public Buffer {
 public:
 	~TcpBuffer() override;
 
-	void addWriteBuffer(std::shared_ptr<ByteArray> buffer) override;
+	void addWriteBuffer(const ByteArray &buffer) override;
+
+	ByteArray peekReadBuffer(ByteArray::LengthType size) override;
+	ByteArray readBuffer(ByteArray::LengthType size) override;
 
 	/**
 	* @brief Read from buffer, and send to peer

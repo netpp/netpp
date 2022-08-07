@@ -6,6 +6,7 @@
 #define NETPP_BUFFER_H
 
 #include <memory>
+#include "buffer/ByteArray.h"
 
 namespace netpp {
 class BufferIOConversion;
@@ -19,7 +20,11 @@ class ByteArray;
 class Buffer {
 public:
 	virtual ~Buffer() = default;
-	virtual void addWriteBuffer(std::shared_ptr<ByteArray> buffer) = 0;
+
+	virtual void addWriteBuffer(const ByteArray &buffer) = 0;
+	virtual ByteArray peekReadBuffer(ByteArray::LengthType size) = 0;
+	virtual ByteArray readBuffer(ByteArray::LengthType size) = 0;
+
 	virtual std::unique_ptr<BufferIOConversion> sendBufferForIO() = 0;
 	virtual std::unique_ptr<BufferIOConversion> receiveBufferForIO() = 0;
 };
