@@ -12,13 +12,20 @@
 #include "support/Util.h"
 
 namespace netpp {
-TickTimer::TickTimer(std::weak_ptr<TimeWheel> wheel)
-		: m_wheel{std::move(wheel)}, m_wheelEntry{std::make_shared<WheelEntry>()}, m_running{false}
+TickTimer::TickTimer(EventLoop *loop)
+	: m_timerData{std::make_unique<TimeWheel::WheelEntryData>()}, m_running{false}
 {
-	m_wheelEntry->singleShot = true;
-	m_wheelEntry->timeoutTick = 60;
-	// if not specified wheel, run in main loop
-	if (m_wheel.expired())
+	bool useMainLoop = true;
+	if (loop)
+	{
+		auto wheel = loop->loopData()->wheel;
+		if (wheel)
+		{
+			useMainLoop = false;
+			m_wheel = wheel;
+		}
+	}
+	if (useMainLoop)
 	{
 		APPLICATION_INSTANCE_REQUIRED();
 		auto manager = Application::loopManager();
@@ -27,34 +34,39 @@ TickTimer::TickTimer(std::weak_ptr<TimeWheel> wheel)
 	}
 }
 
-TickTimer::~TickTimer() = default;
+TickTimer::~TickTimer()
+{
+	stop();
+}
 
 void TickTimer::setOnTimeout(const std::function<void()> &callback)
 {
-	m_wheelEntry->callback = [this, callback] {
-		m_running = false;
-		callback();
+	m_timerData->callback = [this, callback] {
+		if (m_timerData->singleShot)
+			m_running = false;
+		if (callback)
+			callback();
 	};
 }
 
-void TickTimer::setInterval(TimerInterval tick)
+void TickTimer::setInterval(TimerInterval interval)
 {
-	m_wheelEntry->timeoutTick = tick;
+	m_timerData->interval = interval;
 }
 
 void TickTimer::setSingleShot(bool singleShot)
 {
-	m_wheelEntry->singleShot = singleShot;
+	m_timerData->singleShot = singleShot;
 }
 
 TimerInterval TickTimer::interval() const
 {
-	return m_wheelEntry->timeoutTick;
+	return m_timerData->interval;
 }
 
 bool TickTimer::singleShot() const
 {
-	return m_wheelEntry->singleShot;
+	return m_timerData->singleShot;
 }
 
 void TickTimer::start()
@@ -63,7 +75,7 @@ void TickTimer::start()
 	if (wheel)
 	{
 		m_running = true;
-		wheel->addToWheel(m_wheelEntry);
+		wheel->addToWheel(this, dynamic_cast<const TimeWheel::WheelEntryData &>(*m_timerData));
 	}
 }
 
@@ -73,7 +85,7 @@ void TickTimer::restart()
 	if (wheel)
 	{
 		if (m_running)
-			wheel->renew(m_wheelEntry);
+			wheel->renew(dynamic_cast<const TimeWheel::WheelEntryData &>(*m_timerData));
 		else
 			start();
 	}
@@ -85,7 +97,7 @@ void TickTimer::stop()
 	if (wheel && m_running)
 	{
 		m_running = false;
-		wheel->removeFromWheel(m_wheelEntry);
+		wheel->removeFromWheel(dynamic_cast<const TimeWheel::WheelEntryData &>(*m_timerData));
 	}
 }
 }

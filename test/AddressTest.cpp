@@ -26,9 +26,6 @@ TEST_F(AddressTest, IpV4AddressTest)
 	sockaddr->sin_family = AF_INET;
 	sockaddr->sin_addr.s_addr = ::inet_addr("192.168.0.2");
 	sockaddr->sin_port = ::htons(11);
-	netpp::Address addr2(sockaddr);
-	EXPECT_EQ(std::string("192.168.0.2"), addr2.ip());
-	EXPECT_EQ(11, addr2.port());
 }
 
 TEST_F(AddressTest, IpV6AddressTest)

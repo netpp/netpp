@@ -8,6 +8,7 @@
 #include <memory>
 #include <functional>
 #include "support/Types.h"
+#include "TimerData.h"
 
 namespace netpp {
 class EventLoop;
@@ -34,7 +35,7 @@ public:
 	 * @brief Callback on timeout, the callback must NOT throw exception
 	 * @param callback The callback on timeout
 	 */
-	void setOnTimeout(std::function<void()> callback) { m_callback = std::move(callback); }
+	void setOnTimeout(std::function<void()> callback) { m_timerData.callback = std::move(callback); }
 
 	/**
 	 * @brief Set timer trigger interval, by default, interval is 1000ms
@@ -50,9 +51,9 @@ public:
 	void setSingleShot(bool singleShot);
 
 	/// @brief Get timer interval
-	[[nodiscard]] TimerInterval interval() const { return m_interval; }
+	[[nodiscard]] TimerInterval interval() const { return m_timerData.interval; }
 	/// @brief Get is single shot
-	[[nodiscard]] bool singleShot() const { return m_singleShot; }
+	[[nodiscard]] bool singleShot() const { return m_timerData.singleShot; }
 	/// @brief Get is timer running
 	[[nodiscard]] bool running() const { return m_running; }
 
@@ -64,10 +65,8 @@ public:
 private:
 	void setAndRunTimer();
 
-	TimerInterval m_interval;
-	bool m_singleShot;
-	bool m_running;	
-	std::function<void()> m_callback;
+	TimerData m_timerData;
+	bool m_running;
 
 	// event and handler
 	std::shared_ptr<TimerHandler> m_handler;

@@ -46,6 +46,8 @@ public:
 	 */
 	void run();
 
+	void quit();
+
 	/**
 	 * @brief Add new event handler to event loop
 	 * 
@@ -81,6 +83,7 @@ private:
 	std::mutex m_handlersMutex;    // guard m_handlers
 	std::unordered_set<EventLoop::Handler> m_handlers;    // epoll events handlers
 
+	bool m_loopKeepRunning;
 	std::unique_ptr<EventLoopData> m_loopData;
 };
 }

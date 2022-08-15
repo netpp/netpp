@@ -1,16 +1,9 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#define private public
-#define protected public
 #include "time/TimeWheel.h"
 #include "eventloop/EventLoop.h"
-#include "internal/epoll/EpollEvent.h"
-#include "internal/handlers/RunInLoopHandler.h"
 #include "epoll/Epoll.h"
 #include "Application.h"
-
-#undef private
-#undef protected
 
 class TimerTest : public testing::Test {
 public:
@@ -89,7 +82,7 @@ MATCHER_P(SingleShotTimerEQ, msec, "")
 TEST_F(TimerTest, SetTimerPropertyTest)
 {
 	netpp::Application app;
-	netpp::time::Timer timer(app.loopManager()->mainLoop());
+	netpp::Timer timer;
 	EXPECT_EQ(timer.interval(), 1000);
 	EXPECT_EQ(timer.singleShot(), true);
 	EXPECT_EQ(timer.running(), false);
@@ -104,64 +97,58 @@ TEST_F(TimerTest, SetTimerPropertyTest)
 TEST_F(TimerTest, SingleShotTimerTest)
 {
 	int timerTriggerCount = 0;
-	try {
-		netpp::eventloop::EventLoop eventLoop;
-		netpp::time::Timer timer(&eventLoop);
-		netpp::time::Timer quitLoopTimer(&eventLoop);
+	netpp::EventLoop eventLoop;
+	netpp::Timer timer(&eventLoop);
+	netpp::Timer quitLoopTimer(&eventLoop);
 
-		timer.setInterval(10);
-		timer.setSingleShot(true);
-		timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; });
-		quitLoopTimer.setInterval(50);
-		quitLoopTimer.setSingleShot(true);
-		quitLoopTimer.setOnTimeout([]{ throw std::runtime_error("quit"); });
-		timer.start();
-		quitLoopTimer.start();
-		eventLoop.run();
-	} catch (const std::runtime_error &e) {
-	}
+	timer.setInterval(10);
+	timer.setSingleShot(true);
+	timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; });
+	quitLoopTimer.setInterval(50);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ eventLoop.quit(); });
+	timer.start();
+	quitLoopTimer.start();
+	eventLoop.run();
+
 	EXPECT_EQ(timerTriggerCount, 1);
 }
 
 TEST_F(TimerTest, RepeatedlyTimerTest)
 {
 	int timerTriggerCount = 0;
-	try {
-		netpp::eventloop::EventLoop eventLoop;
-		netpp::time::Timer timer(&eventLoop);
+	netpp::EventLoop eventLoop;
+	netpp::Timer timer(&eventLoop);
 
-		timer.setInterval(10);
-		timer.setSingleShot(false);
-		timer.setOnTimeout([&timerTriggerCount]{
-			++timerTriggerCount;
-			if (timerTriggerCount > 5)
-				throw std::runtime_error("quit");
-		});
-		timer.start();
-		eventLoop.run();
-	} catch (const std::runtime_error &e) {
-	}
+	timer.setInterval(10);
+	timer.setSingleShot(false);
+	timer.setOnTimeout([&]{
+		++timerTriggerCount;
+		if (timerTriggerCount > 5)
+			eventLoop.quit();
+	});
+	timer.start();
+	eventLoop.run();
+
 	EXPECT_GT(timerTriggerCount, 5);
 }
 
 TEST_F(TimerTest, SetSingleShotWhileRunningTest)
 {
 	int timerTriggerCount = 0;
-	try {
-		netpp::eventloop::EventLoop eventLoop;
-		netpp::time::Timer timer(&eventLoop);
-		netpp::time::Timer quitLoopTimer(&eventLoop);
+	netpp::EventLoop eventLoop;
+	netpp::Timer timer(&eventLoop);
+	netpp::Timer quitLoopTimer(&eventLoop);
 
-		timer.setInterval(10);
-		timer.setSingleShot(false);
-		timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.setSingleShot(true); });
-		quitLoopTimer.setInterval(50);
-		quitLoopTimer.setSingleShot(true);
-		quitLoopTimer.setOnTimeout([]{ throw std::runtime_error("quit"); });
-		timer.start();
-		quitLoopTimer.start();
-		eventLoop.run();
-	} catch (const std::runtime_error &e) {
-	}
+	timer.setInterval(10);
+	timer.setSingleShot(false);
+	timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.setSingleShot(true); });
+	quitLoopTimer.setInterval(50);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ eventLoop.quit(); });
+	timer.start();
+	quitLoopTimer.start();
+	eventLoop.run();
+
 	EXPECT_EQ(timerTriggerCount, 2);
 }

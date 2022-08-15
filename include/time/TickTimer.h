@@ -8,10 +8,11 @@
 #include <functional>
 #include <memory>
 #include "support/Types.h"
+#include "TimerData.h"
 
 namespace netpp {
-struct WheelEntry;
 class TimeWheel;
+class EventLoop;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 /**
  * @brief The ticking timer, with limited duration and limited precision
  */
@@ -22,7 +23,7 @@ public:
 	 * @param wheel Where this timer ticks,
 	 * by default nullptr passed, the timer runs in default wheel(the wheel in main event loop).
 	 */
-	explicit TickTimer(std::weak_ptr<TimeWheel> wheel = std::weak_ptr<TimeWheel>());
+	explicit TickTimer(EventLoop *loop = nullptr);
 	~TickTimer();
 
 	/**
@@ -35,7 +36,7 @@ public:
 	 * @brief Set when will this timer be triggered, by default ticks 100 times
 	 * @param tick after time wheel tick given times, timer timeout
 	 */
-	void setInterval(TimerInterval tick);
+	void setInterval(TimerInterval interval);
 
 	/**
 	 * @brief Set the timer should run repeatedly, by default TickTimer is single shot
@@ -53,6 +54,9 @@ public:
 	 */
 	[[nodiscard]] bool singleShot() const;
 
+	/// @brief Get is timer running
+	[[nodiscard]] bool running() const { return m_running; }
+
 	/**
 	 * @brief Start run timer
 	 */
@@ -68,12 +72,9 @@ public:
 	 */
 	void stop();
 
-	/// @brief Get is timer running
-	[[nodiscard]] bool running() const { return m_running; }
-
 private:
 	std::weak_ptr<TimeWheel> m_wheel;
-	std::shared_ptr<WheelEntry> m_wheelEntry;
+	std::unique_ptr<TimerData> m_timerData;
 	bool m_running;
 };
 }

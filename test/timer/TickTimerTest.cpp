@@ -5,8 +5,9 @@
 #include <gtest/gtest.h>
 #include "time/TimeWheel.h"
 #include "time/TickTimer.h"
-#include "time/Timer.h"
 #include "eventloop/EventLoop.h"
+#include "Application.h"
+#include "eventloop/EventLoopManager.h"
 
 class TickTimerTest : public testing::Test {
 public:
@@ -17,9 +18,8 @@ protected:
 
 TEST_F(TickTimerTest, SetTimerPropertyTest)
 {
-	netpp::eventloop::EventLoop eventLoop;
-	auto wheel = std::make_shared<netpp::time::TimeWheel>(&eventLoop, 10, 10);
-	netpp::time::TickTimer timer(wheel);
+	netpp::Application app;
+	netpp::TickTimer timer;
 
 	EXPECT_EQ(timer.interval(), 60);
 	EXPECT_EQ(timer.singleShot(), true);
@@ -34,63 +34,57 @@ TEST_F(TickTimerTest, SetTimerPropertyTest)
 
 TEST_F(TickTimerTest, SingleShotTimerTest)
 {
+	netpp::Application app;
 	int timerTriggerCount = 0;
-	try {
-		netpp::eventloop::EventLoop eventLoop;
-		auto wheel = std::make_shared<netpp::time::TimeWheel>(&eventLoop, 10, 10);
-		netpp::time::TickTimer timer(wheel);
-		netpp::time::Timer quitLoopTimer(&eventLoop);
+	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
+	netpp::TickTimer timer(eventLoop);
+	netpp::Timer quitLoopTimer(eventLoop);
 
-		timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; });
-		timer.setInterval(1);
-		timer.setSingleShot(true);
-		quitLoopTimer.setInterval(50);
-		quitLoopTimer.setSingleShot(true);
-		quitLoopTimer.setOnTimeout([]{ throw std::runtime_error("quit"); });
-		timer.start();
-		quitLoopTimer.start();
-		eventLoop.run();
-	} catch (const std::runtime_error &e) {
-	}
+	timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; });
+	timer.setInterval(1);
+	timer.setSingleShot(true);
+	quitLoopTimer.setInterval(50);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ eventLoop->quit(); });
+	timer.start();
+	quitLoopTimer.start();
+	eventLoop->run();
 	EXPECT_EQ(timerTriggerCount, 1);
 }
 
 TEST_F(TickTimerTest, RepeatedlyTimerTest)
 {
+	netpp::Application app;
 	int timerTriggerCount = 0;
-	try {
-		netpp::eventloop::EventLoop eventLoop;
-		auto wheel = std::make_shared<netpp::time::TimeWheel>(&eventLoop, 10, 10);
-		netpp::time::TickTimer timer(wheel);
+	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
+	netpp::TickTimer timer;
 
-		timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; if (timerTriggerCount > 5) throw std::runtime_error("quit"); });
-		timer.setInterval(1);
-		timer.setSingleShot(false);
-		timer.start();
-		eventLoop.run();
-	} catch (const std::runtime_error &e) {
-	}
+	timer.setOnTimeout([&]{ ++timerTriggerCount; if (timerTriggerCount > 5) eventLoop->quit(); });
+	timer.setInterval(1);
+	timer.setSingleShot(false);
+	timer.start();
+	eventLoop->run();
+
 	EXPECT_GT(timerTriggerCount, 5);
 }
 
 TEST_F(TickTimerTest, SetSingleShotWhileRunningTest)
 {
+	netpp::Application app;
 	int timerTriggerCount = 0;
-	try {
-		netpp::eventloop::EventLoop eventLoop;
-		netpp::time::Timer timer(&eventLoop);
-		netpp::time::Timer quitLoopTimer(&eventLoop);
+	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
+	netpp::Timer timer(eventLoop);
+	netpp::Timer quitLoopTimer(eventLoop);
 
-		timer.setInterval(10);
-		timer.setSingleShot(false);
-		timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.setSingleShot(true); });
-		quitLoopTimer.setInterval(50);
-		quitLoopTimer.setSingleShot(true);
-		quitLoopTimer.setOnTimeout([]{ throw std::runtime_error("quit"); });
-		timer.start();
-		quitLoopTimer.start();
-		eventLoop.run();
-	} catch (const std::runtime_error &e) {
-	}
+	timer.setInterval(10);
+	timer.setSingleShot(false);
+	timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.setSingleShot(true); });
+	quitLoopTimer.setInterval(50);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ eventLoop->quit(); });
+	timer.start();
+	quitLoopTimer.start();
+	eventLoop->run();
+
 	EXPECT_EQ(timerTriggerCount, 2);
 }

@@ -3,39 +3,28 @@
 
 #include <unordered_set>
 #include <memory>
-#include "time/Timer.h"
+#include "Timer.h"
 #include "support/Types.h"
 #include <string>
 #include <limits>
+#include "TimerData.h"
 
 namespace netpp {
-struct WheelEntry {
-private:
-	friend class TimeWheel;
-	/**
-	 * @brief The index in TimeWheel, can be accessed by TimeWheel only
-	 */
-	TimerInterval wheelIndex = 0;
-	bool expire = false;
-public:
-	/**
-	 * @brief Can run this entry repeatedly
-	 */
-	bool singleShot = true;
-
-	/**
-	 * @brief The number of ticks this entry timeout
-	 */
-	TimerInterval timeoutTick = 0;
-
-	/**
-	 * @brief The callback when timeout
-	 */
-	std::function<void()> callback;
-};
-
 class TimeWheel {
 public:
+	struct WheelEntryData : public TimerData {
+	public:
+		WheelEntryData()
+		: TimerData{true, 1000},
+		  expire{false}, timerId{nullptr}, wheelIndex{0}
+		{}
+		~WheelEntryData() override = default;
+
+		bool expire;
+		void *timerId;
+		TimerInterval wheelIndex;
+	};
+
 	/**
 	 * @brief Construct a TimeWheel
 	 *
@@ -43,9 +32,9 @@ public:
 	 */
 	explicit TimeWheel(EventLoop *loop);
 
-	void addToWheel(const std::shared_ptr<WheelEntry> &entry);
-	void removeFromWheel(const std::shared_ptr<WheelEntry> &entry);
-	void renew(const std::shared_ptr<WheelEntry> &entry);
+	void addToWheel(void *timerId, const WheelEntryData &data);
+	void removeFromWheel(const WheelEntryData &data);
+	void renew(const WheelEntryData &data);
 
 private:
 	void tick();
@@ -53,7 +42,7 @@ private:
 	Timer m_tickTimer;
 	unsigned m_timeOutBucketIndex;
 
-	std::array<std::unordered_set<std::shared_ptr<WheelEntry>>, 600> m_buckets;
+	std::array<std::unordered_map<void *, WheelEntryData>, 600> m_buckets;
 };
 }
 

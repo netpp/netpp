@@ -37,7 +37,7 @@ public:
 
 	/// @brief Get runnable return type
 	template <typename Runnable, typename ... Args>
-	using ResultType = typename std::result_of<Runnable(Args...)>::type;
+	using ResultType = typename std::invoke_result_t<Runnable, Args...>;
 
 	/**
 	 * @brief Add task to thread pool

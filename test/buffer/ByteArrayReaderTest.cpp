@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "ByteArray.h"
-#include "internal/socket/SocketIO.h"
+#include "buffer/ByteArray.h"
+#include "buffer/BufferIOConversion.h"
 #include <cstring>
 extern "C" {
 #include <sys/socket.h>
@@ -8,10 +8,6 @@ extern "C" {
 #include <endian.h>
 #include <sys/uio.h>
 }
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
 
 using namespace netpp;
 
@@ -25,7 +21,7 @@ TEST_F(ByteArrayReaderTest, EmptyByteArray)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	{
-		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ByteArrayReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.iovenLength(), 0);
 		EXPECT_EQ(readVec.iovec(), nullptr);
 		readVec.adjustByteArray(0);
@@ -38,7 +34,7 @@ TEST_F(ByteArrayReaderTest, ReadInt8)
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	byteArray->writeInt8(1);
 	{
-		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ByteArrayReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.iovenLength(), 1);
 		EXPECT_NE(readVec.iovec(), nullptr);
 		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int8_t));
@@ -52,7 +48,7 @@ TEST_F(ByteArrayReaderTest, ReadInt64)
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	byteArray->writeInt64(2);
 	{
-		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ByteArrayReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.iovenLength(), 1);
 		EXPECT_NE(readVec.iovec(), nullptr);
 		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
@@ -66,7 +62,7 @@ TEST_F(ByteArrayReaderTest, ReadInt8FromInt64)
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	byteArray->writeInt64(2);
 	{
-		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ByteArrayReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.iovenLength(), 1);
 		EXPECT_NE(readVec.iovec(), nullptr);
 		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
@@ -85,7 +81,7 @@ TEST_F(ByteArrayReaderTest, ReadString)
 	std::string str = "test string";
 	byteArray->writeString(str);
 	{
-		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ByteArrayReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.iovenLength(), 1);
 		EXPECT_NE(readVec.iovec(), nullptr);
 		EXPECT_EQ(readVec.iovec()[0].iov_len, str.length() * sizeof(char));
@@ -101,7 +97,7 @@ TEST_F(ByteArrayReaderTest, ReadTwice)
 	std::size_t stringLength = str.length() * sizeof(char);
 	byteArray->writeString(str);
 	{
-		internal::socket::ByteArrayReaderWithLock readVecFir(byteArray);
+		ByteArrayReaderWithLock readVecFir(byteArray);
 		::iovec *vecFir = readVecFir.iovec();
 		EXPECT_EQ(readVecFir.iovenLength(), 1);
 		EXPECT_NE(vecFir, nullptr);
@@ -113,7 +109,7 @@ TEST_F(ByteArrayReaderTest, ReadTwice)
 	str = "abcs string";
 	byteArray->writeString(str);
 	{
-		internal::socket::ByteArrayReaderWithLock readVecSec(byteArray);
+		ByteArrayReaderWithLock readVecSec(byteArray);
 		::iovec *vecSec = readVecSec.iovec();
 		EXPECT_EQ(readVecSec.iovenLength(), 1);
 		EXPECT_NE(vecSec, nullptr);
@@ -139,7 +135,7 @@ TEST_F(ByteArrayReaderTest, ReadCrossNodeInt8)
 	EXPECT_EQ(byteArray->readableBytes(), sizeof(int8_t) * 2);
 	EXPECT_EQ(byteArray->writeableBytes(), ByteArray::BufferNodeSize - sizeof(int8_t));
 	{
-		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ByteArrayReaderWithLock readVec(byteArray);
 		ASSERT_EQ(readVec.iovenLength(), 2);
 		EXPECT_NE(readVec.iovec(), nullptr);
 		int8_t data;
@@ -170,7 +166,7 @@ TEST_F(ByteArrayReaderTest, ReadCrossNodeInt64)
 	EXPECT_EQ(byteArray->readableBytes(), sizeof(int64_t));
 	EXPECT_EQ(byteArray->writeableBytes(), ByteArray::BufferNodeSize - sizeof(int8_t) * 7);
 	{
-		internal::socket::ByteArrayReaderWithLock readVec(byteArray);
+		ByteArrayReaderWithLock readVec(byteArray);
 		ASSERT_EQ(readVec.iovenLength(), 2);
 		EXPECT_NE(readVec.iovec(), nullptr);
 		int64_t data;

@@ -3,15 +3,8 @@
 //
 
 #include <gtest/gtest.h>
-#define private public
-#define protected public
-#include "time/TickTimer.h"
 #include "time/TimeWheel.h"
 #include "eventloop/EventLoop.h"
-#undef private
-#undef protected
-
-using namespace netpp::time;
 
 class TimerWheelTest : public testing::Test {
 public:
@@ -21,154 +14,123 @@ protected:
 	void TearDown() override {}
 };
 
-TEST_F(TimerWheelTest, WheelRotateTest)
-{
-	netpp::eventloop::EventLoop loop;
-	TimeWheel wheel(&loop, 10, 10);
-	EXPECT_EQ(wheel.m_timeOutBucketIndex, 0);
-	for (int i = 1; i < 10; ++i)
-	{
-		wheel.tick();
-		EXPECT_EQ(wheel.m_timeOutBucketIndex, i);
-	}
-	wheel.tick();
-	EXPECT_EQ(wheel.m_timeOutBucketIndex, 0);
-}
-
 TEST_F(TimerWheelTest, AddEntryTest)
 {
-	netpp::eventloop::EventLoop loop;
-	TimeWheel wheel(&loop, 10, 10);
+	netpp::EventLoop loop;
+	netpp::TimeWheel wheel(&loop);
 	{
-		auto entry = std::make_shared<WheelEntry>();
-		entry->timeoutTick = 1;
-		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 1);
-		EXPECT_EQ(entry->expire, false);
+		netpp::TimeWheel::WheelEntryData entry;
+		void *fakeTimerId = reinterpret_cast<void *>(1);
+		entry.interval = 1000;
+		wheel.addToWheel(fakeTimerId, entry);
+		EXPECT_EQ(entry.wheelIndex, 1);
+		EXPECT_EQ(entry.expire, false);
+		EXPECT_EQ(entry.timerId, fakeTimerId);
 	}
 	{
-		auto entry = std::make_shared<WheelEntry>();
-		entry->expire = true;
-		entry->timeoutTick = 1;
-		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 1);
-		EXPECT_EQ(entry->expire, false);
+		netpp::TimeWheel::WheelEntryData entry;
+		void *fakeTimerId = reinterpret_cast<void *>(2);
+		entry.expire = true;
+		entry.interval = 1000;
+		wheel.addToWheel(fakeTimerId, entry);
+		EXPECT_EQ(entry.wheelIndex, 1);
+		EXPECT_EQ(entry.expire, false);
+		EXPECT_EQ(entry.timerId, fakeTimerId);
 	}
 	{
-		auto entry = std::make_shared<WheelEntry>();
-		entry->timeoutTick = 0;
-		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 0);
-		EXPECT_EQ(entry->expire, false);
+		netpp::TimeWheel::WheelEntryData entry;
+		void *fakeTimerId = reinterpret_cast<void *>(3);
+		entry.interval = 0;
+		wheel.addToWheel(fakeTimerId, entry);
+		EXPECT_EQ(entry.wheelIndex, 0);
+		EXPECT_EQ(entry.expire, false);
+		EXPECT_EQ(entry.timerId, fakeTimerId);
 	}
 	{
-		auto entry = std::make_shared<WheelEntry>();
-		entry->timeoutTick = 10;
-		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 9);
-		EXPECT_EQ(entry->expire, false);
-	}
-	{
-		auto entry = std::make_shared<WheelEntry>();
-		entry->timeoutTick = 11;
-		wheel.addToWheel(entry);
-		EXPECT_EQ(entry->wheelIndex, 9);
-		EXPECT_EQ(entry->expire, false);
+		netpp::TimeWheel::WheelEntryData entry;
+		void *fakeTimerId = reinterpret_cast<void *>(4);
+		entry.interval = 10000;
+		wheel.addToWheel(fakeTimerId, entry);
+		EXPECT_EQ(entry.wheelIndex, 9);
+		EXPECT_EQ(entry.expire, false);
+		EXPECT_EQ(entry.timerId, fakeTimerId);
 	}
 }
 
 TEST_F(TimerWheelTest, RemoveEntryTest)
 {
-	netpp::eventloop::EventLoop loop;
-	TimeWheel wheel(&loop, 10, 2);
+	netpp::EventLoop loop;
+	netpp::TimeWheel wheel(&loop);
 
-	auto entry1 = std::make_shared<WheelEntry>();
-	entry1->timeoutTick = 1;
-	entry1->singleShot = false;
-	entry1->callback = [&]{
+	netpp::TimeWheel::WheelEntryData entry1;
+	void *fakeTimerId1 = reinterpret_cast<void *>(1);
+	entry1.interval = 1000;
+	entry1.singleShot = false;
+	entry1.callback = [&]{
 		static int i = 0;
 		++i;
 		if (i >= 2)
 		{
 			wheel.removeFromWheel(entry1);
-			EXPECT_TRUE(entry1->expire);
+			EXPECT_TRUE(entry1.expire);
 		}
 	};
-	wheel.addToWheel(entry1);
-	auto entry2 = std::make_shared<WheelEntry>();
-	entry2->singleShot = true;
-	entry2->timeoutTick = 1;
-	wheel.addToWheel(entry2);
-	auto entry3 = std::make_shared<WheelEntry>();
-	entry3->singleShot = false;
-	entry3->timeoutTick = 1;
-	wheel.addToWheel(entry3);
-	EXPECT_EQ(wheel.m_buckets[1].size(), 3);
+	wheel.addToWheel(fakeTimerId1, entry1);
 
-	wheel.tick();
-	EXPECT_EQ(wheel.m_buckets[1].size(), 2);
+	netpp::TimeWheel::WheelEntryData entry2;
+	void *fakeTimerId2 = reinterpret_cast<void *>(2);
+	entry2.singleShot = true;
+	entry2.interval = 1000;
+	wheel.addToWheel(fakeTimerId2, entry2);
 
-	wheel.tick();
-	EXPECT_EQ(wheel.m_buckets[1].size(), 2);
+	netpp::TimeWheel::WheelEntryData entry3;
+	void *fakeTimerId3 = reinterpret_cast<void *>(3);
+	entry3.singleShot = false;
+	entry3.interval = 1000;
+	wheel.addToWheel(fakeTimerId3, entry3);
 
-	wheel.tick();
-	EXPECT_EQ(wheel.m_buckets[1].size(), 1);
+	// wait after all entry timed out
 }
 
 TEST_F(TimerWheelTest, RenewEntryTest)
 {
-	netpp::eventloop::EventLoop loop;
-	TimeWheel wheel(&loop, 10, 10);
+	netpp::EventLoop loop;
+	netpp::TimeWheel wheel(&loop);
 
-	auto entry = std::make_shared<WheelEntry>();
-	entry->timeoutTick = 1;
+	netpp::TimeWheel::WheelEntryData entry;
+	void *fakeTimerId = reinterpret_cast<void *>(1);
+	entry.interval = 1000;
 
-	wheel.addToWheel(entry);
-	EXPECT_EQ(entry->wheelIndex, 1);
-	EXPECT_EQ(wheel.m_buckets[1].size(), 1);
+	wheel.addToWheel(fakeTimerId, entry);
+	EXPECT_EQ(entry.wheelIndex, 1);
 
-	entry->timeoutTick = 3;
+	entry.interval = 3000;
 	wheel.renew(entry);
-	EXPECT_EQ(entry->wheelIndex, 3);
-	EXPECT_EQ(wheel.m_buckets[1].size(), 0);
-	EXPECT_EQ(wheel.m_buckets[3].size(), 1);
+	EXPECT_EQ(entry.wheelIndex, 3);
 
-	entry->timeoutTick = 0;
+	entry.interval = 0;
 	wheel.renew(entry);
-	EXPECT_EQ(entry->wheelIndex, 0);
-	EXPECT_EQ(wheel.m_buckets[0].size(), 1);
-	EXPECT_EQ(wheel.m_buckets[3].size(), 0);
+	EXPECT_EQ(entry.wheelIndex, 0);
 
-	entry->timeoutTick = 10;
+	entry.interval = 10000;
 	wheel.renew(entry);
-	EXPECT_EQ(entry->wheelIndex, 9);
-	EXPECT_EQ(wheel.m_buckets[9].size(), 1);
-	EXPECT_EQ(wheel.m_buckets[0].size(), 0);
 }
 
 TEST_F(TimerWheelTest, TickTest)
 {
-	netpp::eventloop::EventLoop loop;
-	TimeWheel wheel(&loop, 10, 3);
+	netpp::EventLoop loop;
+	netpp::TimeWheel wheel(&loop);
 
 	int triggerCount = 0;
-	auto entry = std::make_shared<WheelEntry>();
-	entry->timeoutTick = 1;
-	entry->singleShot = false;
-	entry->callback = [&triggerCount]{
+	netpp::TimeWheel::WheelEntryData entry;
+	void *fakeTimerId = reinterpret_cast<void *>(1);
+	entry.interval = 1000;
+	entry.singleShot = false;
+	entry.callback = [&triggerCount]{
 		++triggerCount;
 	};
-	wheel.addToWheel(entry);
+	wheel.addToWheel(fakeTimerId, entry);
 
-	wheel.tick();
-	EXPECT_EQ(triggerCount, 1);
-
-	wheel.tick();
-	EXPECT_EQ(triggerCount, 1);
-
-	wheel.tick();
-	EXPECT_EQ(triggerCount, 1);
-
-	wheel.tick();
+	// wait util entry timed out
 	EXPECT_EQ(triggerCount, 2);
 }

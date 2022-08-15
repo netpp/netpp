@@ -5,7 +5,6 @@
 #include <cassert>
 #include "time/Timer.h"
 #include "eventloop/EventLoop.h"
-#include "support/Log.h"
 #include "epoll/handlers/TimerHandler.h"
 #include "Application.h"
 #include "eventloop/EventLoopManager.h"
@@ -16,7 +15,7 @@ using std::make_shared;
 
 namespace netpp {
 Timer::Timer(EventLoop *loop)
-	: m_interval(1000), m_singleShot{true}, m_running{false}
+	: m_timerData(true, 1000), m_running{false}
 {
 	// timer runs in creating thread
 	if (!loop)
@@ -38,7 +37,7 @@ Timer::~Timer()
 
 void Timer::setInterval(TimerInterval mSec)
 {
-	m_interval = mSec;
+	m_timerData.interval = mSec;
 	if (m_running)	// if running, affect immediately
 	{
 		setAndRunTimer();
@@ -47,9 +46,9 @@ void Timer::setInterval(TimerInterval mSec)
 
 void Timer::setSingleShot(bool singleShot)
 {
-	if (m_singleShot == singleShot)
+	if (m_timerData.singleShot == singleShot)
 		return;
-	m_singleShot = singleShot;
+	m_timerData.singleShot = singleShot;
 	if (running())
 	{
 		setAndRunTimer();
@@ -77,25 +76,15 @@ void Timer::stop()
 void Timer::setAndRunTimer()
 {
 	auto callback = [this]{
-		if (m_singleShot)
+		if (m_timerData.singleShot)
 			m_running = false;
-		if (m_callback)
-		{
-			try
-			{
-				m_callback();
-			}
-			catch (...)
-			{
-				LOG_CRITICAL("exception threw while executing timeout method, stop");
-				throw;
-			}
-		}
+		if (m_timerData.callback)
+			m_timerData.callback();
 	};
 	m_running = true;
-	if (m_singleShot)
-		m_handler->setIntervalAndRun(m_interval, false, callback);
+	if (m_timerData.singleShot)
+		m_handler->setIntervalAndRun(m_timerData.interval, false, callback);
 	else
-		m_handler->setIntervalAndRun(m_interval, true, callback);
+		m_handler->setIntervalAndRun(m_timerData.interval, true, callback);
 }
 }

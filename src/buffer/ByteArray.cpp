@@ -126,7 +126,7 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 
 	std::size_t expectWrite = length;
 	auto it = m_writeNode;
-	while (length > 0)
+	while (length > 0 && it != m_nodes->end())
 	{
 		std::size_t bytesToWrite = BufferNodeSize - it->end;
 		bytesToWrite = (bytesToWrite < length) ? bytesToWrite : length;
@@ -137,7 +137,7 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		// have next iteration
 		++it;
 	}
-	if (it->end == BufferNodeSize)	// this node is full, move to next
+	if (it != m_nodes->end() && it->end == BufferNodeSize)	// this node is full, move to next
 		++it;
 	m_writeNode = it;
 	m_availableSizeToRead += (expectWrite - length);
@@ -260,7 +260,7 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 			++it;
 		}
 
-		if (it->start == BufferNodeSize)	// this node is empty, move to next
+		if (it != m_nodes->end() && it->start == BufferNodeSize)	// this node is empty, move to next
 			++it;
 		bool nextIsEnd = false;
 		if (it == m_nodes->end())			// this node at end, move to last

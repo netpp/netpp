@@ -1,22 +1,13 @@
 #include <gtest/gtest.h>
 #include <cstring>
+#include "buffer/ByteArray.h"
+#include "buffer/BufferIOConversion.h"
 extern "C" {
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <endian.h>
 #include <sys/uio.h>
 }
-
-#define private public
-#define protected public
-#include "ByteArray.h"
-#include "internal/socket/SocketIO.h"
-#undef private
-#undef protected
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
 
 using namespace netpp;
 
@@ -35,7 +26,7 @@ TEST_F(ByteArrayWriterTest, EmptyByteArray)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		EXPECT_EQ(writeVec.iovenLength(), 1);
 		EXPECT_NE(writeVec.iovec(), nullptr);
 		EXPECT_EQ(writeVec.iovec()[0].iov_len, ByteArray::BufferNodeSize);
@@ -48,13 +39,13 @@ TEST_F(ByteArrayWriterTest, WriteOutOfRange)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		EXPECT_EQ(writeVec.iovenLength(), 1);
 		EXPECT_NE(writeVec.iovec(), nullptr);
 		EXPECT_EQ(writeVec.iovec()[0].iov_len, ByteArray::BufferNodeSize);
 		writeVec.adjustByteArray(ByteArray::BufferNodeSize + 1);
 	}
-	EXPECT_EQ(byteArray->m_nodes->size(), 2);
+//	EXPECT_EQ(byteArray->m_nodes->size(), 2);
 	EXPECT_EQ(byteArray->readableBytes(), ByteArray::BufferNodeSize + 1);
 	EXPECT_EQ(byteArray->writeableBytes(), ByteArray::BufferNodeSize - 1);
 }
@@ -63,7 +54,7 @@ TEST_F(ByteArrayWriterTest, WriteInt8)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.iovec();
 		EXPECT_EQ(writeVec.iovenLength(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -80,7 +71,7 @@ TEST_F(ByteArrayWriterTest, WriteInt64)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.iovec();
 		EXPECT_EQ(writeVec.iovenLength(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -97,7 +88,7 @@ TEST_F(ByteArrayWriterTest, WriteInt64WithLength)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.iovec();
 		EXPECT_EQ(writeVec.iovenLength(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -114,12 +105,12 @@ TEST_F(ByteArrayWriterTest, WriteNegativeInt64)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.iovec();
 		EXPECT_EQ(writeVec.iovenLength(), 1);
 		EXPECT_NE(vec, nullptr);
 		EXPECT_EQ(vec[0].iov_len, ByteArray::BufferNodeSize);
-		auto value = static_cast<int64_t>(::htobe64(-2));
+		auto value = static_cast<int64_t>(::htobe64(static_cast<uint64_t>(-2)));
 		writeToIOVec(writeVec.iovec(), 0, &value, sizeof(int64_t));
 		writeVec.adjustByteArray(sizeof(int64_t));
 	}
@@ -133,7 +124,7 @@ TEST_F(ByteArrayWriterTest, WriteRaw)
 	const char str[] = "test string";
 	std::size_t stringLength = (std::strlen(str) + 1) * sizeof(char);
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		::iovec *vec = writeVec.iovec();
 		EXPECT_EQ(writeVec.iovenLength(), 1);
 		EXPECT_NE(vec, nullptr);
@@ -153,7 +144,7 @@ TEST_F(ByteArrayWriterTest, WriteTwice)
 	std::string str = "test string";
 	std::size_t stringLength = str.length() * sizeof(char);
 	{
-		internal::socket::ByteArrayWriterWithLock writeVecFir(byteArray);
+		ByteArrayWriterWithLock writeVecFir(byteArray);
 		::iovec *vecFir = writeVecFir.iovec();
 		EXPECT_EQ(writeVecFir.iovenLength(), 1);
 		EXPECT_NE(vecFir, nullptr);
@@ -166,7 +157,7 @@ TEST_F(ByteArrayWriterTest, WriteTwice)
 
 	str = "abcs string";
 	{
-		internal::socket::ByteArrayWriterWithLock writeVecSec(byteArray);
+		ByteArrayWriterWithLock writeVecSec(byteArray);
 		::iovec *vecSec = writeVecSec.iovec();
 		EXPECT_EQ(writeVecSec.iovenLength(), 1);
 		EXPECT_NE(vecSec, nullptr);
@@ -186,7 +177,7 @@ TEST_F(ByteArrayWriterTest, WriteCrossNodeInt8)
 	EXPECT_EQ(byteArray->readableBytes(), ByteArray::BufferNodeSize * 3 - 1);
 	EXPECT_EQ(byteArray->writeableBytes(), ByteArray::BufferNodeSize + 1);
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		ASSERT_EQ(writeVec.iovenLength(), 2);
 		EXPECT_NE(writeVec.iovec(), nullptr);
 		int8_t data = 1;
@@ -219,10 +210,10 @@ TEST_F(ByteArrayWriterTest, WriteCrossNodeInt64)
 	EXPECT_EQ(byteArray->readableBytes(), ByteArray::BufferNodeSize * 3 - 1);
 	EXPECT_EQ(byteArray->writeableBytes(), ByteArray::BufferNodeSize + 1);
 	{
-		internal::socket::ByteArrayWriterWithLock writeVec(byteArray);
+		ByteArrayWriterWithLock writeVec(byteArray);
 		ASSERT_EQ(writeVec.iovenLength(), 2);
 		EXPECT_NE(writeVec.iovec(), nullptr);
-		int64_t data = htobe64(9223372000004775807);
+		auto data = static_cast<int64_t>(htobe64(9223372000004775807));
 		writeToIOVec(writeVec.iovec(), 0, &data, sizeof(int8_t));
 		writeToIOVec(writeVec.iovec(), 1, reinterpret_cast<char *>(&data) + sizeof(int8_t), sizeof(int8_t) * 7);
 		writeVec.adjustByteArray(sizeof(int64_t));

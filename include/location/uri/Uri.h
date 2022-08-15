@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include "support/Types.h"
+#include "support/Util.h"
 
 namespace netpp {
 /**

@@ -15,7 +15,7 @@ thread_local netpp::EventLoop *thisEventLoopOnThread = nullptr;
 
 namespace netpp {
 EventLoop::EventLoop()
-	: m_loopRunning{false}, m_poll{std::make_unique<Epoll>()}
+	: m_loopRunning{false}, m_poll{std::make_unique<Epoll>()}, m_loopKeepRunning{false}
 {
 }
 
@@ -29,10 +29,19 @@ void EventLoop::run()
 		return;
 	}
 	::thisEventLoopOnThread = this;
-	while (true)
+	m_loopKeepRunning = true;
+	while (m_loopKeepRunning)
 	{
 		m_poll->poll();
 	}
+	m_loopRunning.clear();
+}
+
+void EventLoop::quit()
+{
+	runInLoop([this]{
+		m_loopKeepRunning = false;
+	});
 }
 
 void EventLoop::addEventHandlerToLoop(const Handler &handler)

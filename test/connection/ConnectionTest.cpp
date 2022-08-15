@@ -5,8 +5,6 @@
 #include <gtest/gtest.h>
 #include "channel/Channel.h"
 #include "Application.h"
-#include "TcpServer.h"
-#include "TcpClient.h"
 
 class ConnectionTest : public testing::Test {
 protected:

@@ -36,6 +36,6 @@ endforeach()
 link_libraries(gtest gmock pthread dl netpp)
 add_executable(test ${netpp_http_test_source}
         main.cpp
-        ByteArray/ByteArrayReaderTest.cpp ByteArray/ByteArraySequentialReaderTest.cpp buffer/ByteArrayTest.cpp ByteArray/ByteArrayWriterTest.cpp
+        buffer/ByteArrayReaderTest.cpp buffer/ByteArraySequentialReaderTest.cpp buffer/ByteArrayTest.cpp buffer/ByteArrayWriterTest.cpp
         uri/UriAccessor.cpp uri/UriCombining.cpp uri/UriConstructor.cpp uri/UriConversions.cpp uri/UriEncoding.cpp uri/UriOperator.cpp uri/UriResolve.cpp uri/UriSplitting.cpp uri/UriBuilder.cpp
-        AddressTest.cpp ThreadPoolTest.cpp signal/SignalTest.cpp timer/TimerTest.cpp ByteArray/CowLinkTest.cpp timer/TimerWheelTest.cpp timer/TickTimerTest.cpp connection/ConnectionTest.cpp buffer/BufferNodeTest.cpp)
+        AddressTest.cpp ThreadPoolTest.cpp signal/SignalTest.cpp timer/TimerTest.cpp buffer/CowLinkTest.cpp timer/TimerWheelTest.cpp timer/TickTimerTest.cpp connection/ConnectionTest.cpp buffer/BufferNodeTest.cpp)
