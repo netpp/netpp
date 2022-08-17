@@ -91,20 +91,18 @@ public:
 			--m_current;
 			return *this;
 		}
-		ConstIterator &operator+(difference_type n)
+		ConstIterator operator+(difference_type n)
 		{
-			m_current += n;
-			return *this;
+			return ConstIterator(_link, m_current + n);
 		}
 		ConstIterator &operator+=(difference_type n)
 		{
 			m_current += n;
 			return *this;
 		}
-		ConstIterator &operator-(difference_type n)
+		ConstIterator operator-(difference_type n)
 		{
-			m_current -= n;
-			return *this;
+			return ConstIterator(_link, m_current - n);
 		}
 		ConstIterator &operator-=(difference_type n)
 		{
@@ -181,11 +179,9 @@ public:
 			cowThisNode();
 			return *this;
 		}
-		CowIterator &operator+(difference_type n)
+		CowIterator operator+(difference_type n)
 		{
-			m_current += n;
-			cowThisNode();
-			return *this;
+			return CowIterator(_link, m_current + n, true);
 		}
 		CowIterator &operator+=(difference_type n)
 		{
@@ -193,11 +189,9 @@ public:
 			cowThisNode();
 			return *this;
 		}
-		CowIterator &operator-(difference_type n)
+		CowIterator operator-(difference_type n)
 		{
-			m_current -= n;
-			cowThisNode();
-			return *this;
+			return CowIterator(_link, m_current - n, true);
 		}
 		CowIterator &operator-=(difference_type n)
 		{

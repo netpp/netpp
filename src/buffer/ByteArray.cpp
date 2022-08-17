@@ -126,7 +126,7 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 
 	std::size_t expectWrite = length;
 	auto it = m_writeNode;
-	while (length > 0 && it != m_nodes->end())
+	while (length > 0)
 	{
 		std::size_t bytesToWrite = BufferNodeSize - it->end;
 		bytesToWrite = (bytesToWrite < length) ? bytesToWrite : length;
@@ -134,11 +134,17 @@ void ByteArray::writeRaw(const char *data, std::size_t length)
 		it->end += bytesToWrite;
 		data += bytesToWrite;
 		length -= bytesToWrite;
-		// have next iteration
-		++it;
+		// move to next node
+		if (it->end == BufferNodeSize)
+		{
+			++it;
+			if (it == m_nodes->end())
+			{
+				--it;
+				break;
+			}
+		}
 	}
-	if (it != m_nodes->end() && it->end == BufferNodeSize)	// this node is full, move to next
-		++it;
 	m_writeNode = it;
 	m_availableSizeToRead += (expectWrite - length);
 	m_availableSizeToWrite -= (expectWrite - length);
@@ -249,7 +255,7 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 	if (m_availableSizeToRead >= length)
 	{
 		auto it = m_readNode;
-		while (length > 0 && it <= m_writeNode)
+		while (length > 0)
 		{
 			std::size_t bytesToCopy = it->end - it->start;
 			bytesToCopy = (bytesToCopy < length) ? bytesToCopy : length;
@@ -257,23 +263,11 @@ std::size_t ByteArray::retrieveRaw(char *buffer, std::size_t length)
 			it->start += bytesToCopy;
 			buffer += bytesToCopy;
 			length -= bytesToCopy;
-			++it;
+			if (it->start == BufferNodeSize)
+				++it;
 		}
 
-		if (it != m_nodes->end() && it->start == BufferNodeSize)	// this node is empty, move to next
-			++it;
-		bool nextIsEnd = false;
-		if (it == m_nodes->end())			// this node at end, move to last
-		{
-			--it;
-			nextIsEnd = true;
-		}
 		m_readNode = it;
-		if (m_readNode == m_writeNode)
-		{
-			if (!nextIsEnd)
-				++m_writeNode;
-		}
 		m_availableSizeToRead -= (expectToRead - length);
 	}
 	if (buffer > bufferStartPtr)
@@ -309,7 +303,6 @@ void ByteArray::unlockedMoveBufferHead()
 	if (m_readNode == m_nodes->begin())
 		return;
 
-	m_nodes->moveToTail(m_readNode);
 	for (auto it = m_nodes->begin(); it != m_readNode; ++it)
 	{
 		it->start = 0;
@@ -317,6 +310,7 @@ void ByteArray::unlockedMoveBufferHead()
 		--m_writeNode;
 		m_availableSizeToWrite += BufferNodeSize;
 	}
+	m_nodes->moveToTail(m_readNode);
 	m_readNode = m_nodes->begin();
 }
 }

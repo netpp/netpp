@@ -21,7 +21,7 @@ TEST_F(TickTimerTest, SetTimerPropertyTest)
 	netpp::Application app;
 	netpp::TickTimer timer;
 
-	EXPECT_EQ(timer.interval(), 60);
+	EXPECT_EQ(timer.interval(), 1000);
 	EXPECT_EQ(timer.singleShot(), true);
 	EXPECT_EQ(timer.running(), false);
 

@@ -11,7 +11,7 @@ BufferNode::BufferNode()
 {}
 
 BufferNode::BufferNode(const BufferNode &other)
-		: start{0}, end{0}, buffer{}
+		: start{other.start}, end{other.end}, buffer{}
 {
 	std::memcpy(buffer, other.buffer, BufferNodeSize);
 }

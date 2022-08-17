@@ -106,7 +106,7 @@ TEST_F(ByteArrayTest, WriteFloat)
 	byteArray.writeFloat(static_cast<float>(9.1));
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(float));
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize - sizeof(float));
-	EXPECT_FLOAT_EQ(byteArray.retrieveFloat(), 9.1);
+	EXPECT_FLOAT_EQ(byteArray.retrieveFloat(), static_cast<float>(9.1));
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize - sizeof(float));
 }
@@ -117,7 +117,7 @@ TEST_F(ByteArrayTest, WriteDouble)
 	byteArray.writeDouble(10.1);
 	EXPECT_EQ(byteArray.readableBytes(), sizeof(double));
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize - sizeof(double));
-	EXPECT_FLOAT_EQ(byteArray.retrieveDouble(), 10.1);
+	EXPECT_DOUBLE_EQ(byteArray.retrieveDouble(), static_cast<double>(10.1));
 	EXPECT_EQ(byteArray.readableBytes(), 0);
 	EXPECT_EQ(byteArray.writeableBytes(), ByteArray::BufferNodeSize - sizeof(double));
 }

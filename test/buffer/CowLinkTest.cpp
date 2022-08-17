@@ -34,7 +34,7 @@ TEST_F(CowLinkTest, CopyLInk)
 	EXPECT_STREQ(link1.begin()->buffer, link2.begin()->buffer);
 
 	std::string testBuffer2("test buffer2");
-	std::memcpy(link2.begin()->buffer, testBuffer.data(), testBuffer.length());
+	std::memcpy(link2.begin()->buffer, testBuffer2.data(), testBuffer2.length());
 	EXPECT_STRNE(link1.begin()->buffer, link2.begin()->buffer);
 	EXPECT_STREQ(link1.begin()->buffer, testBuffer.c_str());
 	EXPECT_STREQ(link2.begin()->buffer, testBuffer2.c_str());
@@ -90,7 +90,7 @@ TEST_F(CowLinkTest, RangedIteration)
 		++i;
 	}
 	// not include last
-	EXPECT_EQ(i, 6);
+	EXPECT_EQ(i, 7);
 }
 
 TEST_F(CowLinkTest, CustomStepIteration)
@@ -113,6 +113,7 @@ TEST_F(CowLinkTest, CustomStepIteration)
 		it->start = i + 2;
 		it->end = i + 3;
 	}
+	i = 0;
 	for (auto &node : copiedLink)
 	{
 		EXPECT_EQ(node.start, i);
@@ -132,7 +133,7 @@ TEST_F(CowLinkTest, AllocBy0)
 {
 	CowBuffer link;
 	link.allocMore(0);
-	EXPECT_EQ(link.size(), 0);
+	EXPECT_EQ(link.size(), CowBuffer::defaultNodeSize);
 }
 
 TEST_F(CowLinkTest, MoveNode)
@@ -180,5 +181,18 @@ TEST_F(CowLinkTest, MoveNodeBy0)
 	{
 		EXPECT_EQ(node.start, i);
 		EXPECT_EQ(node.end, i + 1);
+		++i;
 	}
+}
+
+TEST_F(CowLinkTest, IteratorAdditionSubtraction)
+{
+	CowBuffer link;
+	link.allocMore(10);
+	auto start = link.begin();
+	auto it1 = start + 5;
+	EXPECT_EQ(it1 - start, 5);
+	auto it2 = start + 7;
+	EXPECT_EQ(it2 - it1, 2);
+	EXPECT_EQ(it2 - start, 7);
 }

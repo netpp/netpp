@@ -14,7 +14,6 @@ extern "C" {
 void defaultSignalAction(int bySignal)
 {
 	netpp::Application app;
-//	app.bindSignalHandler({netpp::Signals::E_XFSZ}, []{});
 	netpp::Timer timer;
 	timer.setOnTimeout([bySignal]{
 		::kill(::getpid(), bySignal);
@@ -48,20 +47,28 @@ public:
 INSTANTIATE_TEST_SUITE_P(signal_params,
 						SignalTest,
 						testing::Values(
-								std::tuple<int, netpp::Signals>{SIGINT, netpp::Signals::E_INT},
-								 std::tuple<int, netpp::Signals>{SIGALRM, netpp::Signals::E_ALRM}
+								std::tuple<int, netpp::Signals>{SIGALRM, netpp::Signals::E_ALRM},
+								std::tuple<int, netpp::Signals>{SIGINT, netpp::Signals::E_INT}
 								));
 
 TEST_P(SignalTest, DeadByUnhandledSignal)
 {
-	int signal = std::get<0>(GetParam());
-	EXPECT_EXIT(defaultSignalAction(signal), testing::KilledBySignal(signal), "");
+//	int signal = std::get<0>(GetParam());
+//	EXPECT_EXIT(defaultSignalAction(signal), testing::KilledBySignal(signal), "");
 }
 
 TEST_P(SignalTest, DeadByHandledSignal)
 {
-	int signal = std::get<0>(GetParam());
-	netpp::Signals signalEnum = std::get<1>(GetParam());
+//	int signal = std::get<0>(GetParam());
+//	netpp::Signals signalEnum = std::get<1>(GetParam());
 //	handleSignal(signalEnum);
-	EXPECT_EXIT(handleSignal(signalEnum), testing::ExitedWithCode(signal), "");
+//	EXPECT_EXIT(handleSignal(signalEnum), testing::ExitedWithCode(signal), "");
+}
+
+TEST_P(SignalTest, DeadBySignal)
+{
+	EXPECT_EXIT(defaultSignalAction(SIGALRM), testing::KilledBySignal(SIGALRM), "");
+	EXPECT_EXIT(defaultSignalAction(SIGINT), testing::KilledBySignal(SIGINT), "");
+	EXPECT_EXIT(handleSignal(netpp::Signals::E_ALRM), testing::ExitedWithCode(SIGALRM), "");
+	EXPECT_EXIT(handleSignal(netpp::Signals::E_INT), testing::ExitedWithCode(SIGINT), "");
 }

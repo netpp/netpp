@@ -3,7 +3,6 @@
 //
 
 #include "epoll/handlers/TimerHandler.h"
-#include "time/Timer.h"
 #include "eventloop/EventLoop.h"
 #include "support/Log.h"
 #include "internal/stub/IO.h"
@@ -26,6 +25,7 @@ TimerHandler::~TimerHandler()
 {
 	if (::close(m_timerFd) == -1)
 		LOG_WARN("failed to close timer");
+	disableEvent();
 }
 
 void TimerHandler::handleIn()

@@ -32,8 +32,8 @@ TEST_F(ByteArrayReaderTest, EmptyByteArray)
 TEST_F(ByteArrayReaderTest, ReadInt8)
 {
 	std::shared_ptr<ByteArray> byteArray = std::make_shared<ByteArray>();
-	byteArray->writeInt8(1);
 	{
+		byteArray->writeInt8(1);
 		ByteArrayReaderWithLock readVec(byteArray);
 		EXPECT_EQ(readVec.iovenLength(), 1);
 		EXPECT_NE(readVec.iovec(), nullptr);

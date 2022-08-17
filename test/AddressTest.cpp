@@ -40,7 +40,7 @@ TEST_F(AddressTest, IpV4AddressConvertionTest)
 	EXPECT_EQ(sockaddr1.sin_port, ::htons(10));
 
 	netpp::Address addr2("0.0.0.0", 20);
-	::sockaddr_in sockaddr2 = netpp::toSockAddress(addr1);
+	::sockaddr_in sockaddr2 = netpp::toSockAddress(addr2);
 	EXPECT_EQ(sockaddr2.sin_family, AF_INET);
 	EXPECT_EQ(sockaddr2.sin_addr.s_addr, ::htons(INADDR_ANY));
 	EXPECT_EQ(sockaddr2.sin_port, ::htons(20));

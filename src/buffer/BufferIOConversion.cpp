@@ -46,7 +46,6 @@ void ByteArrayReaderWithLock::adjustByteArray(ByteArray::LengthType size)
 	{
 		m_buffer->m_readNode = m_buffer->m_writeNode;
 		m_buffer->m_availableSizeToRead = 0;
-		auto node = *m_buffer->m_readNode;
 		m_buffer->m_readNode->start = m_buffer->m_readNode->end;
 	}
 	else

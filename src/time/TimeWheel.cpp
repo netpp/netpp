@@ -2,119 +2,192 @@
 #include "eventloop/EventLoop.h"
 #include "support/Log.h"
 
-namespace {
-/**
- * @brief Cast time interval into wheel's bucket length type
- * @param interval Time interval
- * @return Value in bucket length type
- */
-unsigned long interval_cast(netpp::TimerInterval interval)
-{
-	return static_cast<unsigned long>(interval);
-}
-
-/**
- * @brief Cast wheel's bucket length type into time interval
- * @param size bucket length
- * @return Value in time interval
- */
-netpp::TimerInterval bucket_size_cast(unsigned long size)
-{
-	return static_cast<netpp::TimerInterval>(size);
-}
-}
-
 namespace netpp {
 TimeWheel::TimeWheel(EventLoop *loop)
-	: m_tickTimer(loop), m_timeOutBucketIndex(0)
+	: m_tickTimer(loop)
 {
-	if (!m_buckets.empty())
-	{
-		m_tickTimer.setOnTimeout(std::bind(&TimeWheel::tick, this));
-		m_tickTimer.setInterval(1000);
-		m_tickTimer.setSingleShot(false);
-		m_tickTimer.start();
-	}
+	m_tickTimer.setOnTimeout(std::bind(&TimeWheel::tick, this));
+	m_tickTimer.setInterval(1000);
+	m_tickTimer.setSingleShot(false);
+	m_tickTimer.start();
 }
 
 void TimeWheel::addToWheel(void *timerId, const WheelEntryData &data)
 {
-	if (!m_buckets.empty())
-	{
-		WheelEntryData entry(data);
-		entry.expire = false;
-		// find position for this entry
-		if (::interval_cast(entry.interval) >= m_buckets.size())
-			entry.interval = ::bucket_size_cast(m_buckets.size()) - 1;
-		TimerInterval currentPos = (m_timeOutBucketIndex == 0) ? (!m_buckets.empty() - 1) : (m_timeOutBucketIndex - 1);
-		entry.wheelIndex = (currentPos + entry.interval) % ::bucket_size_cast(m_buckets.size());
-		m_buckets[::interval_cast(entry.wheelIndex)].insert({timerId, entry});
-	}
+	WheelEntryData entry(data);
+	entry.expire = false;
+	auto indexer = getIndexer(entry.interval);
+	entry.wheelIndexer = indexer;
+	entry.timerId = timerId;
+	if (indexer.dayWheel != m_currentTick.dayWheel)
+		m_dayWheel[indexer.dayWheel].emplace(entry);
+	else if (indexer.hourWheel != m_currentTick.hourWheel)
+		m_hourWheel[indexer.hourWheel].emplace(entry);
+	else if (indexer.minuteWheel != m_currentTick.minuteWheel)
+		m_minWheel[indexer.minuteWheel].emplace(entry);
+	else
+		m_secWheel[indexer.secondWheel].emplace(entry);
 }
 
 void TimeWheel::removeFromWheel(const WheelEntryData &data)
 {
-	WheelEntryData entry(data);
-	TimerInterval index = entry.wheelIndex;
-	if (::interval_cast(entry.wheelIndex) >= m_buckets.size())
-		return;
-	auto &bucket = m_buckets[::interval_cast(index)];
-	auto entryIt = bucket.find(entry.timerId);
-	if (entryIt != bucket.end())
+	WheelEntryContainer *targetContainer = nullptr;
+	if (data.wheelIndexer.dayWheel == m_currentTick.dayWheel)
 	{
-		// if this entry in timeout bucket, just mark it, erase it in tick
-		if (entry.wheelIndex == m_timeOutBucketIndex)
-			entry.expire = true;
-		else	// remove directly
-			bucket.erase(entryIt);
+		if (data.wheelIndexer.hourWheel == m_currentTick.hourWheel)
+		{
+			if (data.wheelIndexer.minuteWheel == m_currentTick.minuteWheel)
+				targetContainer = m_secWheel + data.wheelIndexer.secondWheel;
+			else
+				targetContainer = m_minWheel + data.wheelIndexer.minuteWheel;
+		}
+		else
+		{
+			targetContainer = m_hourWheel + data.wheelIndexer.hourWheel;
+		}
+	}
+	else
+	{
+		targetContainer = m_dayWheel + data.wheelIndexer.dayWheel;
+	}
+
+	if (targetContainer)
+	{
+		auto it = targetContainer->find(data);
+		if (it != targetContainer->end())
+		{
+			auto &entry = const_cast<WheelEntryData &>(*it);
+			if (entry.wheelIndexer.secondWheel == m_currentTick.secondWheel)
+				entry.expire = true;	// field expire is not for hash
+			else
+				targetContainer->erase(it);
+		}
 	}
 }
 
 void TimeWheel::renew(const WheelEntryData &data)
 {
-	WheelEntryData entry(data);
-	if (!m_buckets.empty())
-	{
-		if (::interval_cast(entry.interval) >= m_buckets.size())
-			entry.interval = ::bucket_size_cast(m_buckets.size()) - 1;
-		TimerInterval currentPos = (m_timeOutBucketIndex == 0) ? (!m_buckets.empty() - 1) : (m_timeOutBucketIndex - 1);
-		TimerInterval previousIndex = entry.wheelIndex;
-		entry.wheelIndex = (currentPos + entry.interval) % ::bucket_size_cast(m_buckets.size());
-		entry.expire = false;
-
-		if (::interval_cast(previousIndex) < m_buckets.size())
-		{
-			// remove entry from previous bucket
-			auto &bucket = m_buckets[::interval_cast(previousIndex)];
-			auto entryIt = bucket.find(entry.timerId);
-			bucket.erase(entryIt);
-
-			// add entry to target bucket
-			m_buckets[::interval_cast(entry.wheelIndex)].insert({entry.timerId, entry});
-		}
-	}
+	removeFromWheel(data);
+	addToWheel(data.timerId, data);
 }
 
 void TimeWheel::tick()
 {
-	++m_timeOutBucketIndex;
-	if (m_timeOutBucketIndex == m_buckets.size())
-		m_timeOutBucketIndex = 0;
-	auto &bucket = m_buckets[m_timeOutBucketIndex];
-	for (auto it = bucket.begin(); it != bucket.end();)
+	bool dayChanged = false;
+	bool hourChanged = false;
+	bool minuteChanged = false;
+
+	// update indexer
+	++m_currentTick.secondWheel;
+	if (m_currentTick.secondWheel >= secondsMax)
 	{
-		// make a copy in case onTimeout will erase itself
-		WheelEntryData &entry = it->second;
-		LOG_INFO("wheel entry time out");
-		if (!entry.expire)
-		{
-			if (entry.callback)
-				entry.callback();
-		}
-		if (entry.expire || entry.singleShot)
-			it = bucket.erase(it);
-		else
-			++it;
+		m_currentTick.secondWheel = 0;
+		++m_currentTick.minuteWheel;
+		minuteChanged = true;
 	}
+	if (m_currentTick.minuteWheel >= minutesMax)
+	{
+		m_currentTick.minuteWheel = 0;
+		++m_currentTick.hourWheel;
+		hourChanged = true;
+	}
+	if (m_currentTick.hourWheel >= hoursMax)
+	{
+		m_currentTick.hourWheel = 0;
+		++m_currentTick.dayWheel;
+		dayChanged = true;
+	}
+	if (m_currentTick.dayWheel >= daysMax)
+	{
+		m_currentTick.dayWheel = 0;
+	}
+
+	if (dayChanged)
+	{
+		auto &entryInDay = m_dayWheel[m_currentTick.dayWheel];
+		auto it = entryInDay.begin();
+		while (it != entryInDay.end())
+		{
+			m_hourWheel[it->wheelIndexer.hourWheel].emplace(*it);
+			it = entryInDay.erase(it);
+		}
+	}
+	if (hourChanged)
+	{
+		auto &entryInHour = m_hourWheel[m_currentTick.hourWheel];
+		auto it = entryInHour.begin();
+		while (it != entryInHour.end())
+		{
+			m_minWheel[it->wheelIndexer.minuteWheel].emplace(*it);
+			it = entryInHour.erase(it);
+		}
+	}
+	if (minuteChanged)
+	{
+		auto &entryInMin = m_minWheel[m_currentTick.minuteWheel];
+		auto it = entryInMin.begin();
+		while (it != entryInMin.end())
+		{
+			m_secWheel[it->wheelIndexer.secondWheel].emplace(*it);
+			it = entryInMin.erase(it);
+		}
+	}
+
+	auto &entryInSec = m_secWheel[m_currentTick.secondWheel];
+	auto it = entryInSec.begin();
+	while (it != entryInSec.end())
+	{
+		WheelEntryData data = (*it);
+		if (!data.expire)
+		{
+			if (data.callback)
+				data.callback();
+		}
+		it = entryInSec.erase(it);
+		// if not single shot, add entry to wheel
+		if (!data.expire && !data.singleShot)
+		{
+			addToWheel(data.timerId, data);
+		}
+	}
+}
+
+TimeWheel::WheelIndexer TimeWheel::getIndexer(netpp::TimerInterval interval) const
+{
+	WheelIndexer indexer;
+	// ceil
+	if (interval % 1000 != 0)
+		interval += 1000;
+	int intervalInSec = static_cast<int>(interval / 1000 % secondsMax);
+	int intervalInMin = static_cast<int>((interval / 1000 / secondsMax) % minutesMax);
+	int intervalInHour = static_cast<int>((interval / 1000 / secondsMax / minutesMax) % hoursMax);
+	int intervalInDay = static_cast<int>(interval / 1000 / secondsMax / minutesMax / hoursMax);
+	if (intervalInDay > daysMax)
+		intervalInDay = daysMax;
+	indexer.secondWheel = m_currentTick.secondWheel + intervalInSec;
+	if (indexer.secondWheel >= secondsMax)
+	{
+		indexer.secondWheel -= secondsMax;
+		++intervalInMin;
+	}
+	indexer.minuteWheel = m_currentTick.minuteWheel + intervalInMin;
+	if (indexer.minuteWheel >= minutesMax)
+	{
+		indexer.minuteWheel -= minutesMax;
+		++intervalInHour;
+	}
+	indexer.hourWheel = m_currentTick.hourWheel + intervalInHour;
+	if (indexer.hourWheel >= hoursMax)
+	{
+		indexer.hourWheel -= hoursMax;
+		++intervalInDay;
+	}
+	indexer.dayWheel = m_currentTick.dayWheel + intervalInDay;
+	if (indexer.dayWheel >= daysMax)
+	{
+		indexer.dayWheel -= daysMax;
+	}
+
+	return indexer;
 }
 }

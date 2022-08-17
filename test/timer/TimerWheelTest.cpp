@@ -23,7 +23,10 @@ TEST_F(TimerWheelTest, AddEntryTest)
 		void *fakeTimerId = reinterpret_cast<void *>(1);
 		entry.interval = 1000;
 		wheel.addToWheel(fakeTimerId, entry);
-		EXPECT_EQ(entry.wheelIndex, 1);
+		EXPECT_EQ(entry.wheelIndexer.secondWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.minuteWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.hourWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.dayWheel, 0);
 		EXPECT_EQ(entry.expire, false);
 		EXPECT_EQ(entry.timerId, fakeTimerId);
 	}
@@ -33,27 +36,27 @@ TEST_F(TimerWheelTest, AddEntryTest)
 		entry.expire = true;
 		entry.interval = 1000;
 		wheel.addToWheel(fakeTimerId, entry);
-		EXPECT_EQ(entry.wheelIndex, 1);
 		EXPECT_EQ(entry.expire, false);
-		EXPECT_EQ(entry.timerId, fakeTimerId);
 	}
 	{
 		netpp::TimeWheel::WheelEntryData entry;
 		void *fakeTimerId = reinterpret_cast<void *>(3);
 		entry.interval = 0;
 		wheel.addToWheel(fakeTimerId, entry);
-		EXPECT_EQ(entry.wheelIndex, 0);
-		EXPECT_EQ(entry.expire, false);
-		EXPECT_EQ(entry.timerId, fakeTimerId);
+		EXPECT_EQ(entry.wheelIndexer.secondWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.minuteWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.hourWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.dayWheel, 0);
 	}
 	{
 		netpp::TimeWheel::WheelEntryData entry;
 		void *fakeTimerId = reinterpret_cast<void *>(4);
 		entry.interval = 10000;
 		wheel.addToWheel(fakeTimerId, entry);
-		EXPECT_EQ(entry.wheelIndex, 9);
-		EXPECT_EQ(entry.expire, false);
-		EXPECT_EQ(entry.timerId, fakeTimerId);
+		EXPECT_EQ(entry.wheelIndexer.secondWheel, 9);
+		EXPECT_EQ(entry.wheelIndexer.minuteWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.hourWheel, 0);
+		EXPECT_EQ(entry.wheelIndexer.dayWheel, 0);
 	}
 }
 
@@ -102,24 +105,38 @@ TEST_F(TimerWheelTest, RenewEntryTest)
 	entry.interval = 1000;
 
 	wheel.addToWheel(fakeTimerId, entry);
-	EXPECT_EQ(entry.wheelIndex, 1);
+	EXPECT_EQ(entry.wheelIndexer.secondWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.minuteWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.hourWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.dayWheel, 0);
 
 	entry.interval = 3000;
 	wheel.renew(entry);
-	EXPECT_EQ(entry.wheelIndex, 3);
+	EXPECT_EQ(entry.wheelIndexer.secondWheel, 2);
+	EXPECT_EQ(entry.wheelIndexer.minuteWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.hourWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.dayWheel, 0);
 
 	entry.interval = 0;
 	wheel.renew(entry);
-	EXPECT_EQ(entry.wheelIndex, 0);
+	EXPECT_EQ(entry.wheelIndexer.secondWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.minuteWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.hourWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.dayWheel, 0);
 
 	entry.interval = 10000;
 	wheel.renew(entry);
+	EXPECT_EQ(entry.wheelIndexer.secondWheel, 9);
+	EXPECT_EQ(entry.wheelIndexer.minuteWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.hourWheel, 0);
+	EXPECT_EQ(entry.wheelIndexer.dayWheel, 0);
 }
 
 TEST_F(TimerWheelTest, TickTest)
 {
 	netpp::EventLoop loop;
 	netpp::TimeWheel wheel(&loop);
+	netpp::Timer quitLoopTimer(&loop);
 
 	int triggerCount = 0;
 	netpp::TimeWheel::WheelEntryData entry;
@@ -130,6 +147,12 @@ TEST_F(TimerWheelTest, TickTest)
 		++triggerCount;
 	};
 	wheel.addToWheel(fakeTimerId, entry);
+	quitLoopTimer.setInterval(2500);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ loop.quit(); });
+	quitLoopTimer.start();
+
+	loop.run();
 
 	// wait util entry timed out
 	EXPECT_EQ(triggerCount, 2);

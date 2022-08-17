@@ -26,11 +26,7 @@ EpollEventHandler::EpollEventHandler(EventLoop *loop)
 	_poll = loop->getPoll();
 }
 
-EpollEventHandler::~EpollEventHandler()
-{
-	if (m_registeredToEpoll)
-		_poll->removeEvent(this);
-}
+EpollEventHandler::~EpollEventHandler() = default;
 
 void EpollEventHandler::handleEvents(uint32_t events)
 {

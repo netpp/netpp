@@ -44,7 +44,7 @@ TEST_F(BufferNodeTest, CopyNode)
 
 	netpp::BufferNode newNode(node);
 	EXPECT_EQ(newNode.start, node.start);
-	EXPECT_EQ(newNode.end, node.start);
+	EXPECT_EQ(newNode.end, node.end);
 	EXPECT_NE(newNode.buffer, node.buffer);
 	for (auto i = 0; i < 100; ++i)
 	{

@@ -28,6 +28,7 @@ Timer::Timer(EventLoop *loop)
 	}
 	m_handler = make_shared<TimerHandler>(loop);
 	m_timerLoop = loop;
+	m_timerLoop->addEventHandlerToLoop(m_handler);
 }
 
 Timer::~Timer()
