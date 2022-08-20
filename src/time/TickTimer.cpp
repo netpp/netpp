@@ -13,7 +13,7 @@
 
 namespace netpp {
 TickTimer::TickTimer(EventLoop *loop)
-	: m_timerData{std::make_unique<TimeWheel::WheelEntryData>()}, m_running{false}
+	: m_timerData{std::make_shared<TimeWheel::WheelEntryData>()}, m_running{false}
 {
 	bool useMainLoop = true;
 	if (loop)
@@ -75,7 +75,7 @@ void TickTimer::start()
 	if (wheel)
 	{
 		m_running = true;
-		wheel->addToWheel(this, dynamic_cast<const TimeWheel::WheelEntryData &>(*m_timerData));
+		wheel->addToWheel(this, std::dynamic_pointer_cast<TimeWheel::WheelEntryData>(m_timerData));
 	}
 }
 
@@ -85,7 +85,7 @@ void TickTimer::restart()
 	if (wheel)
 	{
 		if (m_running)
-			wheel->renew(dynamic_cast<const TimeWheel::WheelEntryData &>(*m_timerData));
+			wheel->renew(std::dynamic_pointer_cast<TimeWheel::WheelEntryData>(m_timerData));
 		else
 			start();
 	}
@@ -97,7 +97,7 @@ void TickTimer::stop()
 	if (wheel && m_running)
 	{
 		m_running = false;
-		wheel->removeFromWheel(dynamic_cast<const TimeWheel::WheelEntryData &>(*m_timerData));
+		wheel->removeFromWheel(std::dynamic_pointer_cast<TimeWheel::WheelEntryData>(m_timerData));
 	}
 }
 }

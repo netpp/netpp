@@ -41,9 +41,9 @@ TEST_F(TickTimerTest, SingleShotTimerTest)
 	netpp::Timer quitLoopTimer(eventLoop);
 
 	timer.setOnTimeout([&timerTriggerCount]{ ++timerTriggerCount; });
-	timer.setInterval(1);
+	timer.setInterval(1000);
 	timer.setSingleShot(true);
-	quitLoopTimer.setInterval(50);
+	quitLoopTimer.setInterval(1100);
 	quitLoopTimer.setSingleShot(true);
 	quitLoopTimer.setOnTimeout([&]{ eventLoop->quit(); });
 	timer.start();
@@ -59,13 +59,13 @@ TEST_F(TickTimerTest, RepeatedlyTimerTest)
 	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
 	netpp::TickTimer timer;
 
-	timer.setOnTimeout([&]{ ++timerTriggerCount; if (timerTriggerCount > 5) eventLoop->quit(); });
-	timer.setInterval(1);
+	timer.setOnTimeout([&]{ ++timerTriggerCount; if (timerTriggerCount > 1) eventLoop->quit(); });
+	timer.setInterval(1000);
 	timer.setSingleShot(false);
 	timer.start();
 	eventLoop->run();
 
-	EXPECT_GT(timerTriggerCount, 5);
+	EXPECT_EQ(timerTriggerCount, 2);
 }
 
 TEST_F(TickTimerTest, SetSingleShotWhileRunningTest)
@@ -73,13 +73,34 @@ TEST_F(TickTimerTest, SetSingleShotWhileRunningTest)
 	netpp::Application app;
 	int timerTriggerCount = 0;
 	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
-	netpp::Timer timer(eventLoop);
+	netpp::TickTimer timer(eventLoop);
 	netpp::Timer quitLoopTimer(eventLoop);
 
-	timer.setInterval(10);
+	timer.setInterval(1000);
 	timer.setSingleShot(false);
 	timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.setSingleShot(true); });
-	quitLoopTimer.setInterval(50);
+	quitLoopTimer.setInterval(2100);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ eventLoop->quit(); });
+	timer.start();
+	quitLoopTimer.start();
+	eventLoop->run();
+
+	EXPECT_EQ(timerTriggerCount, 1);
+}
+
+TEST_F(TickTimerTest, RestartOnTimeoutTest)
+{
+	netpp::Application app;
+	int timerTriggerCount = 0;
+	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
+	netpp::TickTimer timer(eventLoop);
+	netpp::Timer quitLoopTimer(eventLoop);
+
+	timer.setInterval(1000);
+	timer.setSingleShot(true);
+	timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.restart(); });
+	quitLoopTimer.setInterval(2100);
 	quitLoopTimer.setSingleShot(true);
 	quitLoopTimer.setOnTimeout([&]{ eventLoop->quit(); });
 	timer.start();
@@ -87,4 +108,46 @@ TEST_F(TickTimerTest, SetSingleShotWhileRunningTest)
 	eventLoop->run();
 
 	EXPECT_EQ(timerTriggerCount, 2);
+}
+
+TEST_F(TickTimerTest, StopOnTimeoutTest)
+{
+	netpp::Application app;
+	int timerTriggerCount = 0;
+	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
+	netpp::TickTimer timer(eventLoop);
+	netpp::Timer quitLoopTimer(eventLoop);
+
+	timer.setInterval(1000);
+	timer.setSingleShot(false);
+	timer.setOnTimeout([&timerTriggerCount, &timer]{ ++timerTriggerCount; timer.stop(); });
+	quitLoopTimer.setInterval(2100);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ eventLoop->quit(); });
+	timer.start();
+	quitLoopTimer.start();
+	eventLoop->run();
+
+	EXPECT_EQ(timerTriggerCount, 1);
+}
+
+TEST_F(TickTimerTest, DeleteOnTimeoutTest)
+{
+	netpp::Application app;
+	int timerTriggerCount = 0;
+	netpp::EventLoop *eventLoop = netpp::Application::loopManager()->mainLoop();
+	auto *timer = new netpp::TickTimer(eventLoop);
+	netpp::Timer quitLoopTimer(eventLoop);
+
+	timer->setInterval(1000);
+	timer->setSingleShot(false);
+	timer->setOnTimeout([&]{ ++timerTriggerCount; delete timer; });
+	quitLoopTimer.setInterval(2100);
+	quitLoopTimer.setSingleShot(true);
+	quitLoopTimer.setOnTimeout([&]{ eventLoop->quit(); });
+	timer->start();
+	quitLoopTimer.start();
+	eventLoop->run();
+
+	EXPECT_EQ(timerTriggerCount, 1);
 }

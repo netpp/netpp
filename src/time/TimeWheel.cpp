@@ -1,6 +1,5 @@
 #include "time/TimeWheel.h"
 #include "eventloop/EventLoop.h"
-#include "support/Log.h"
 
 namespace netpp {
 TimeWheel::TimeWheel(EventLoop *loop)
@@ -12,43 +11,42 @@ TimeWheel::TimeWheel(EventLoop *loop)
 	m_tickTimer.start();
 }
 
-void TimeWheel::addToWheel(void *timerId, const WheelEntryData &data)
+void TimeWheel::addToWheel(void *timerId, const std::shared_ptr<WheelEntryData>& data)
 {
-	WheelEntryData entry(data);
-	entry.expire = false;
-	auto indexer = getIndexer(entry.interval);
-	entry.wheelIndexer = indexer;
-	entry.timerId = timerId;
+	data->expire = false;
+	auto indexer = getIndexer(data->interval);
+	data->wheelIndexer = indexer;
+	data->timerId = timerId;
 	if (indexer.dayWheel != m_currentTick.dayWheel)
-		m_dayWheel[indexer.dayWheel].emplace(entry);
+		m_dayWheel[indexer.dayWheel].emplace(data);
 	else if (indexer.hourWheel != m_currentTick.hourWheel)
-		m_hourWheel[indexer.hourWheel].emplace(entry);
+		m_hourWheel[indexer.hourWheel].emplace(data);
 	else if (indexer.minuteWheel != m_currentTick.minuteWheel)
-		m_minWheel[indexer.minuteWheel].emplace(entry);
+		m_minWheel[indexer.minuteWheel].emplace(data);
 	else
-		m_secWheel[indexer.secondWheel].emplace(entry);
+		m_secWheel[indexer.secondWheel].emplace(data);
 }
 
-void TimeWheel::removeFromWheel(const WheelEntryData &data)
+void TimeWheel::removeFromWheel(const std::shared_ptr<WheelEntryData>& data)
 {
 	WheelEntryContainer *targetContainer = nullptr;
-	if (data.wheelIndexer.dayWheel == m_currentTick.dayWheel)
+	if (data->wheelIndexer.dayWheel == m_currentTick.dayWheel)
 	{
-		if (data.wheelIndexer.hourWheel == m_currentTick.hourWheel)
+		if (data->wheelIndexer.hourWheel == m_currentTick.hourWheel)
 		{
-			if (data.wheelIndexer.minuteWheel == m_currentTick.minuteWheel)
-				targetContainer = m_secWheel + data.wheelIndexer.secondWheel;
+			if (data->wheelIndexer.minuteWheel == m_currentTick.minuteWheel)
+				targetContainer = m_secWheel + data->wheelIndexer.secondWheel;
 			else
-				targetContainer = m_minWheel + data.wheelIndexer.minuteWheel;
+				targetContainer = m_minWheel + data->wheelIndexer.minuteWheel;
 		}
 		else
 		{
-			targetContainer = m_hourWheel + data.wheelIndexer.hourWheel;
+			targetContainer = m_hourWheel + data->wheelIndexer.hourWheel;
 		}
 	}
 	else
 	{
-		targetContainer = m_dayWheel + data.wheelIndexer.dayWheel;
+		targetContainer = m_dayWheel + data->wheelIndexer.dayWheel;
 	}
 
 	if (targetContainer)
@@ -56,19 +54,19 @@ void TimeWheel::removeFromWheel(const WheelEntryData &data)
 		auto it = targetContainer->find(data);
 		if (it != targetContainer->end())
 		{
-			auto &entry = const_cast<WheelEntryData &>(*it);
-			if (entry.wheelIndexer.secondWheel == m_currentTick.secondWheel)
-				entry.expire = true;	// field expire is not for hash
+			auto &entry = *it;
+			if (entry->wheelIndexer.secondWheel == m_currentTick.secondWheel)
+				entry->expire = true;	// field expire is not for hash
 			else
 				targetContainer->erase(it);
 		}
 	}
 }
 
-void TimeWheel::renew(const WheelEntryData &data)
+void TimeWheel::renew(const std::shared_ptr<WheelEntryData>& data)
 {
 	removeFromWheel(data);
-	addToWheel(data.timerId, data);
+	addToWheel(data->timerId, data);
 }
 
 void TimeWheel::tick()
@@ -108,8 +106,10 @@ void TimeWheel::tick()
 		auto it = entryInDay.begin();
 		while (it != entryInDay.end())
 		{
-			m_hourWheel[it->wheelIndexer.hourWheel].emplace(*it);
-			it = entryInDay.erase(it);
+			std::shared_ptr<WheelEntryData> data = *it;
+			if (data)
+				m_hourWheel[data->wheelIndexer.hourWheel].emplace(data);
+			entryInDay.erase(it);
 		}
 	}
 	if (hourChanged)
@@ -118,8 +118,10 @@ void TimeWheel::tick()
 		auto it = entryInHour.begin();
 		while (it != entryInHour.end())
 		{
-			m_minWheel[it->wheelIndexer.minuteWheel].emplace(*it);
-			it = entryInHour.erase(it);
+			std::shared_ptr<WheelEntryData> data = *it;
+			if (data)
+				m_minWheel[data->wheelIndexer.minuteWheel].emplace(data);
+			entryInHour.erase(it);
 		}
 	}
 	if (minuteChanged)
@@ -128,8 +130,10 @@ void TimeWheel::tick()
 		auto it = entryInMin.begin();
 		while (it != entryInMin.end())
 		{
-			m_secWheel[it->wheelIndexer.secondWheel].emplace(*it);
-			it = entryInMin.erase(it);
+			std::shared_ptr<WheelEntryData> data = *it;
+			if (data)
+				m_secWheel[data->wheelIndexer.secondWheel].emplace(data);
+			entryInMin.erase(it);
 		}
 	}
 
@@ -137,18 +141,21 @@ void TimeWheel::tick()
 	auto it = entryInSec.begin();
 	while (it != entryInSec.end())
 	{
-		WheelEntryData data = (*it);
-		if (!data.expire)
+		std::shared_ptr<WheelEntryData> data = *it;
+		if (data)
 		{
-			if (data.callback)
-				data.callback();
+			if (!data->expire)
+			{
+				if (data->callback)
+					data->callback();
+			}
+			// if not single shot, add entry to wheel
+			if (!data->expire && !data->singleShot)
+			{
+				addToWheel(data->timerId, data);
+			}
 		}
 		it = entryInSec.erase(it);
-		// if not single shot, add entry to wheel
-		if (!data.expire && !data.singleShot)
-		{
-			addToWheel(data.timerId, data);
-		}
 	}
 }
 
@@ -156,7 +163,7 @@ TimeWheel::WheelIndexer TimeWheel::getIndexer(netpp::TimerInterval interval) con
 {
 	WheelIndexer indexer;
 	// ceil
-	if (interval % 1000 != 0)
+	if (interval == 0 || interval % 1000 != 0)
 		interval += 1000;
 	int intervalInSec = static_cast<int>(interval / 1000 % secondsMax);
 	int intervalInMin = static_cast<int>((interval / 1000 / secondsMax) % minutesMax);

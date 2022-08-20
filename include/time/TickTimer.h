@@ -74,7 +74,7 @@ public:
 
 private:
 	std::weak_ptr<TimeWheel> m_wheel;
-	std::unique_ptr<TimerData> m_timerData;
+	std::shared_ptr<TimerData> m_timerData;
 	bool m_running;
 };
 }

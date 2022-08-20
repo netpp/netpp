@@ -34,6 +34,7 @@ void EventLoop::run()
 	{
 		m_poll->poll();
 	}
+	thisEventLoopOnThread = nullptr;
 	m_loopRunning.clear();
 }
 

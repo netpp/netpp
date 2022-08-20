@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include "signal/Signals.h"
-#include "error/Exception.h"
 #include "time/Timer.h"
 #include "eventloop/EventLoop.h"
 #include "epoll/Epoll.h"

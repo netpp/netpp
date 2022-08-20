@@ -51,9 +51,9 @@ public:
 	 */
 	explicit TimeWheel(EventLoop *loop);
 
-	void addToWheel(void *timerId, const WheelEntryData &data);
-	void removeFromWheel(const WheelEntryData &data);
-	void renew(const WheelEntryData &data);
+	void addToWheel(void *timerId, const std::shared_ptr<WheelEntryData>& data);
+	void removeFromWheel(const std::shared_ptr<WheelEntryData>& data);
+	void renew(const std::shared_ptr<WheelEntryData>& data);
 
 private:
 	void tick();
@@ -62,21 +62,7 @@ private:
 
 	Timer m_tickTimer;
 
-	struct WheelEntryDataHash {
-		size_t operator()(const WheelEntryData &data) const
-		{
-			return std::hash<void *>{}(data.timerId);
-		}
-	};
-
-	struct WheelEntryDataEq {
-		bool operator()(const WheelEntryData &lhs, const WheelEntryData &rhs) const
-		{
-			return lhs.timerId == rhs.timerId;
-		}
-	};
-
-	using WheelEntryContainer = std::unordered_set<WheelEntryData, WheelEntryDataHash, WheelEntryDataEq>;
+	using WheelEntryContainer = std::unordered_set<std::shared_ptr<WheelEntryData>>;
 	static constexpr int daysMax = 24;
 	static constexpr int hoursMax = 24;
 	static constexpr int minutesMax = 60;
