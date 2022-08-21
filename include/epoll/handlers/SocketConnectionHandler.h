@@ -29,10 +29,10 @@ public:
 	 * @param halfCloseTime Specify how long the socket lives before force closed in half close state if no data being transferred, pass -1 if do not need auto close connection, default -1
 	 */
 	SocketConnectionHandler(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket,
-							TimerInterval idleTime = -1, TimerInterval halfCloseTime = -1);
+							std::shared_ptr<Channel> channelToBind, std::shared_ptr<Buffer> buffer);
 	~SocketConnectionHandler() override;
 
-	void init(std::shared_ptr<Channel> channelToBind, std::shared_ptr<Buffer> buffer);
+	void setIdleTimeout(TimerInterval idleTime);
 
 	/**
 	 * @brief After write some data to ByteArray, use this to send.
@@ -134,8 +134,6 @@ private:
 	TimerInterval m_idleTimeInterval;
 	/// @brief if connection is idle, closed by this time wheel
 	std::unique_ptr<TickTimer> m_idleConnectionWheel;
-
-	TimerInterval m_halfCloseTimeInterval;
 	/// @brief if connection is half close, and no data transferred, closed by this time wheel
 	std::unique_ptr<TickTimer> m_halfCloseWheel;
 };

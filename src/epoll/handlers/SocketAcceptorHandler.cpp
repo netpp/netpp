@@ -1,7 +1,6 @@
 #include "epoll/handlers/SocketAcceptorHandler.h"
 #include <utility>
 #include <cassert>
-#include "epoll/handlers/SocketConnectionHandler.h"
 #include "support/Log.h"
 #include "eventloop/EventLoopManager.h"
 #include "error/Exception.h"

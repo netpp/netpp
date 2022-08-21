@@ -17,10 +17,8 @@ int main()
 	{
 		channel->setMessageReceivedCallBack([](std::shared_ptr<netpp::Channel> channel)
 		{
-			auto sizeByteArray = channel->peek(sizeof(int));
-			uint32_t size = sizeByteArray.retrieveUInt32();
-			auto dataByteArray = channel->read(sizeof(int) + size);
-			dataByteArray.retrieveUInt32();
+			auto size = channel->readableBytes();
+			auto dataByteArray = channel->read(size);
 			std::string data = dataByteArray.retrieveString(size);
 
 			std::cout << "Received size "<< size << " data " << data;
@@ -33,7 +31,7 @@ int main()
 		});
 		channel->setDisconnectedCallBack([](std::shared_ptr<netpp::Channel> channel){
 			std::cout << "Disconnected from server, exit";
-			exit(0);
+			::exit(0);
 		});
 		channel->setWriteCompletedCallBack([](std::shared_ptr<netpp::Channel> channel){
 			std::cout << "Write completed";

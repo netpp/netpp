@@ -44,6 +44,7 @@ public:
 	 * @brief Const iterator of CowLink, readonly
 	 */
 	using const_iterator = ConstIterator;
+	/** @brief How many nodes should be created by default */
 	constexpr static unsigned defaultNodeSize = 1;
 
 public:
@@ -60,7 +61,7 @@ public:
 		ConstIterator(CowLink *link, NodeContainerIndexer index) : _link{link}, m_current{index} {}
 		~ConstIterator() = default;
 
-		/** @brief Random access iterator */
+		/** @brief Iterator of CowLink is random access */
 		using iterator_category = std::random_access_iterator_tag;
 		/** @brief Element type */
 		using value_type = const Element;
@@ -154,10 +155,15 @@ public:
 		}
 		~CowIterator() = default;
 
+		/** @brief Iterator of CowLink is random access */
 		using iterator_category = std::random_access_iterator_tag;
+		/** @brief Element type */
 		using value_type = Element;
+		/** @brief Reference to element type */
 		using reference_type = Element &;
+		/** @brief Pointer to element type */
 		using pointer_type = std::shared_ptr<Element>;
+		/** @brief Distance of iterator */
 		using difference_type = NodeContainerIndexer;
 
 		bool operator==(const CowIterator &other) const { return m_current == other.m_current; }
@@ -167,6 +173,10 @@ public:
 		bool operator>=(const CowIterator &other) const { return m_current >= other.m_current; }
 		bool operator<=(const CowIterator &other) const { return m_current <= other.m_current; }
 
+		/**
+		 * @brief Move to next, it node is not unique copy it
+		 * @return Next iterator
+		 */
 		CowIterator &operator++()
 		{
 			++m_current;
@@ -203,7 +213,16 @@ public:
 		{
 			return m_current - other.m_current;
 		}
+		/**
+		 * @brief Dereference iterator
+		 * @return Reference to element
+		 */
 		reference_type operator*() { return *(_link->m_nodes[m_current].get()); }
+
+		/**
+		 * @brief Access element
+		 * @return Pointer to element
+		 */
 		pointer_type operator->() { return _link->m_nodes[m_current]; }
 
 	private:
@@ -237,11 +256,15 @@ public:
 		NodeContainerIndexer m_rangeEnd;
 	};
 
+	/**
+	 * @brief Create a default CowLink
+	 */
 	CowLink()
 	{
 		for (NodeContainerIndexer i = 0; i < defaultNodeSize; ++i)
 			m_nodes.emplace_back(std::make_shared<Element>());
 	}
+	/** @brief Copy from an other link */
 	CowLink(const CowLink &other) = default;
 
 	/**
@@ -272,7 +295,8 @@ public:
 	RangedCow range(NodeContainerIndexer begin, NodeContainerIndexer end) { return RangedCow(this, begin, end); }
 
 	/**
-	 *
+	 * @brief Get link size
+	 * @return Nodes in CowLink
 	 */
 	[[nodiscard]] NodeContainerIndexer size() const { return m_nodes.size(); }
 

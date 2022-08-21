@@ -2,27 +2,30 @@
 // Created by gaojian on 2021/4/13.
 //
 
-#include "Events.h"
-#include "TcpServer.h"
 #include "Application.h"
 #include "channel/TcpChannel.h"
+#include "Acceptor.h"
+#include "error/Error.h"
 #include <list>
 #include <iostream>
-#include "error/SocketError.h"
 
 class ChatServer {
 public:
 	void onConnected(std::shared_ptr<netpp::Channel> channel)
 	{
+		channel->setMessageReceivedCallBack(std::bind(&ChatServer::onMessageReceived, this, std::placeholders::_1));
+		channel->setDisconnectedCallBack(std::bind(&ChatServer::onDisconnect, this, std::placeholders::_1));
+		channel->setErrorCallBack(std::bind(&ChatServer::onError, this, std::placeholders::_1));
+
 		for (auto &member : m_room)
 		{
 			if (member != channel)
 			{
-				auto tcpMemberChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(member);
-				auto writer = tcpMemberChannel->writer();
 				std::string hello{"hello!\n"};
-				writer.writeUInt16(static_cast<uint16_t>(hello.length())).writeString(hello);
-				member->send();
+				netpp::ByteArray buffer;
+				buffer.writeUInt16(static_cast<uint16_t>(hello.length()));
+				buffer.writeString(hello);
+				member->send(buffer);
 			}
 		}
 		m_room.emplace_back(channel);
@@ -30,46 +33,48 @@ public:
 
 	void onMessageReceived(std::shared_ptr<netpp::Channel> channel)
 	{
-		auto tcpChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(channel);
-		auto reader = tcpChannel->reader();
-		uint16_t length = reader.retrieveUInt16().value();
-		std::string message = reader.retrieveString(length).value();
+		auto size = channel->read(sizeof(uint16_t));
+		auto msg = channel->read(size.retrieveUInt16());
+
+		auto length = size.retrieveUInt16();
+		auto message = msg.retrieveString(length);
+
+		netpp::ByteArray buffer;
+		buffer.writeUInt16(length);
+		buffer.writeString(message);
 		for (auto &member : m_room)
 		{
-			if (member->channelId() != channel->channelId())
+			if (member != channel)
 			{
-				auto tcpMemberChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(member);
-				auto writer = tcpMemberChannel->writer();
-				writer.writeUInt16(length).writeString(message);
-				member->send();
+				member->send(buffer);
 			}
 		}
 	}
 
 	void onDisconnect(std::shared_ptr<netpp::Channel> channel)
 	{
+		netpp::ByteArray buffer;
+		std::string goodBye{"good bye!\n"};
+		buffer.writeUInt16(static_cast<uint16_t>(goodBye.length()));
+		buffer.writeString(goodBye);
 		auto it = m_room.begin();
 		while (it != m_room.end())
 		{
-			if ((*it)->channelId() == channel->channelId())
+			if ((*it) == channel)
 			{
 				it = m_room.erase(it);
 			}
 			else
 			{
-				std::string hello{"good bye!\n"};
-				auto tcpOnlineChannel = std::dynamic_pointer_cast<netpp::TcpChannel>(*it);
-				auto writer = tcpOnlineChannel->writer();
-				writer.writeUInt16(static_cast<uint16_t>(hello.length())).writeString(hello);
-				tcpOnlineChannel->send();
+				(*it)->send(buffer);
 				++it;
 			}
 		}
 	}
 
-	void onError(netpp::error::SocketError code)
+	void onError(netpp::Error code)
 	{
-		std::cerr << netpp::error::errorAsString(code) << std::endl;
+		std::cerr << netpp::getErrorDescription(code) << std::endl;
 	}
 
 private:
@@ -78,11 +83,10 @@ private:
 
 int main()
 {
-	netpp::Config config;
-//	config.eventLoopNumber = 2;
-	config.eventHandler = netpp::Events(std::make_shared<ChatServer>());
-	netpp::Application app(config);
-	netpp::TcpServer chatServer(netpp::Address("0.0.0.0", 12346));
-	chatServer.listen();
+	netpp::Application app;
+	netpp::Acceptor acceptor;
+	ChatServer server;
+	acceptor.setConnectedCallback(std::bind(&ChatServer::onConnected, &server, std::placeholders::_1));
+	acceptor.listen(netpp::Address("0.0.0.0", 12346));
 	app.exec();
 }

@@ -25,8 +25,16 @@ public:
 	virtual ByteArray peekReadBuffer(ByteArray::LengthType size) = 0;
 	virtual ByteArray readBuffer(ByteArray::LengthType size) = 0;
 
+	/**
+	 * @brief A Channel is for user, should not expose implementation of low level io,
+	 * ChannelBufferConversion is support class to do the transformation. Each Channel's
+	 * subclass should implement it's ChannelBufferConversion object.
+	 * @return The specified ChannelBufferConversion for Channel
+	 */
 	virtual std::unique_ptr<BufferIOConversion> sendBufferForIO() = 0;
 	virtual std::unique_ptr<BufferIOConversion> receiveBufferForIO() = 0;
+
+	virtual ByteArray::LengthType readableBytes() const = 0;
 };
 }
 

@@ -35,4 +35,9 @@ std::unique_ptr<BufferIOConversion> TcpBuffer::receiveBufferForIO()
 {
 	return std::make_unique<ByteArrayWriterWithLock>(m_receiveArray);
 }
+
+ByteArray::LengthType TcpBuffer::readableBytes() const
+{
+	return  m_receiveArray->readableBytes();
+}
 }

@@ -17,14 +17,20 @@ class ThreadSafeQueue;
  * 
  */
 class ThreadPool {
+	/**
+	 * @brief The type of ThreadPool tasks
+	 */
 	using TaskType = RunnableWrapper;
 public:
 	/**
 	 * @brief Create a thread pool, threads will not be created before start() is called
 	 * 
-	 * @param ThreadNum if <= 0, use hardware thread number, else create n threads
+	 * @param threadNum if <= 0, use hardware thread number, else create n threads
 	 */
 	explicit ThreadPool(unsigned threadNum = 0);
+	/**
+	 * @brief Destruct thread pool
+	 */
 	~ThreadPool();
 
 	/**
@@ -94,8 +100,18 @@ public:
 	void waitForDone(unsigned mSec) const;
 
 private:
+	/**
+	 * @brief Worker method
+	 */
 	void workerThread();
+	/**
+	 * @brief Run pending task in queue
+	 */
 	void runTask();
+	/**
+	 * @brief And task to queue
+	 * @param task new task
+	 */
 	void addTask(TaskType &&task);
 
 	std::atomic_bool m_quit;

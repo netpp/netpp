@@ -35,11 +35,6 @@ public:
 	void stopConnect();
 
 	/**
-	 * @brief Get the SocketConnectionHandler connected by SocketConnectorHandler
-	 */
-	std::weak_ptr<SocketConnectionHandler> getConnection() const { return _connection; }
-
-	/**
 	 * @brief Is already connected
 	 */
 	bool connected() const { return m_connectionEstablished.load(std::memory_order_relaxed); }
@@ -59,8 +54,6 @@ protected:
 	int fileDescriptor() const override;
 
 private:
-	std::weak_ptr<SocketConnectionHandler> _connection;
-
 	std::unique_ptr<SocketDevice> m_socket;
 	std::unique_ptr<Timer> m_retryTimer;
 

@@ -22,6 +22,11 @@ struct BufferNode {
 	constexpr static LengthType BufferNodeSize = 1024;
 
 	BufferNode();
+
+	/**
+	 * @brief Copy from another buffer
+	 * @param other
+	 */
 	BufferNode(const BufferNode &other);
 
 	// constexpr static int maxTimeToLive = 10;
@@ -35,6 +40,9 @@ struct BufferNode {
 	LengthType end;
 
 	// int timeToLive;
+	/**
+	 * @brief The buffer
+	 */
 	char buffer[BufferNodeSize];    // buffer
 };
 }

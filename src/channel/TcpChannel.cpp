@@ -15,6 +15,7 @@ public:
 	~TcpChannelImpl() override;
 
 	void send(const ByteArray &data) override;
+	ByteArray::LengthType readableBytes() const override;
 	ByteArray peek(ByteArray::LengthType size) override;
 	ByteArray read(ByteArray::LengthType size) override;
 
@@ -24,6 +25,8 @@ public:
 	void setWriteCompletedCallBack(const WriteCompletedCallBack &cb) override;
 	void setDisconnectedCallBack(const DisconnectedCallBack &cb) override;
 	void setErrorCallBack(const ErrorCallBack &cb) override;
+
+	void setIdleTimeout(TimerInterval idleTime) override;
 
 	void init();
 
@@ -44,9 +47,9 @@ void TcpChannelImpl::init()
 {
 	auto buffer = std::make_shared<TcpBuffer>();
 	_buffer = buffer;
-	auto connection = std::make_shared<SocketConnectionHandler>(_loop, std::move(_tmpSocketDev));
+	auto connection = std::make_shared<SocketConnectionHandler>(_loop, std::move(_tmpSocketDev),
+																shared_from_this(), buffer);
 	_connection = connection;
-	connection->init(shared_from_this(), buffer);
 	_loop->addEventHandlerToLoop(connection);
 }
 
@@ -60,6 +63,14 @@ void TcpChannelImpl::send(const ByteArray &data)
 		if (connection)
 			connection->sendInLoop();
 	}
+}
+
+ByteArray::LengthType TcpChannelImpl::readableBytes() const
+{
+	auto buffer = _buffer.lock();
+	if (buffer)
+		return buffer->readableBytes();
+	return 0;
 }
 
 ByteArray TcpChannelImpl::peek(ByteArray::LengthType size)
@@ -113,6 +124,13 @@ void TcpChannelImpl::setErrorCallBack(const ErrorCallBack &cb)
 		connection->setErrorCallBack(cb);
 }
 
+void TcpChannelImpl::setIdleTimeout(TimerInterval idleTime)
+{
+	auto connection = _connection.lock();
+	if (connection)
+		connection->setIdleTimeout(idleTime);
+}
+
 TcpChannel::TcpChannel(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
 	: m_impl{std::make_shared<TcpChannelImpl>(loop, std::move(socket))}
 {
@@ -124,6 +142,11 @@ TcpChannel::~TcpChannel() = default;
 void TcpChannel::send(const ByteArray &data)
 {
 	m_impl->send(data);
+}
+
+ByteArray::LengthType TcpChannel::readableBytes() const
+{
+	return m_impl->readableBytes();
 }
 
 ByteArray TcpChannel::peek(ByteArray::LengthType size)
@@ -161,4 +184,8 @@ void TcpChannel::setErrorCallBack(const ErrorCallBack &cb)
 	m_impl->setErrorCallBack(cb);
 }
 
+void TcpChannel::setIdleTimeout(TimerInterval idleTime)
+{
+	m_impl->setIdleTimeout(idleTime);
+}
 }

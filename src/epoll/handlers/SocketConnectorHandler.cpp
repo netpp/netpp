@@ -10,6 +10,7 @@
 #include "Application.h"
 #include "iodevice/TcpSocket.h"
 #include "support/Util.h"
+#include "channel/TcpChannel.h"
 
 using std::make_unique;
 using std::make_shared;
@@ -140,15 +141,11 @@ void SocketConnectorHandler::handleOut()
 			m_retryTimer = nullptr;
 		}
 		APPLICATION_INSTANCE_REQUIRED();
-		auto connection = std::make_shared<SocketConnectionHandler>(
-				Application::loopManager()->dispatch(),
-				std::move(m_socket)
-				);
+		auto targetLoop = Application::loopManager()->dispatch();
+		std::shared_ptr<Channel> channel = std::make_shared<TcpChannel>(targetLoop, std::move(m_socket));
 		m_socket = nullptr;
 		m_connectionEstablished.store(true, std::memory_order_relaxed);
-		_connection = connection;
 		LOG_TRACE("Connected to server");
-		std::shared_ptr<Channel> channel = connection->getIOChannel();
 		m_state = TcpState::Established;
 		m_connectedCallback(channel);
 	}

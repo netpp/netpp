@@ -35,6 +35,7 @@ public:
 	*/
 	std::unique_ptr<BufferIOConversion> receiveBufferForIO() override;
 
+	ByteArray::LengthType readableBytes() const override;
 private:
 	std::vector<std::shared_ptr<ByteArray>> m_sendBuffers;
 	std::shared_ptr<ByteArray> m_receiveArray;

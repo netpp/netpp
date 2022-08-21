@@ -15,11 +15,17 @@ using std::make_shared;
 
 namespace netpp {
 SocketConnectionHandler::SocketConnectionHandler(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket,
-												 TimerInterval idleTime, TimerInterval halfCloseTime)
+												 std::shared_ptr<Channel> channelToBind, std::shared_ptr<Buffer> buffer)
 		: EpollEventHandler(loop), m_state{TcpState::Established},
 		  m_isWaitWriting{false}, m_socket{std::move(socket)},
-		  m_idleTimeInterval{idleTime}, m_halfCloseTimeInterval{halfCloseTime}
-{}
+		  m_idleTimeInterval{-1}
+{
+	m_bindChannel = std::move(channelToBind);
+	m_connectionBuffer = std::move(buffer);
+
+	// set up events
+	activeEvents(EpollEv::IN | EpollEv::RDHUP);
+}
 
 SocketConnectionHandler::~SocketConnectionHandler() = default;
 
@@ -28,31 +34,32 @@ int SocketConnectionHandler::fileDescriptor() const
 	return m_socket->fileDescriptor();
 }
 
-void SocketConnectionHandler::init(std::shared_ptr<Channel> channelToBind, std::shared_ptr<Buffer> buffer)
+void SocketConnectionHandler::setIdleTimeout(TimerInterval idleTime)
 {
-	m_bindChannel = std::move(channelToBind);
-	m_connectionBuffer = std::move(buffer);
-
-	// set up events
-	activeEvents(EpollEv::IN | EpollEv::RDHUP);
-
-	if (m_idleTimeInterval != -1)
-	{
-		// set up kick idle connection here
-		m_idleConnectionWheel = std::make_unique<TickTimer>();
-		m_idleConnectionWheel->setSingleShot(true);
-		m_idleConnectionWheel->setInterval(m_idleTimeInterval);
-		m_idleConnectionWheel->setOnTimeout([weakConnection{weak_from_this()}] {
-												auto conn = weakConnection.lock();
-												if (conn)
-												{
-													LOG_INFO("idle connection timeout, close write");
-													conn->closeAfterWriteCompleted();
-												}
-											}
-		);
-		m_idleConnectionWheel->start();
-	}
+	_loopThisHandlerLiveIn->runInLoop([this, connectionWeak(weak_from_this()), idleTime] {
+		auto connection = connectionWeak.lock();
+		if (connection)
+		{
+			m_idleTimeInterval = idleTime;
+			if (m_idleTimeInterval != -1)
+			{
+				// set up kick idle connection here
+				m_idleConnectionWheel = std::make_unique<TickTimer>();
+				m_idleConnectionWheel->setSingleShot(true);
+				m_idleConnectionWheel->setInterval(m_idleTimeInterval);
+				m_idleConnectionWheel->setOnTimeout([weakConnection{weak_from_this()}] {
+														auto conn = weakConnection.lock();
+														if (conn)
+														{
+															LOG_INFO("idle connection timeout, close write");
+															conn->closeAfterWriteCompleted();
+														}
+													}
+				);
+				m_idleConnectionWheel->start();
+			}
+		}
+	});
 }
 
 void SocketConnectionHandler::handleIn()
@@ -184,12 +191,12 @@ void SocketConnectionHandler::closeAfterWriteCompleted()
 					// disable RDHUP, shutdown write will wake up epoll_wait with EPOLLRDHUP and EPOLLIN
 					deactivateEvents(EpollEv::RDHUP);
 
-					if (m_halfCloseTimeInterval != -1)
+					if (m_idleTimeInterval != -1)
 					{
 						// force close connection in wheel
 						m_halfCloseWheel = std::make_unique<TickTimer>();
 						m_halfCloseWheel->setSingleShot(true);
-						m_halfCloseWheel->setInterval(m_halfCloseTimeInterval);
+						m_halfCloseWheel->setInterval(m_idleTimeInterval);
 						m_halfCloseWheel->setOnTimeout([weakConnection{weak_from_this()}] {
 																	   auto conn = weakConnection.lock();
 																	   if (conn)
