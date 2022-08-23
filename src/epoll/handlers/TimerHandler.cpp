@@ -5,7 +5,6 @@
 #include "epoll/handlers/TimerHandler.h"
 #include "eventloop/EventLoop.h"
 #include "support/Log.h"
-#include "internal/stub/IO.h"
 #include <cstring>
 #include <utility>
 extern "C" {

@@ -7,7 +7,6 @@
 #include "support/Log.h"
 #include "support/Util.h"
 #include "error/Exception.h"
-
 extern "C" {
 #include <sys/socket.h>
 #include <netinet/in.h>

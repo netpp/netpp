@@ -25,21 +25,19 @@ int main()
 			std::string str;
 			std::cin >> str;
 			netpp::ByteArray buffer;
-			buffer.writeUInt32(static_cast<uint32_t>(str.length()));
 			buffer.writeString(str);
 			channel->send(buffer);
 		});
 		channel->setDisconnectedCallBack([](std::shared_ptr<netpp::Channel> channel){
-			std::cout << "Disconnected from server, exit";
+			std::cout << "Disconnected from server, exit" << channel;
 			::exit(0);
 		});
 		channel->setWriteCompletedCallBack([](std::shared_ptr<netpp::Channel> channel){
-			std::cout << "Write completed";
+			std::cout << "Write completed" << channel;
 		});
 
 		netpp::ByteArray buffer;
 		std::string greeting("hello netpp");
-		buffer.writeUInt32(static_cast<uint32_t>(greeting.length()));
 		buffer.writeString(greeting);
 		channel->send(buffer);
 	});

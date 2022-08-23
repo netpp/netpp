@@ -37,7 +37,7 @@ set(netpp_source
         src/support/Log.cpp src/support/ThreadPool.cpp src/support/Util.cpp
         src/time/Timer.cpp src/time/TimeWheel.cpp src/time/TickTimer.cpp
         src/Application.cpp src/Acceptor.cpp src/Connector.cpp
-        )
+        src/channel/UdpChannel.cpp include/channel/UdpChannel.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 

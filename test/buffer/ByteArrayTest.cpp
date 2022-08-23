@@ -9,6 +9,77 @@ protected:
 	void TearDown() override {}
 };
 
+TEST_F(ByteArrayTest, DefaultConstructedByteArray)
+{
+	ByteArray array;
+	EXPECT_EQ(array.readableBytes(), 0);
+	EXPECT_EQ(array.writeableBytes(), ByteArray::BufferNodeSize);
+}
+
+TEST_F(ByteArrayTest, CopyByteArray)
+{
+	ByteArray source;
+	source.writeInt8(1);
+	source.writeInt16(2);
+	ByteArray array(source);
+	EXPECT_EQ(array.readableBytes(), sizeof(int8_t) + sizeof(int16_t));
+	EXPECT_EQ(array.writeableBytes(), ByteArray::BufferNodeSize - (sizeof(int8_t) + sizeof(int16_t)));
+	EXPECT_EQ(array.retrieveInt8(), 1);
+	EXPECT_EQ(array.retrieveInt16(), 2);
+}
+
+TEST_F(ByteArrayTest, MoveByteArray)
+{
+	ByteArray source;
+	source.writeInt8(1);
+	source.writeInt16(2);
+	ByteArray array(std::move(source));
+	EXPECT_EQ(array.readableBytes(), sizeof(int8_t) + sizeof(int16_t));
+	EXPECT_EQ(array.writeableBytes(), ByteArray::BufferNodeSize - (sizeof(int8_t) + sizeof(int16_t)));
+	EXPECT_EQ(array.retrieveInt8(), 1);
+	EXPECT_EQ(array.retrieveInt16(), 2);
+}
+
+TEST_F(ByteArrayTest, PartiallyCopyByteArray)
+{
+	ByteArray source;
+	source.writeInt8(1);
+	source.writeInt8(2);
+	source.writeInt8(3);
+	source.writeInt8(4);
+	ByteArray array(source, sizeof(int8_t) * 2, false);
+	EXPECT_EQ(array.readableBytes(), sizeof(int8_t) * 2);
+	EXPECT_EQ(array.writeableBytes(), ByteArray::BufferNodeSize - (sizeof(int8_t) * 2));
+	EXPECT_EQ(array.retrieveInt8(), 1);
+	EXPECT_EQ(array.retrieveInt8(), 2);
+
+	EXPECT_EQ(source.readableBytes(), sizeof(int8_t) * 4);
+	EXPECT_EQ(source.writeableBytes(), ByteArray::BufferNodeSize - (sizeof(int8_t) * 4));
+	EXPECT_EQ(source.retrieveInt8(), 1);
+	EXPECT_EQ(source.retrieveInt8(), 2);
+	EXPECT_EQ(source.retrieveInt8(), 3);
+	EXPECT_EQ(source.retrieveInt8(), 4);
+}
+
+TEST_F(ByteArrayTest, PartiallyMoveByteArray)
+{
+	ByteArray source;
+	source.writeInt8(1);
+	source.writeInt8(2);
+	source.writeInt8(3);
+	source.writeInt8(4);
+	ByteArray array(source, sizeof(int8_t) * 2, true);
+	EXPECT_EQ(array.readableBytes(), sizeof(int8_t) * 2);
+	EXPECT_EQ(array.writeableBytes(), ByteArray::BufferNodeSize - (sizeof(int8_t) * 2));
+	EXPECT_EQ(array.retrieveInt8(), 1);
+	EXPECT_EQ(array.retrieveInt8(), 2);
+
+	EXPECT_EQ(source.readableBytes(), sizeof(int8_t) * 2);
+	EXPECT_EQ(source.writeableBytes(), ByteArray::BufferNodeSize - (sizeof(int8_t) * 4));
+	EXPECT_EQ(source.retrieveInt8(), 3);
+	EXPECT_EQ(source.retrieveInt8(), 4);
+}
+
 TEST_F(ByteArrayTest, WriteInt8)
 {
 	ByteArray byteArray;

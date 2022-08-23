@@ -4,11 +4,8 @@
 
 #include "epoll/Epoll.h"
 #include "support/Log.h"
-#include "internal/stub/IO.h"
-#include "internal/stub/Epoll.h"
 #include "error/Exception.h"
 #include "epoll/EpollEventHandler.h"
-#include <climits>
 extern "C" {
 #include <sys/epoll.h>
 }

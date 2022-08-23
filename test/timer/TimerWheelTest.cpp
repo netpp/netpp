@@ -147,7 +147,7 @@ TEST_F(TimerWheelTest, TickTest)
 		++triggerCount;
 	};
 	wheel.addToWheel(fakeTimerId, entry);
-	quitLoopTimer.setInterval(2500);
+	quitLoopTimer.setInterval(2100);
 	quitLoopTimer.setSingleShot(true);
 	quitLoopTimer.setOnTimeout([&]{ loop.quit(); });
 	quitLoopTimer.start();

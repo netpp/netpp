@@ -1,7 +1,6 @@
 #include "epoll/handlers/SignalHandler.h"
 #include "eventloop/EventLoop.h"
 #include "signal/Signals.h"
-#include "internal/stub/IO.h"
 #include "support/Log.h"
 #include <utility>
 extern "C" {

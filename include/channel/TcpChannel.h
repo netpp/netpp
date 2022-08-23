@@ -22,20 +22,6 @@ public:
 
 	~TcpChannel() override;
 
-	void send(const ByteArray &data) override;
-	ByteArray::LengthType readableBytes() const override;
-	ByteArray peek(ByteArray::LengthType size) override;
-	ByteArray read(ByteArray::LengthType size) override;
-
-	void close() override;
-
-	void setMessageReceivedCallBack(const MessageReceivedCallBack &cb) override;
-	void setWriteCompletedCallBack(const WriteCompletedCallBack &cb) override;
-	void setDisconnectedCallBack(const DisconnectedCallBack &cb) override;
-	void setErrorCallBack(const ErrorCallBack &cb) override;
-
-	void setIdleTimeout(TimerInterval idleTime) override;
-
 private:
 	std::shared_ptr<TcpChannelImpl> m_impl;
 };

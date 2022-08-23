@@ -50,6 +50,8 @@ void SocketAcceptorHandler::listen(const Address &address)
 			{
 				if (m_errorCallback)
 					m_errorCallback(e.getErrorCode());
+				else
+					throw e;
 			}
 		}
 	});
@@ -98,13 +100,18 @@ void SocketAcceptorHandler::handleIn()
 		}
 		else
 		{
-			m_errorCallback(Error::ConnectRefused);
+			if (m_errorCallback)
+				m_errorCallback(Error::ConnectRefused);
+			else
+				throw InternalException(Error::ConnectRefused);
 		}
 	}
 	catch (InternalException &e)
 	{
 		if (m_errorCallback)
 			m_errorCallback(e.getErrorCode());
+		else
+			throw e;
 	}
 }
 }

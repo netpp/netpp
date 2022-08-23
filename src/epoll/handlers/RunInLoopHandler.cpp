@@ -1,10 +1,10 @@
 #include "epoll/handlers/RunInLoopHandler.h"
-#include "internal/stub/IO.h"
 #include "eventloop/EventLoop.h"
 #include "support/Log.h"
 #include "error/Exception.h"
 extern "C" {
 #include <fcntl.h>
+#include <sys/eventfd.h>
 }
 
 namespace netpp {

@@ -16,9 +16,10 @@ class BufferIOConversion;
  */
 class TcpBuffer : public Buffer {
 public:
+	TcpBuffer();
 	~TcpBuffer() override;
 
-	void addWriteBuffer(const ByteArray &buffer) override;
+	void write(const ByteArray &buffer) override;
 
 	ByteArray peekReadBuffer(ByteArray::LengthType size) override;
 	ByteArray readBuffer(ByteArray::LengthType size) override;

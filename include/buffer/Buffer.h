@@ -21,7 +21,7 @@ class Buffer {
 public:
 	virtual ~Buffer() = default;
 
-	virtual void addWriteBuffer(const ByteArray &buffer) = 0;
+	virtual void write(const ByteArray &buffer) = 0;
 	virtual ByteArray peekReadBuffer(ByteArray::LengthType size) = 0;
 	virtual ByteArray readBuffer(ByteArray::LengthType size) = 0;
 

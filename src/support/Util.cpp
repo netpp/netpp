@@ -35,4 +35,11 @@ Address toAddress(const ::sockaddr_in &address)
 	uint16_t port = ::ntohs(address.sin_port);
 	return Address(ip, port);
 }
+
+Address toAddress(const ::sockaddr_in *address)
+{
+	std::string ip(::inet_ntoa(address->sin_addr));
+	uint16_t port = ::ntohs(address->sin_port);
+	return Address(ip, port);
+}
 }

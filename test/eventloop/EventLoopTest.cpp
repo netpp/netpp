@@ -3,29 +3,45 @@
 //
 
 #include <gtest/gtest.h>
+#include <future>
 #include "eventloop/EventLoop.h"
-#include "time/Timer.h"
+#include "eventloop/EventLoopFactory.h"
 
 class EventLoopTest : public testing::Test {
 public:
 protected:
 	void SetUp() override {}
-
 	void TearDown() override {}
 };
 
+TEST_F(EventLoopTest, RunInLoopTest)
+{
+	auto loop = netpp::EventLoopFactory::makeEventLoop(true, true);
+	// run in another thread
+	auto task = std::async([&]{
+		loop->runInLoop([&]{
+			EXPECT_EQ(netpp::EventLoop::thisLoop(), loop.get());
+		});
+	});
+	task.wait();
+
+	// run before loop start
+	loop->runInLoop([&]{
+		EXPECT_EQ(netpp::EventLoop::thisLoop(), loop.get());
+		loop->quit();
+	});
+
+	loop->run();
+}
+
 TEST_F(EventLoopTest, ThisLoopTest)
 {
-	netpp::EventLoop loop;
+	auto loop = netpp::EventLoopFactory::makeEventLoop(true, true);
 	EXPECT_EQ(netpp::EventLoop::thisLoop(), nullptr);
-	netpp::Timer loopTaskTimer(&loop);
-	loopTaskTimer.setOnTimeout([&]{
-		EXPECT_EQ(netpp::EventLoop::thisLoop(), &loop);
-		loop.quit();
+	loop->runInLoop([&]{
+		EXPECT_EQ(netpp::EventLoop::thisLoop(), loop.get());
+		loop->quit();
 	});
-	loopTaskTimer.setSingleShot(true);
-	loopTaskTimer.setInterval(20);
-	loopTaskTimer.start();
-	loop.run();
+	loop->run();
 	EXPECT_EQ(netpp::EventLoop::thisLoop(), nullptr);
 }

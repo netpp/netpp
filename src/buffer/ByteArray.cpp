@@ -32,24 +32,30 @@ ByteArray::ByteArray(ByteArray &&other) noexcept
 }
 
 ByteArray::ByteArray(ByteArray &other, LengthType size, bool move)
-		: ByteArray(other)
 {
-	LengthType nodeMovement = (m_availableSizeToRead - size) / BufferNodeSize;
+	std::lock_guard lck(other.m_bufferMutex);
+	m_availableSizeToRead = other.m_availableSizeToRead;
+	m_availableSizeToWrite = other.m_availableSizeToWrite;
+	m_nodes = std::make_unique<CowBuffer>(*other.m_nodes);
+	m_readNode = CowBuffer::iterator(m_nodes.get(), other.m_readNode);
+	m_writeNode = CowBuffer::iterator(m_nodes.get(), other.m_writeNode);
 
+	LengthType length = m_readNode->start + size;
+	LengthType nodes = length / BufferNodeSize;
+	LengthType endOffset = length % BufferNodeSize;
 	if (m_availableSizeToRead >= size)
 	{
 		m_availableSizeToWrite += m_availableSizeToRead - size;
 		m_availableSizeToRead = size;
-		m_writeNode = m_writeNode - nodeMovement;
-		m_writeNode->start = 0;
-		m_writeNode->end = size % BufferNodeSize;
+		m_writeNode += nodes;
+		m_writeNode->end += endOffset;
 	}
+
 	if (move)
 	{
 		other.m_availableSizeToRead -= size;
-		other.m_readNode = m_readNode + nodeMovement;
-		other.m_writeNode->start = size % BufferNodeSize;
-		other.m_writeNode->end = size % BufferNodeSize;
+		other.m_readNode += nodes;
+		other.m_readNode->start += endOffset;
 	}
 }
 

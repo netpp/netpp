@@ -6,7 +6,6 @@
 #include "Application.h"
 extern "C" {
 #include <csignal>
-#include <sys/types.h>
 #include <unistd.h>
 }
 
@@ -52,22 +51,13 @@ INSTANTIATE_TEST_SUITE_P(signal_params,
 
 TEST_P(SignalTest, DeadByUnhandledSignal)
 {
-//	int signal = std::get<0>(GetParam());
-//	EXPECT_EXIT(defaultSignalAction(signal), testing::KilledBySignal(signal), "");
+	int signal = std::get<0>(GetParam());
+	EXPECT_EXIT(defaultSignalAction(signal), testing::KilledBySignal(signal), "");
 }
 
 TEST_P(SignalTest, DeadByHandledSignal)
 {
-//	int signal = std::get<0>(GetParam());
-//	netpp::Signals signalEnum = std::get<1>(GetParam());
-//	handleSignal(signalEnum);
-//	EXPECT_EXIT(handleSignal(signalEnum), testing::ExitedWithCode(signal), "");
-}
-
-TEST_P(SignalTest, DeadBySignal)
-{
-	EXPECT_EXIT(defaultSignalAction(SIGALRM), testing::KilledBySignal(SIGALRM), "");
-	EXPECT_EXIT(defaultSignalAction(SIGINT), testing::KilledBySignal(SIGINT), "");
-	EXPECT_EXIT(handleSignal(netpp::Signals::E_ALRM), testing::ExitedWithCode(SIGALRM), "");
-	EXPECT_EXIT(handleSignal(netpp::Signals::E_INT), testing::ExitedWithCode(SIGINT), "");
+	int signal = std::get<0>(GetParam());
+	netpp::Signals signalEnum = std::get<1>(GetParam());
+	EXPECT_EXIT(handleSignal(signalEnum), testing::ExitedWithCode(signal), "");
 }

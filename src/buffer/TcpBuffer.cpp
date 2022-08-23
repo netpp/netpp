@@ -7,9 +7,13 @@
 #include "buffer/BufferIOConversion.h"
 
 namespace netpp {
+TcpBuffer::TcpBuffer()
+	: m_receiveArray{std::make_shared<netpp::ByteArray>()}
+{}
+
 TcpBuffer::~TcpBuffer() = default;
 
-void TcpBuffer::addWriteBuffer(const ByteArray &buffer)
+void TcpBuffer::write(const ByteArray &buffer)
 {
 	m_sendBuffers.emplace_back(std::make_shared<ByteArray>(buffer));
 }

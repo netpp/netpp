@@ -28,32 +28,34 @@ void SocketConnectorHandler::connect(const Address &address)
 {
 	m_connectionEstablished.store(false, std::memory_order_relaxed);
 	_loopThisHandlerLiveIn->runInLoop([this, weakConnector{weak_from_this()}, address] {
-										  try
-										  {
-											  auto connector = weakConnector.lock();
-											  if (connector)
-											  {
-												  if (m_socket)	// another socket exist
-													  return;
-												  m_address = address;
-												  m_socket = std::make_unique<TcpSocket>();
-												  m_socket->open();
-												  if (m_socket->connect(m_address))    // connect success immediately
-													  handleOut();
-												  else
-												  {
-													  // connect in progress, manually enable read
-													  activeEvents(EpollEv::OUT);
-													  m_state = TcpState::Connecting;
-												  }
-											  }
-										  }
-										  catch (InternalException &e)
-										  {
-											  if (m_errorCallback)
-											  	m_errorCallback(e.getErrorCode());
-										  }
-									  }
+		try
+		{
+			auto connector = weakConnector.lock();
+			if (connector)
+			{
+				if (m_socket)	// another socket exist
+					return;
+				m_address = address;
+				m_socket = std::make_unique<TcpSocket>();
+				m_socket->open();
+				if (m_socket->connect(m_address))    // connect success immediately
+					handleOut();
+				else
+				{
+					// connect in progress, manually enable read
+					activeEvents(EpollEv::OUT);
+					m_state = TcpState::Connecting;
+				}
+			}
+		}
+		catch (InternalException &e)
+		{
+			if (m_errorCallback)
+				m_errorCallback(e.getErrorCode());
+			else
+				throw e;
+		}
+	}
 	);
 }
 

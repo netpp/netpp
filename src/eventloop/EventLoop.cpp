@@ -31,10 +31,8 @@ void EventLoop::run()
 	::thisEventLoopOnThread = this;
 	m_loopKeepRunning = true;
 	while (m_loopKeepRunning)
-	{
 		m_poll->poll();
-	}
-	thisEventLoopOnThread = nullptr;
+	::thisEventLoopOnThread = nullptr;
 	m_loopRunning.clear();
 }
 

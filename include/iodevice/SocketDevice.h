@@ -25,8 +25,8 @@ class SocketDevice : public IODevice {
 public:
 	~SocketDevice() noexcept override = default;
 
-	void read(std::unique_ptr<BufferIOConversion> &&buffer) override;
-	bool write(std::unique_ptr<BufferIOConversion> &&buffer) override;
+	void read(std::shared_ptr<Buffer> buffer) override;
+	bool write(std::shared_ptr<Buffer> buffer) override;
 
 	virtual Address address() = 0;
 

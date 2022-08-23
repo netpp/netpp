@@ -67,7 +67,7 @@ void SocketConnectionHandler::handleIn()
 	try
 	{
 		renewWheel();
-		m_socket->read(m_connectionBuffer->receiveBufferForIO());
+		m_socket->read(m_connectionBuffer);
 		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
 		if (m_receivedCallback)
 			m_receivedCallback(m_bindChannel);
@@ -90,6 +90,8 @@ void SocketConnectionHandler::handleIn()
 		}
 		if (m_errorCallback)
 			m_errorCallback(errorCode);
+		else
+			throw e;
 	}
 }
 
@@ -100,7 +102,7 @@ void SocketConnectionHandler::handleOut()
 		renewWheel();
 		// may not write all data this round, keep OUT event on and wait for next round
 		// TODO: handle read/write timeout
-		bool writeCompleted = m_socket->write(m_connectionBuffer->sendBufferForIO());
+		bool writeCompleted = m_socket->write(m_connectionBuffer);
 		if (writeCompleted)
 		{
 			deactivateEvents(EpollEv::OUT);
@@ -132,6 +134,8 @@ void SocketConnectionHandler::handleOut()
 		}
 		if (m_errorCallback)
 			m_errorCallback(errorCode);
+		else
+			throw e;
 	}
 }
 

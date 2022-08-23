@@ -7,7 +7,6 @@
 
 #include "SocketDevice.h"
 #include "location/Address.h"
-#include <memory>
 
 namespace netpp {
 class TcpSocket : public SocketDevice {

@@ -5,15 +5,17 @@
 #include "iodevice/SocketDevice.h"
 #include "buffer/BufferIOConversion.h"
 #include <cstring>
+#include "buffer/Buffer.h"
 extern "C" {
 #include <sys/socket.h>
 #include <sys/uio.h>
 }
 
 namespace netpp {
-void SocketDevice::read(std::unique_ptr<BufferIOConversion> &&bufferConverter)
+void SocketDevice::read(std::shared_ptr<Buffer> buffer)
 {
-	::msghdr msg{};
+	auto bufferConverter = buffer->receiveBufferForIO();
+	::msghdr msg;
 	std::memset(&msg, 0, sizeof(::msghdr));
 	msg.msg_iov = bufferConverter->iovec();
 	msg.msg_iovlen = bufferConverter->iovenLength();
@@ -22,10 +24,11 @@ void SocketDevice::read(std::unique_ptr<BufferIOConversion> &&bufferConverter)
 	bufferConverter->adjustByteArray(static_cast<std::size_t>(num));
 }
 
-bool SocketDevice::write(std::unique_ptr<BufferIOConversion> &&bufferConverter)
+bool SocketDevice::write(std::shared_ptr<Buffer> buffer)
 {
+	auto bufferConverter = buffer->sendBufferForIO();
 	std::size_t expectWriteSize = bufferConverter->availableBytes();
-	::msghdr msg{};
+	::msghdr msg;
 	std::memset(&msg, 0, sizeof(::msghdr));
 	msg.msg_iov = bufferConverter->iovec();
 	msg.msg_iovlen = bufferConverter->iovenLength();
