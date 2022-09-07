@@ -7,7 +7,7 @@
 #include "support/Util.h"
 #include "error/Exception.h"
 #include "buffer/BufferIOConversion.h"
-#include "buffer/Buffer.h"
+#include "buffer/TransferBuffer.h"
 #include <cstring>
 extern "C" {
 #include <sys/socket.h>
@@ -29,38 +29,31 @@ UdpSocket::~UdpSocket() noexcept
 	realClose();
 }
 
-Address UdpSocket::receive(std::unique_ptr<Buffer> &&buffer)
+Address UdpSocket::receive(std::unique_ptr<TransferBuffer> &&buffer)
 {
 	auto bufferConverter = buffer->receiveBufferForIO();
-	::msghdr msg;
-	::sockaddr_in receiveAddress;
-	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = bufferConverter->iovec();
-	msg.msg_iovlen = bufferConverter->iovenLength();
-	msg.msg_name = &receiveAddress;
-	msg.msg_namelen = sizeof(receiveAddress);
-	std::size_t num = realRecv(&msg);
+	::msghdr *msg = bufferConverter->msghdr();
+	::sockaddr_in receivedFrom;
+	msg->msg_name = &receivedFrom;
+	msg->msg_namelen = sizeof(receivedFrom);
+
+	std::size_t num = realRecv(msg);
 	bufferConverter->adjustByteArray(static_cast<std::size_t>(num));
-	auto address = reinterpret_cast<sockaddr_in *>(msg.msg_name);
-	return toAddress(address);
+	return toAddress(receivedFrom);
 }
 
-bool UdpSocket::send(std::unique_ptr<Buffer> &&buffer, const Address &address)
+std::size_t UdpSocket::send(std::unique_ptr<TransferBuffer> &&buffer, const Address &address)
 {
 	auto bufferConverter = buffer->sendBufferForIO();
-	std::size_t expectWriteSize = bufferConverter->availableBytes();
-	::msghdr msg;
-	::sockaddr_in receiveAddress = toSockAddress(address);
-	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = bufferConverter->iovec();
-	msg.msg_iovlen = bufferConverter->iovenLength();
-	msg.msg_name = &receiveAddress;
-	msg.msg_namelen = sizeof(receiveAddress);
-	std::size_t actualSend = realSend(&msg);
+	::msghdr *msg = bufferConverter->msghdr();
+	auto destination = toSockAddress(address);
+	msg->msg_name = &destination;
+	msg->msg_namelen = sizeof(destination);
+	std::size_t actualSend = realSend(msg);
 
 	auto sendSize = static_cast<std::size_t>(actualSend);
 	bufferConverter->adjustByteArray(sendSize);
-	return (sendSize <= expectWriteSize);
+	return sendSize;
 }
 
 void UdpSocket::open()

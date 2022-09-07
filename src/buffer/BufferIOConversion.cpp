@@ -3,25 +3,34 @@
 //
 
 #include "buffer/BufferIOConversion.h"
+#include "buffer/Datagram.h"
+#include "location/Address.h"
+#include "support/Util.h"
+#include <cstring>
 extern "C" {
 #include <sys/uio.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 }
 
 namespace netpp {
-BufferIOConversion::BufferIOConversion()
-		: m_vec{nullptr}, m_vecLen{0}
+ByteArrayGather::ByteArrayGather()
 {
+	m_msghdr = new ::msghdr;
+	std::memset(m_msghdr,0, sizeof(::msghdr));
 }
 
-BufferIOConversion::~BufferIOConversion()
+ByteArrayGather::~ByteArrayGather()
 {
-	delete[] m_vec;
+	if (m_msghdr->msg_iov)
+		delete []m_msghdr->msg_iov;
+	delete m_msghdr;
 }
 
 ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr <ByteArray> buffer)
 		: m_buffer{std::move(buffer)}, m_lck{m_buffer->m_bufferMutex}
 {
-	m_vecLen = 0;
+	std::size_t vecLen = 0;
 	auto *vecNodes = new ::iovec[m_buffer->m_writeNode - m_buffer->m_readNode + 1];
 
 	auto end = m_buffer->m_writeNode + 1;
@@ -29,13 +38,16 @@ ByteArrayReaderWithLock::ByteArrayReaderWithLock(std::shared_ptr <ByteArray> buf
 	{
 		if (it->end - it->start != 0)        // this node is empty
 		{
-			vecNodes[m_vecLen].iov_base = it->buffer + it->start;
-			vecNodes[m_vecLen].iov_len = it->end - it->start;
-			++m_vecLen;
+			vecNodes[vecLen].iov_base = it->buffer + it->start;
+			vecNodes[vecLen].iov_len = it->end - it->start;
+			++vecLen;
 		}
 	}
-	if (m_vecLen != 0)
-		m_vec = vecNodes;
+	if (vecLen != 0)
+	{
+		m_msghdr->msg_iov = vecNodes;
+		m_msghdr->msg_iovlen = vecLen;
+	}
 }
 
 ByteArrayReaderWithLock::~ByteArrayReaderWithLock() = default;
@@ -69,17 +81,19 @@ ByteArrayWriterWithLock::ByteArrayWriterWithLock(std::shared_ptr <ByteArray> buf
 		: m_buffer(std::move(buffer)), m_lck{m_buffer->m_bufferMutex}
 {
 	uint64_t bytes = m_buffer->m_availableSizeToWrite;
-	m_vecLen = bytes / ByteArray::BufferNodeSize + (bytes % ByteArray::BufferNodeSize != 0);
-	if (m_vecLen > 0)
+	std::size_t vecLen = bytes / ByteArray::BufferNodeSize + (bytes % ByteArray::BufferNodeSize != 0);
+	if (vecLen > 0)
 	{
-		m_vec = new ::iovec[m_vecLen];
+		auto vec = new ::iovec[vecLen];
 		int i = 0;
 		for (auto it = m_buffer->m_writeNode; it != m_buffer->m_nodes->end(); ++it)
 		{
-			m_vec[i].iov_base = it->buffer + it->end;
-			m_vec[i].iov_len = ByteArray::BufferNodeSize - it->end;
+			vec[i].iov_base = it->buffer + it->end;
+			vec[i].iov_len = ByteArray::BufferNodeSize - it->end;
 			++i;
 		}
+		m_msghdr->msg_iov = vec;
+		m_msghdr->msg_iovlen = vecLen;
 	}
 }
 
@@ -126,7 +140,7 @@ SequentialByteArrayReaderWithLock::SequentialByteArrayReaderWithLock(std::vector
 
 	if (nodeCount != 0)
 	{
-		m_vecLen = 0;
+		std::size_t vecLen = 0;
 		auto *vecNodes = new ::iovec[nodeCount];
 		for (auto &b: m_buffers)
 		{
@@ -135,14 +149,17 @@ SequentialByteArrayReaderWithLock::SequentialByteArrayReaderWithLock(std::vector
 			{
 				if (it->end - it->start != 0)        // this node is empty
 				{
-					vecNodes[m_vecLen].iov_base = it->buffer + it->start;
-					vecNodes[m_vecLen].iov_len = it->end - it->start;
-					++m_vecLen;
+					vecNodes[vecLen].iov_base = it->buffer + it->start;
+					vecNodes[vecLen].iov_len = it->end - it->start;
+					++vecLen;
 				}
 			}
 		}
-		if (m_vecLen != 0)
-			m_vec = vecNodes;
+		if (vecLen != 0)
+		{
+			m_msghdr->msg_iov = vecNodes;
+			m_msghdr->msg_iovlen = vecLen;
+		}
 	}
 }
 
@@ -181,5 +198,48 @@ ByteArray::LengthType SequentialByteArrayReaderWithLock::availableBytes()
 	for (auto &b: m_buffers)
 		length += b->m_availableSizeToRead;
 	return length;
+}
+
+::sockaddr_in *dataGramDestinationExtractor(Datagram *data)
+{
+	return data->m_address;
+}
+
+DatagramReaderWithLock::DatagramReaderWithLock(std::shared_ptr<Datagram> data)
+	: m_reader(std::dynamic_pointer_cast<ByteArray>(data))
+{
+	m_msghdr->msg_name = dataGramDestinationExtractor(data.get());
+	m_msghdr->msg_namelen = sizeof(::sockaddr_in);
+}
+
+DatagramReaderWithLock::~DatagramReaderWithLock() = default;
+
+void DatagramReaderWithLock::adjustByteArray(ByteArray::LengthType size)
+{
+	m_reader.adjustByteArray(size);
+}
+
+ByteArray::LengthType DatagramReaderWithLock::availableBytes()
+{
+	return m_reader.availableBytes();
+}
+
+DatagramWriterWithLock::DatagramWriterWithLock(std::shared_ptr<Datagram> data)
+	: m_writer(std::dynamic_pointer_cast<ByteArray>(data))
+{
+	m_msghdr->msg_name = dataGramDestinationExtractor(data.get());
+	m_msghdr->msg_namelen = sizeof(::sockaddr_in);
+}
+
+DatagramWriterWithLock::~DatagramWriterWithLock() = default;
+
+void DatagramWriterWithLock::adjustByteArray(ByteArray::LengthType size)
+{
+	m_writer.adjustByteArray(size);
+}
+
+ByteArray::LengthType DatagramWriterWithLock::availableBytes()
+{
+	return m_writer.availableBytes();
 }
 }

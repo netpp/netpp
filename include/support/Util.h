@@ -34,6 +34,7 @@ utf8string toUtf8String(const Source& val)
 }
 
 extern ::sockaddr_in toSockAddress(const Address &address);
+extern void toSockAddress(const Address &address, ::sockaddr_in *dest);
 extern Address toAddress(const ::sockaddr_in &address);
 extern Address toAddress(const ::sockaddr_in *address);
 

@@ -15,12 +15,14 @@ protected:
 TEST_F(AddressTest, IpV4AddressTest)
 {
 	netpp::Address addr;
-	EXPECT_EQ(std::string("0.0.0.0"), addr.ip());
-	EXPECT_EQ(11111, addr.port());
+	EXPECT_EQ(std::string(), addr.ip());
+	EXPECT_EQ(0, addr.port());
+	EXPECT_FALSE(addr.isValid());
 
 	netpp::Address addr1("192.168.0.1", 10);
 	EXPECT_EQ(std::string("192.168.0.1"), addr1.ip());
 	EXPECT_EQ(10, addr1.port());
+	EXPECT_TRUE(addr1.isValid());
 
 	std::shared_ptr<::sockaddr_in> sockaddr{std::make_shared<::sockaddr_in>()};
 	sockaddr->sin_family = AF_INET;

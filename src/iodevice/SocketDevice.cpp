@@ -5,37 +5,30 @@
 #include "iodevice/SocketDevice.h"
 #include "buffer/BufferIOConversion.h"
 #include <cstring>
-#include "buffer/Buffer.h"
+#include "buffer/TransferBuffer.h"
 extern "C" {
 #include <sys/socket.h>
 #include <sys/uio.h>
 }
 
 namespace netpp {
-void SocketDevice::read(std::shared_ptr<Buffer> buffer)
+void SocketDevice::read(std::shared_ptr<TransferBuffer> buffer)
 {
 	auto bufferConverter = buffer->receiveBufferForIO();
-	::msghdr msg;
-	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = bufferConverter->iovec();
-	msg.msg_iovlen = bufferConverter->iovenLength();
 	// TODO: use ioctl(fd, FIONREAD, &n) to get pending read data on socket
-	std::size_t num = realRecv(&msg);
+	std::size_t num = realRecv(bufferConverter->msghdr());
 	bufferConverter->adjustByteArray(static_cast<std::size_t>(num));
 }
 
-bool SocketDevice::write(std::shared_ptr<Buffer> buffer)
+std::size_t SocketDevice::write(std::shared_ptr<TransferBuffer> buffer)
 {
 	auto bufferConverter = buffer->sendBufferForIO();
-	std::size_t expectWriteSize = bufferConverter->availableBytes();
-	::msghdr msg;
-	std::memset(&msg, 0, sizeof(::msghdr));
-	msg.msg_iov = bufferConverter->iovec();
-	msg.msg_iovlen = bufferConverter->iovenLength();
-	std::size_t actualSend = realSend(&msg);
+//	std::size_t expectWriteSize = bufferConverter->availableBytes();
+	std::size_t actualSend = realSend(bufferConverter->msghdr());
 
 	auto sendSize = static_cast<std::size_t>(actualSend);
 	bufferConverter->adjustByteArray(sendSize);
-	return (sendSize <= expectWriteSize);
+
+	return actualSend;
 }
 }

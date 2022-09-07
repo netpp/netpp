@@ -9,38 +9,32 @@
 #include "ByteArray.h"
 
 struct iovec;
+struct msghdr;
+struct sockaddr_in;
 
 namespace netpp {
+class Datagram;
 /**
- * @brief Convert ByteArray to ::iovec, adapt to readv()/writev(), used by SocketIO
+ * @brief Gather ByteArray nodes together for read/write
  */
-class BufferIOConversion {
+class ByteArrayGather {
 public:
-	BufferIOConversion();
-
-	virtual ~BufferIOConversion();
-
-	::iovec *iovec()
-	{ return m_vec; }
-
-	[[nodiscard]] std::size_t iovenLength() const
-	{ return m_vecLen; }
+	ByteArrayGather();
+	virtual ~ByteArrayGather();
 
 	virtual void adjustByteArray(ByteArray::LengthType size) = 0;
 
 	virtual ByteArray::LengthType availableBytes() = 0;
 
-	BufferIOConversion(BufferIOConversion &) = delete;
+	::msghdr *msghdr() { return m_msghdr; }
 
-	BufferIOConversion(BufferIOConversion &&) = delete;
-
-	BufferIOConversion &operator=(BufferIOConversion &) = delete;
-
-	BufferIOConversion &operator=(BufferIOConversion &&) = delete;
+	ByteArrayGather(ByteArrayGather &) = delete;
+	ByteArrayGather(ByteArrayGather &&) = delete;
+	ByteArrayGather &operator=(ByteArrayGather &) = delete;
+	ByteArrayGather &operator=(ByteArrayGather &&) = delete;
 
 protected:
-	::iovec *m_vec;
-	std::size_t m_vecLen;
+	::msghdr *m_msghdr;
 };
 
 /**
@@ -48,7 +42,7 @@ protected:
  * @note ByteArray's lock is acquired until destruction
  *
  */
-class ByteArrayReaderWithLock : public BufferIOConversion {
+class ByteArrayReaderWithLock : public ByteArrayGather {
 public:
 	explicit ByteArrayReaderWithLock(std::shared_ptr <ByteArray> buffer);
 
@@ -77,7 +71,7 @@ private:
  * for example, we can prepend/append anything on an existent buffer, just create an
  * other ByteArray
  */
-class SequentialByteArrayReaderWithLock : public BufferIOConversion {
+class SequentialByteArrayReaderWithLock : public ByteArrayGather {
 public:
 	SequentialByteArrayReaderWithLock(std::initializer_list <std::shared_ptr<ByteArray>> buffers);
 
@@ -111,9 +105,9 @@ private:
  * @note ByteArray's lock is acquired until destruction
  *
  */
-class ByteArrayWriterWithLock : public BufferIOConversion {
+class ByteArrayWriterWithLock : public ByteArrayGather {
 public:
-	explicit ByteArrayWriterWithLock(std::shared_ptr <ByteArray> buffer);
+	explicit ByteArrayWriterWithLock(std::shared_ptr<ByteArray> buffer);
 
 	~ByteArrayWriterWithLock() override;
 
@@ -133,6 +127,32 @@ public:
 private:
 	std::shared_ptr <ByteArray> m_buffer;
 	std::lock_guard<decltype(ByteArray::m_bufferMutex)> m_lck;
+};
+
+extern ::sockaddr_in *dataGramDestinationExtractor(Datagram *data);
+
+class DatagramReaderWithLock : public ByteArrayGather {
+public:
+	explicit DatagramReaderWithLock(std::shared_ptr<Datagram> data);
+	~DatagramReaderWithLock() override;
+
+	void adjustByteArray(ByteArray::LengthType size) override;
+	ByteArray::LengthType availableBytes() override;
+
+private:
+	ByteArrayReaderWithLock m_reader;
+};
+
+class DatagramWriterWithLock : public ByteArrayGather {
+public:
+	explicit DatagramWriterWithLock(std::shared_ptr<Datagram> data);
+	~DatagramWriterWithLock() override;
+
+	void adjustByteArray(ByteArray::LengthType size) override;
+	ByteArray::LengthType availableBytes() override;
+
+private:
+	ByteArrayWriterWithLock m_writer;
 };
 }
 

@@ -98,6 +98,8 @@ public:
 	ByteArray(ByteArray &&other) noexcept;
 	ByteArray(ByteArray &other, LengthType size, bool move);
 
+	virtual ~ByteArray() = default;
+
 	/**
 	 * @brief Write an int8 value to ByteArray
 	 * @param value The value to write

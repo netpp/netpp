@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "buffer/ByteArray.h"
 #include "buffer/BufferIOConversion.h"
+#include "ByteArrayGatherGetter.h"
 #include <cstring>
 extern "C" {
 #include <sys/socket.h>
@@ -38,12 +39,12 @@ TEST_F(ByteArraySequentialReaderTest, SomeEmptyByteArray)
 		{
 			std::vector<std::shared_ptr<ByteArray>> tmp = byteArrays;
 			SequentialByteArrayReaderWithLock readVec(std::move(tmp));
-			EXPECT_EQ(readVec.iovenLength(), byteArrayHasValue);
+			EXPECT_EQ(get_iovec_len(readVec), byteArrayHasValue);
 			for (auto j = 0; j < byteArrayHasValue; ++j)
 			{
-				EXPECT_EQ(readVec.iovec()[j].iov_len, sizeof(int8_t));
+				EXPECT_EQ(get_iovec(readVec)[j].iov_len, sizeof(int8_t));
 				int8_t data;
-				std::memcpy(&data, readVec.iovec()[j].iov_base, sizeof(int8_t));
+				std::memcpy(&data, get_iovec(readVec)[j].iov_base, sizeof(int8_t));
 				EXPECT_EQ(data, 2);
 				readVec.adjustByteArray(sizeof(int8_t));
 			}
@@ -61,10 +62,10 @@ TEST_F(ByteArraySequentialReaderTest, ReadInt64)
 	byteArray2->writeInt64(3);
 	{
 		SequentialByteArrayReaderWithLock readVec({byteArray1, byteArray2});
-		EXPECT_EQ(readVec.iovenLength(), 2);
-		EXPECT_NE(readVec.iovec(), nullptr);
-		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
-		EXPECT_EQ(readVec.iovec()[1].iov_len, sizeof(int64_t));
+		EXPECT_EQ(get_iovec_len(readVec), 2);
+		EXPECT_NE(get_iovec(readVec), nullptr);
+		EXPECT_EQ(get_iovec(readVec)[0].iov_len, sizeof(int64_t));
+		EXPECT_EQ(get_iovec(readVec)[1].iov_len, sizeof(int64_t));
 		readVec.adjustByteArray(sizeof(int64_t) * 2);
 	}
 	EXPECT_EQ(byteArray1->readableBytes(), 0);
@@ -79,10 +80,10 @@ TEST_F(ByteArraySequentialReaderTest, ReadInt64FromTwoInt64)
 	byteArray2->writeInt64(3);
 	{
 		SequentialByteArrayReaderWithLock readVec({byteArray1, byteArray2});
-		EXPECT_EQ(readVec.iovenLength(), 2);
-		EXPECT_NE(readVec.iovec(), nullptr);
-		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
-		EXPECT_EQ(readVec.iovec()[1].iov_len, sizeof(int64_t));
+		EXPECT_EQ(get_iovec_len(readVec), 2);
+		EXPECT_NE(get_iovec(readVec), nullptr);
+		EXPECT_EQ(get_iovec(readVec)[0].iov_len, sizeof(int64_t));
+		EXPECT_EQ(get_iovec(readVec)[1].iov_len, sizeof(int64_t));
 		readVec.adjustByteArray(sizeof(int64_t));
 	}
 	EXPECT_EQ(byteArray1->readableBytes(), 0);
@@ -97,10 +98,10 @@ TEST_F(ByteArraySequentialReaderTest, ReadInt8FromInt64)
 	byteArray2->writeInt64(3);
 	{
 		SequentialByteArrayReaderWithLock readVec({byteArray1, byteArray2});
-		EXPECT_EQ(readVec.iovenLength(), 2);
-		EXPECT_NE(readVec.iovec(), nullptr);
-		EXPECT_EQ(readVec.iovec()[0].iov_len, sizeof(int64_t));
-		EXPECT_EQ(readVec.iovec()[1].iov_len, sizeof(int64_t));
+		EXPECT_EQ(get_iovec_len(readVec), 2);
+		EXPECT_NE(get_iovec(readVec), nullptr);
+		EXPECT_EQ(get_iovec(readVec)[0].iov_len, sizeof(int64_t));
+		EXPECT_EQ(get_iovec(readVec)[1].iov_len, sizeof(int64_t));
 		readVec.adjustByteArray(sizeof(int8_t));
 	}
 	EXPECT_EQ(byteArray1->readableBytes(), sizeof(int64_t) - sizeof(int8_t));
@@ -124,8 +125,8 @@ TEST_F(ByteArraySequentialReaderTest, ReadTwice)
 	byteArray2->writeString(b2Str);
 	{
 		SequentialByteArrayReaderWithLock readVecFir({byteArray1, byteArray2});
-		::iovec *vecFir = readVecFir.iovec();
-		EXPECT_EQ(readVecFir.iovenLength(), 2);
+		::iovec *vecFir = get_iovec(readVecFir);
+		EXPECT_EQ(get_iovec_len(readVecFir), 2);
 		EXPECT_NE(vecFir, nullptr);
 		EXPECT_EQ(vecFir[0].iov_len, b1Len);
 		EXPECT_EQ(vecFir[1].iov_len, b2Len);
@@ -153,8 +154,8 @@ TEST_F(ByteArraySequentialReaderTest, ReadTwice)
 	byteArray2->writeString(b2Str1);
 	{
 		SequentialByteArrayReaderWithLock readVecSec({byteArray1, byteArray2});
-		::iovec *vecSec = readVecSec.iovec();
-		EXPECT_EQ(readVecSec.iovenLength(), 2);
+		::iovec *vecSec = get_iovec(readVecSec);
+		EXPECT_EQ(get_iovec_len(readVecSec), 2);
 		EXPECT_NE(vecSec, nullptr);
 		EXPECT_EQ(vecSec[0].iov_len, b1Len1);
 		EXPECT_EQ(vecSec[1].iov_len, b2Len1);
@@ -200,16 +201,16 @@ TEST_F(ByteArraySequentialReaderTest, CrossNodeReadInt8)
 	fillByteArray(byteArray2);
 	{
 		SequentialByteArrayReaderWithLock readVec({byteArray1, byteArray2});
-		ASSERT_EQ(readVec.iovenLength(), 4);
-		EXPECT_NE(readVec.iovec(), nullptr);
+		ASSERT_EQ(get_iovec_len(readVec), 4);
+		EXPECT_NE(get_iovec(readVec), nullptr);
 		int8_t data;
-		std::memcpy(&data, readVec.iovec()[0].iov_base, sizeof(int8_t));
+		std::memcpy(&data, get_iovec(readVec)[0].iov_base, sizeof(int8_t));
 		EXPECT_EQ(data, 1);
-		std::memcpy(&data, readVec.iovec()[1].iov_base, sizeof(int8_t));
+		std::memcpy(&data, get_iovec(readVec)[1].iov_base, sizeof(int8_t));
 		EXPECT_EQ(data, 2);
-		std::memcpy(&data, readVec.iovec()[2].iov_base, sizeof(int8_t));
+		std::memcpy(&data, get_iovec(readVec)[2].iov_base, sizeof(int8_t));
 		EXPECT_EQ(data, 3);
-		std::memcpy(&data, readVec.iovec()[3].iov_base, sizeof(int8_t));
+		std::memcpy(&data, get_iovec(readVec)[3].iov_base, sizeof(int8_t));
 		EXPECT_EQ(data, 4);
 		readVec.adjustByteArray(sizeof(int8_t) * 4);
 	}
@@ -242,14 +243,14 @@ TEST_F(ByteArraySequentialReaderTest, CrossNodeReadInt64)
 	fillByteArray(byteArray2);
 	{
 		SequentialByteArrayReaderWithLock readVec({byteArray1, byteArray2});
-		ASSERT_EQ(readVec.iovenLength(), 4);
-		EXPECT_NE(readVec.iovec(), nullptr);
+		ASSERT_EQ(get_iovec_len(readVec), 4);
+		EXPECT_NE(get_iovec(readVec), nullptr);
 		int64_t data;
-		std::memcpy(&data, readVec.iovec()[0].iov_base, sizeof(int8_t));
-		std::memcpy(reinterpret_cast<char *>(&data) + 1, readVec.iovec()[1].iov_base, sizeof(int8_t) * 7);
+		std::memcpy(&data, get_iovec(readVec)[0].iov_base, sizeof(int8_t));
+		std::memcpy(reinterpret_cast<char *>(&data) + 1, get_iovec(readVec)[1].iov_base, sizeof(int8_t) * 7);
 		EXPECT_EQ(be64toh(data), 9223372000004775807);
-		std::memcpy(&data, readVec.iovec()[2].iov_base, sizeof(int8_t));
-		std::memcpy(reinterpret_cast<char *>(&data) + 1, readVec.iovec()[3].iov_base, sizeof(int8_t) * 7);
+		std::memcpy(&data, get_iovec(readVec)[2].iov_base, sizeof(int8_t));
+		std::memcpy(reinterpret_cast<char *>(&data) + 1, get_iovec(readVec)[3].iov_base, sizeof(int8_t) * 7);
 		EXPECT_EQ(be64toh(data), 9223372000004775806);
 		readVec.adjustByteArray(sizeof(int64_t) * 2);
 	}

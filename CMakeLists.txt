@@ -10,7 +10,7 @@ option(NETPP_HTTP_SUPPORT "enable http support" OFF)
 option(NETPP_EXAMPLE "build examples" ON)
 
 set(netpp_source
-        include/buffer/BufferIOConversion.h include/buffer/BufferNode.h include/buffer/ByteArray.h include/buffer/Buffer.h include/buffer/CowLink.hpp include/buffer/TcpBuffer.h
+        include/buffer/BufferIOConversion.h include/buffer/BufferNode.h include/buffer/ByteArray.h include/buffer/TransferBuffer.h include/buffer/CowLink.hpp
         include/channel/Channel.h include/channel/TcpChannel.h
         include/error/Error.h include/error/Exception.h
         include/eventloop/EventLoop.h include/eventloop/EventLoopData.h include/eventloop/EventLoopFactory.h include/eventloop/EventLoopManager.h
@@ -24,7 +24,7 @@ set(netpp_source
         include/time/TimerData.h include/time/Timer.h include/time/TimeWheel.h include/time/TickTimer.h
         include/Application.h include/Acceptor.h include/Connector.h
 
-        src/buffer/BufferIOConversion.cpp src/buffer/BufferNode.cpp src/buffer/ByteArray.cpp src/buffer/TcpBuffer.cpp
+        src/buffer/BufferIOConversion.cpp src/buffer/BufferNode.cpp src/buffer/ByteArray.cpp
         src/channel/Channel.cpp src/channel/TcpChannel.cpp
         src/error/Error.cpp src/error/Exception.cpp
         src/eventloop/EventLoop.cpp src/eventloop/EventLoopData.cpp src/eventloop/EventLoopFactory.cpp src/eventloop/EventLoopManager.cpp
@@ -37,7 +37,7 @@ set(netpp_source
         src/support/Log.cpp src/support/ThreadPool.cpp src/support/Util.cpp
         src/time/Timer.cpp src/time/TimeWheel.cpp src/time/TickTimer.cpp
         src/Application.cpp src/Acceptor.cpp src/Connector.cpp
-        src/channel/UdpChannel.cpp include/channel/UdpChannel.h)
+        src/channel/UdpChannel.cpp include/channel/UdpChannel.h src/buffer/Datagram.cpp include/buffer/Datagram.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 

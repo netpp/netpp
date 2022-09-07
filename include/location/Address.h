@@ -14,12 +14,15 @@ namespace netpp {
  */
 class Address {
 public:
+	Address();
 	/**
 	 * @brief Create
 	 * @param ip	The ip address
 	 * @param port	The port
 	 */
-	explicit Address(std::string ip = "0.0.0.0", uint16_t port = 11111);
+	Address(std::string ip, uint16_t port);
+
+	bool isValid() const;
 
 	/**
 	 * @brief Get ip address

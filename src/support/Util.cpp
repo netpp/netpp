@@ -26,6 +26,21 @@ namespace netpp {
 	return sockAddress;
 }
 
+void toSockAddress(const Address &address, ::sockaddr_in *dest)
+{
+	if (dest)
+	{
+		std::memset(dest, 0, sizeof(::sockaddr_in));
+		dest->sin_family = AF_INET;
+		std::string ip = address.ip();
+		if (ip == "0.0.0.0")
+			dest->sin_addr.s_addr = ::htons(INADDR_ANY);
+		else
+			dest->sin_addr.s_addr = ::inet_addr(ip.c_str());
+		dest->sin_port = ::htons(address.port());
+	}
+}
+
 Address toAddress(const ::sockaddr_in &address)
 {
 //	char buffer[INET_ADDRSTRLEN];

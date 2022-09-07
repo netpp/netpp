@@ -10,7 +10,7 @@
 namespace netpp {
 class ByteArray;
 class Address;
-class Buffer;
+class TransferBuffer;
 class IODevice {
 public:
 	virtual ~IODevice() noexcept = default;
@@ -19,8 +19,8 @@ public:
 	virtual void close() = 0;
 	virtual int fileDescriptor() = 0;
 
-	virtual void read(std::shared_ptr<Buffer> buffer) = 0;
-	virtual bool write(std::shared_ptr<Buffer> buffer) = 0;
+	virtual void read(std::shared_ptr<TransferBuffer> buffer) = 0;
+	virtual std::size_t write(std::shared_ptr<TransferBuffer> buffer) = 0;
 };
 }
 

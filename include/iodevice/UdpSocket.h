@@ -15,8 +15,8 @@ public:
 	UdpSocket(int sockFd, const Address &address);
 	~UdpSocket() noexcept override;
 
-	Address receive(std::unique_ptr<Buffer> &&bufferConverter);
-	bool send(std::unique_ptr<Buffer> &&bufferConverter, const Address &address);
+	Address receive(std::unique_ptr<TransferBuffer> &&bufferConverter);
+	std::size_t send(std::unique_ptr<TransferBuffer> &&bufferConverter, const Address &address);
 
 	/**
 	 * @brief Create a tcp socket, file descriptor

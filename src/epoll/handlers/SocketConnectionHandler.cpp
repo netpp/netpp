@@ -4,7 +4,7 @@
 #include "support/Log.h"
 #include "eventloop/EventLoop.h"
 #include "error/Exception.h"
-#include "buffer/TcpBuffer.h"
+#include "buffer/TransferBuffer.h"
 #include "time/TickTimer.h"
 #include "iodevice/SocketDevice.h"
 #include "buffer/BufferIOConversion.h"
@@ -15,7 +15,7 @@ using std::make_shared;
 
 namespace netpp {
 SocketConnectionHandler::SocketConnectionHandler(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket,
-												 std::shared_ptr<Channel> channelToBind, std::shared_ptr<Buffer> buffer)
+												 std::shared_ptr<Channel> channelToBind, std::shared_ptr<TransferBuffer> buffer)
 		: EpollEventHandler(loop), m_state{TcpState::Established},
 		  m_isWaitWriting{false}, m_socket{std::move(socket)},
 		  m_idleTimeInterval{-1}
@@ -102,8 +102,8 @@ void SocketConnectionHandler::handleOut()
 		renewWheel();
 		// may not write all data this round, keep OUT event on and wait for next round
 		// TODO: handle read/write timeout
-		bool writeCompleted = m_socket->write(m_connectionBuffer);
-		if (writeCompleted)
+		m_socket->write(m_connectionBuffer);
+		if (m_connectionBuffer->bytesCanBeSend() != 0)
 		{
 			deactivateEvents(EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?

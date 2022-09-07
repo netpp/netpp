@@ -4,7 +4,7 @@
 
 #include "channel/Channel.h"
 #include "epoll/handlers/SocketConnectionHandler.h"
-#include "buffer/Buffer.h"
+#include "buffer/TransferBuffer.h"
 
 namespace netpp {
 
@@ -24,7 +24,7 @@ ByteArray::LengthType Channel::readableBytes() const
 {
 	auto buffer = _buffer.lock();
 	if (buffer)
-		return buffer->readableBytes();
+		return buffer->bytesReceived();
 	return 0;
 }
 
@@ -32,7 +32,7 @@ ByteArray Channel::peek(ByteArray::LengthType size)
 {
 	auto buffer = _buffer.lock();
 	if (buffer)
-		return buffer->peekReadBuffer(size);
+		return buffer->peek(size);
 	return {};
 }
 
@@ -40,7 +40,7 @@ ByteArray Channel::read(ByteArray::LengthType size)
 {
 	auto buffer = _buffer.lock();
 	if (buffer)
-		return buffer->readBuffer(size);
+		return buffer->read(size);
 	return {};
 }
 

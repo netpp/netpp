@@ -10,7 +10,7 @@
 #include "buffer/ByteArray.h"
 
 namespace netpp {
-class Buffer;
+class TransferBuffer;
 class SocketConnectionHandler;
 class Channel {
 public:
@@ -37,7 +37,7 @@ public:
 	virtual void setIdleTimeout(TimerInterval idleTime);
 
 protected:
-	std::weak_ptr<Buffer> _buffer;
+	std::weak_ptr<TransferBuffer> _buffer;
 	std::weak_ptr<SocketConnectionHandler> _connection;
 };
 } // netpp
