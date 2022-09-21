@@ -129,7 +129,7 @@ private:
 	std::lock_guard<decltype(ByteArray::m_bufferMutex)> m_lck;
 };
 
-extern ::sockaddr_in *dataGramDestinationExtractor(Datagram *data);
+extern ::sockaddr_in *datagramDestinationExtractor(Datagram *data);
 
 class DatagramReaderWithLock : public ByteArrayGather {
 public:

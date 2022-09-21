@@ -20,11 +20,15 @@ Datagram::~Datagram()
 	delete m_address;
 }
 
+Datagram::Datagram(Datagram &other, LengthType size, bool move)
+	: ByteArray(other, size, move), m_address{nullptr}
+{}
+
 Address Datagram::destination() const
 {
 	if (m_address)
 		return toAddress(m_address);
-	return Address();
+	return {};
 }
 
 void Datagram::setDestination(const Address &address)

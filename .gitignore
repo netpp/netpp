@@ -81,4 +81,4 @@ build
 .vs
 CMakeSettings.json
 
-doc
+doc/html

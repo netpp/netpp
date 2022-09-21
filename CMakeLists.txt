@@ -4,10 +4,8 @@ project(netpp)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror")
 
-option(NETPP_ENABLE_TEST "build test" ON)
 option(NETPP_LOG_SUPPORT "enable log output" OFF)
 option(NETPP_HTTP_SUPPORT "enable http support" OFF)
-option(NETPP_EXAMPLE "build examples" ON)
 
 set(netpp_source
         include/buffer/BufferIOConversion.h include/buffer/BufferNode.h include/buffer/ByteArray.h include/buffer/TransferBuffer.h include/buffer/CowLink.hpp
@@ -41,11 +39,6 @@ set(netpp_source
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-if(NETPP_EXAMPLE)
-    message(STATUS "netpp: build example")
-    add_subdirectory(example)
-endif()
-
 if(NETPP_LOG_SUPPORT)
     message(STATUS "netpp: enable log output")
     add_definitions()
@@ -69,13 +62,11 @@ if(NETPP_HTTP_SUPPORT)
     target_compile_options(llhttp PRIVATE -fPIC)
 endif()
 
-if(NETPP_ENABLE_TEST)
-    message(STATUS "netpp: build test")
-    add_subdirectory(test)
-endif()
+add_subdirectory(example)
+add_subdirectory(test)
+add_subdirectory(doc)
 
 add_library(netpp SHARED ${netpp_source})
-#target_link_libraries(netpp llhttp)
 
 add_library(netpp_static STATIC ${netpp_source})
 target_link_libraries(netpp_static)

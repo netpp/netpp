@@ -27,12 +27,12 @@ public:
 
 	ByteArray peek(ByteArray::LengthType size) override
 	{
-		return ByteArray(*m_receiveArray, size, false);
+		return ByteArray{*m_receiveArray, size, false};
 	}
 
 	ByteArray read(ByteArray::LengthType size) override
 	{
-		return ByteArray(*m_receiveArray, size, true);
+		return ByteArray{*m_receiveArray, size, true};
 	}
 
 	/**
@@ -55,12 +55,12 @@ public:
 		return std::make_unique<ByteArrayWriterWithLock>(m_receiveArray);
 	}
 
-	ByteArray::LengthType bytesReceived() const override
+	[[nodiscard]] ByteArray::LengthType bytesReceived() const override
 	{
 		return m_receiveArray->readableBytes();
 	}
 
-	ByteArray::LengthType bytesCanBeSend() const override
+	[[nodiscard]] ByteArray::LengthType bytesCanBeSend() const override
 	{
 		ByteArray::LengthType size = 0;
 		for (auto &s : m_sendBuffers)
@@ -75,17 +75,17 @@ private:
 
 class TcpChannelImpl : public Channel, public std::enable_shared_from_this<TcpChannelImpl> {
 public:
-	TcpChannelImpl(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
-			: _loop{loop}, _tmpSocketDev{std::move(socket)}
+	explicit TcpChannelImpl(EventLoop *loop)
+			: _loop{loop}
 	{}
 
 	~TcpChannelImpl() override = default;
 
-	void init()
+	void init(std::unique_ptr<SocketDevice> &&socket)
 	{
 		auto buffer = std::make_shared<TcpBuffer>();
 		_buffer = buffer;
-		auto connection = std::make_shared<SocketConnectionHandler>(_loop, std::move(_tmpSocketDev),
+		auto connection = std::make_shared<SocketConnectionHandler>(_loop, std::move(socket),
 																	shared_from_this(), buffer);
 		_connection = connection;
 		_loop->addEventHandlerToLoop(connection);
@@ -93,13 +93,12 @@ public:
 
 private:
 	EventLoop *_loop;
-	std::unique_ptr<SocketDevice> &&_tmpSocketDev;
 };
 
 TcpChannel::TcpChannel(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
-	: m_impl{std::make_shared<TcpChannelImpl>(loop, std::move(socket))}
+	: m_impl{std::make_shared<TcpChannelImpl>(loop)}
 {
-	m_impl->init();
+	m_impl->init(std::move(socket));
 }
 
 TcpChannel::~TcpChannel() = default;

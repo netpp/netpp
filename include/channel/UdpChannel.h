@@ -19,11 +19,10 @@ public:
 	~UdpChannel() override;
 
 	void sendDatagram(const Datagram &data);
-	Datagram readDatagram();
-	void connect(const Address &address);
+	Datagram peekDatagram(ByteArray::LengthType size);
+	Datagram readDatagram(ByteArray::LengthType size);
 
 private:
-	Address m_defaultDestination;
 	std::shared_ptr<UdpChannelImpl> m_impl;
 };
 }

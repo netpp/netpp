@@ -26,9 +26,9 @@ public:
 	{
 		if (!m_receiveBuffers.empty())
 		{
-			return ByteArray(*m_receiveBuffers.front(), size, false);
+			return ByteArray{*m_receiveBuffers.front(), size, false};
 		}
-		return ByteArray();
+		return {};
 	}
 
 	ByteArray read(ByteArray::LengthType size) override
@@ -43,9 +43,35 @@ public:
 				return data;
 			}
 			else
-				return ByteArray(*front, size, true);
+				return ByteArray{*front, size, true};
 		}
-		return ByteArray();
+		return {};
+	}
+
+	Datagram peekDatagram(ByteArray::LengthType size)
+	{
+		if (!m_receiveBuffers.empty())
+		{
+			return Datagram{*m_receiveBuffers.front(), size, false};
+		}
+		return {};
+	}
+
+	Datagram readDatagram(ByteArray::LengthType size)
+	{
+		if (!m_receiveBuffers.empty())
+		{
+			auto front = m_receiveBuffers.front();
+			if (front->readableBytes() <= size)
+			{
+				Datagram data(*front);
+				m_receiveBuffers.pop_front();
+				return data;
+			}
+			else
+				return Datagram{*front, size, true};
+		}
+		return {};
 	}
 
 	std::unique_ptr<ByteArrayGather> sendBufferForIO() override
@@ -59,10 +85,10 @@ public:
 	{
 		auto buffer = std::make_shared<Datagram>();
 		m_receiveBuffers.emplace_back(buffer);
-		return std::make_unique<ByteArrayWriterWithLock>(buffer);
+		return std::make_unique<DatagramWriterWithLock>(buffer);
 	}
 
-	ByteArray::LengthType bytesReceived() const override
+	[[nodiscard]] ByteArray::LengthType bytesReceived() const override
 	{
 		ByteArray::LengthType size = 0;
 		for (auto &s : m_receiveBuffers)
@@ -70,7 +96,7 @@ public:
 		return size;
 	}
 
-	ByteArray::LengthType bytesCanBeSend() const override
+	[[nodiscard]] ByteArray::LengthType bytesCanBeSend() const override
 	{
 		ByteArray::LengthType size = 0;
 		for (auto &s : m_sendBuffers)
@@ -85,31 +111,68 @@ private:
 
 class UdpChannelImpl : public Channel, public std::enable_shared_from_this<UdpChannelImpl> {
 public:
-	UdpChannelImpl(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
-			: _loop{loop}, _tmpSocketDev{std::move(socket)}
+	explicit UdpChannelImpl(EventLoop *loop)
+			: _loop{loop}
 	{}
 	~UdpChannelImpl() override = default;
 
-	void init()
+	void init(std::unique_ptr<SocketDevice> &&socket)
 	{
 		auto buffer = std::make_shared<UdpBuffer>();
 		_buffer = buffer;
-		auto connection = std::make_shared<SocketConnectionHandler>(_loop, std::move(_tmpSocketDev),
+		auto connection = std::make_shared<SocketConnectionHandler>(_loop, std::move(socket),
 																	shared_from_this(), buffer);
 		_connection = connection;
 		_loop->addEventHandlerToLoop(connection);
 	}
 
+	void sendDatagram(const Datagram &data)
+	{
+		auto buffer = _buffer.lock();
+		if (buffer)
+			buffer->write(data);
+	}
+
+	Datagram peekDatagram(ByteArray::LengthType size)
+	{
+		auto buffer = std::dynamic_pointer_cast<UdpBuffer>(_buffer.lock());
+		if (buffer)
+			return buffer->peekDatagram(size);
+		return {};
+	}
+
+	Datagram readDatagram(ByteArray::LengthType size)
+	{
+		auto buffer = std::dynamic_pointer_cast<UdpBuffer>(_buffer.lock());
+		if (buffer)
+			return buffer->readDatagram(size);
+		return {};
+	}
+
 private:
 	EventLoop *_loop;
-	std::unique_ptr<SocketDevice> &&_tmpSocketDev;
 };
 
 UdpChannel::UdpChannel(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
-		: m_impl{std::make_shared<UdpChannelImpl>(loop, std::move(socket))}
+		: m_impl{std::make_shared<UdpChannelImpl>(loop)}
 {
-	m_impl->init();
+	m_impl->init(std::move(socket));
 }
 
 UdpChannel::~UdpChannel() = default;
+
+void UdpChannel::sendDatagram(const Datagram &data)
+{
+	m_impl->sendDatagram(data);
+}
+
+Datagram UdpChannel::peekDatagram(ByteArray::LengthType size)
+{
+	return m_impl->peekDatagram(size);
+}
+
+Datagram UdpChannel::readDatagram(ByteArray::LengthType size)
+{
+	return m_impl->readDatagram(size);
+}
 }

@@ -34,8 +34,8 @@ public:
 	virtual std::unique_ptr<ByteArrayGather> sendBufferForIO() = 0;
 	virtual std::unique_ptr<ByteArrayGather> receiveBufferForIO() = 0;
 
-	virtual ByteArray::LengthType bytesReceived() const = 0;
-	virtual ByteArray::LengthType bytesCanBeSend() const = 0;
+	[[nodiscard]] virtual ByteArray::LengthType bytesReceived() const = 0;
+	[[nodiscard]] virtual ByteArray::LengthType bytesCanBeSend() const = 0;
 };
 }
 

@@ -200,7 +200,7 @@ ByteArray::LengthType SequentialByteArrayReaderWithLock::availableBytes()
 	return length;
 }
 
-::sockaddr_in *dataGramDestinationExtractor(Datagram *data)
+::sockaddr_in *datagramDestinationExtractor(Datagram *data)
 {
 	return data->m_address;
 }
@@ -208,7 +208,7 @@ ByteArray::LengthType SequentialByteArrayReaderWithLock::availableBytes()
 DatagramReaderWithLock::DatagramReaderWithLock(std::shared_ptr<Datagram> data)
 	: m_reader(std::dynamic_pointer_cast<ByteArray>(data))
 {
-	m_msghdr->msg_name = dataGramDestinationExtractor(data.get());
+	m_msghdr->msg_name = datagramDestinationExtractor(data.get());
 	m_msghdr->msg_namelen = sizeof(::sockaddr_in);
 }
 
@@ -227,7 +227,7 @@ ByteArray::LengthType DatagramReaderWithLock::availableBytes()
 DatagramWriterWithLock::DatagramWriterWithLock(std::shared_ptr<Datagram> data)
 	: m_writer(std::dynamic_pointer_cast<ByteArray>(data))
 {
-	m_msghdr->msg_name = dataGramDestinationExtractor(data.get());
+	m_msghdr->msg_name = datagramDestinationExtractor(data.get());
 	m_msghdr->msg_namelen = sizeof(::sockaddr_in);
 }
 

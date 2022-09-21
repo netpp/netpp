@@ -27,10 +27,13 @@ cmake ../
 make netpp -j8
 ```
 ## 生成文档
-使用doxygen生成文档，依赖于graphviz，文档目录位于doc
+使用doxygen生成文档，依赖于graphviz，文档目录位于./doc
 ```shell
 sudo pacman -S doxygen graphviz
-doxygen ./Doxyfile
+mkdir build
+cd build
+cmake ../
+make doc
 ```
 ## 开始
 Netpp提供非虚函数的方法作为接口通知事件，定义事件处理类，实现对应方法并注入netpp::Events。

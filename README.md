@@ -27,10 +27,13 @@ cmake ../
 make netpp -j8
 ```
 ## Generate document
-use doxygen to generate, graphviz is required, documents were exported in doc
+use doxygen to generate, graphviz is required, documents were exported in ./doc
 ```shell
 sudo pacman -S doxygen graphviz
-doxygen ./Doxyfile
+mkdir build
+cd build
+cmake ../
+make doc
 ```
 ## Quick start
 Netpp provides non-virtual methods as events notify interface, define event handler and inject to netpp::Events. 

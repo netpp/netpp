@@ -12,10 +12,11 @@ struct sockaddr_in;
 namespace netpp {
 class Address;
 class Datagram : public ByteArray {
-	friend ::sockaddr_in *dataGramDestinationExtractor(Datagram *);
+	friend ::sockaddr_in *datagramDestinationExtractor(Datagram *);
 public:
 	Datagram();
 	~Datagram() override;
+	Datagram(Datagram &other, LengthType size, bool move);
 
 	Address destination() const;
 	void setDestination(const Address &address);
