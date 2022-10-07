@@ -22,6 +22,11 @@ public:
 
 	~TcpChannel() override;
 
+	void send(const ByteArray &data) override;
+	[[nodiscard]] BufferLength readableBytes() const override;
+	ByteArrayPeeker peek() override;
+	ByteArray read() override;
+
 private:
 	std::shared_ptr<TcpChannelImpl> m_impl;
 };

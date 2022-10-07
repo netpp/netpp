@@ -12,7 +12,7 @@ class ByteArray;
 class TickTimer;
 enum class TcpState;
 class SocketDevice;
-class TransferBuffer;
+class BufferGather;
 /**
  * @brief The SocketConnectionHandler class represent a connection, using @see ByteArray as buffer,
  * provide an io @see Channel to read/write.
@@ -29,7 +29,8 @@ public:
 	 * @param halfCloseTime Specify how long the socket lives before force closed in half close state if no data being transferred, pass -1 if do not need auto close connection, default -1
 	 */
 	SocketConnectionHandler(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket,
-							std::shared_ptr<Channel> channelToBind, std::shared_ptr<TransferBuffer> buffer);
+							std::shared_ptr<Channel> channelToBind,
+							std::shared_ptr<BufferGather> readBuffer, std::shared_ptr<BufferGather> writeBuffer);
 	~SocketConnectionHandler() override;
 
 	void setIdleTimeout(TimerInterval idleTime);
@@ -123,8 +124,8 @@ private:
 	bool m_isWaitWriting;
 	std::unique_ptr<SocketDevice> m_socket;
 	std::shared_ptr<Channel> m_bindChannel;
-	/// @brief TransferBuffer for prepend write data
-	std::shared_ptr<TransferBuffer> m_connectionBuffer;
+	std::shared_ptr<BufferGather> m_readBuffer;
+	std::shared_ptr<BufferGather> m_writeBuffer;
 
 	MessageReceivedCallBack m_receivedCallback;
 	WriteCompletedCallBack m_writeCompletedCallback;

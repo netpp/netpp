@@ -5,94 +5,58 @@
 #include "channel/TcpChannel.h"
 #include "epoll/handlers/SocketConnectionHandler.h"
 #include "buffer/ByteArray.h"
+#include "buffer/Buffer.h"
 #include "eventloop/EventLoop.h"
-#include "buffer/TransferBuffer.h"
-#include "buffer/BufferIOConversion.h"
+#include "buffer/BufferGather.h"
 
 namespace netpp {
-/**
- * @brief The normal tcp connection buffer
- */
-class TcpBuffer : public TransferBuffer {
-public:
-	TcpBuffer()
-			: m_receiveArray{std::make_shared<netpp::ByteArray>()}
-	{}
-	~TcpBuffer() override = default;
-
-	void write(const ByteArray &buffer) override
-	{
-		m_sendBuffers.emplace_back(std::make_shared<ByteArray>(buffer));
-	}
-
-	ByteArray peek(ByteArray::LengthType size) override
-	{
-		return ByteArray{*m_receiveArray, size, false};
-	}
-
-	ByteArray read(ByteArray::LengthType size) override
-	{
-		return ByteArray{*m_receiveArray, size, true};
-	}
-
-	/**
-	* @brief Read from buffer, and send to peer
-	* @return The ByteArray to iovec convertor
-	*/
-	std::unique_ptr<ByteArrayGather> sendBufferForIO() override
-	{
-		auto conv = std::make_unique<SequentialByteArrayReaderWithLock>(std::move(m_sendBuffers));
-		m_sendBuffers = std::vector<std::shared_ptr<ByteArray>>();
-		return conv;
-	}
-
-	/**
-	* @brief Write peer message to buffer
-	* @return The ByteArray to iovec convertor
-	*/
-	std::unique_ptr<ByteArrayGather> receiveBufferForIO() override
-	{
-		return std::make_unique<ByteArrayWriterWithLock>(m_receiveArray);
-	}
-
-	[[nodiscard]] ByteArray::LengthType bytesReceived() const override
-	{
-		return m_receiveArray->readableBytes();
-	}
-
-	[[nodiscard]] ByteArray::LengthType bytesCanBeSend() const override
-	{
-		ByteArray::LengthType size = 0;
-		for (auto &s : m_sendBuffers)
-			size += s->readableBytes();
-		return size;
-	}
-
-private:
-	std::vector<std::shared_ptr<ByteArray>> m_sendBuffers;
-	std::shared_ptr<ByteArray> m_receiveArray;
-};
-
 class TcpChannelImpl : public Channel, public std::enable_shared_from_this<TcpChannelImpl> {
 public:
 	explicit TcpChannelImpl(EventLoop *loop)
-			: _loop{loop}
+		: _loop{loop}
 	{}
 
 	~TcpChannelImpl() override = default;
 
 	void init(std::unique_ptr<SocketDevice> &&socket)
 	{
-		auto buffer = std::make_shared<TcpBuffer>();
-		_buffer = buffer;
+		m_sendBufferGather = std::make_shared<SequentialBufferReadGather>();
+		m_receiveBufferGather = std::make_shared<BufferWriteGather>();
 		auto connection = std::make_shared<SocketConnectionHandler>(_loop, std::move(socket),
-																	shared_from_this(), buffer);
+																	shared_from_this(),
+																	m_receiveBufferGather, m_sendBufferGather);
 		_connection = connection;
 		_loop->addEventHandlerToLoop(connection);
 	}
 
+	void send(const ByteArray &data) override
+	{
+		auto sendBuffer = std::dynamic_pointer_cast<MultipleBufferNodesGather>(m_sendBufferGather);
+		sendBuffer->addBufferNode(extractBuffer(&data));
+		auto connection = _connection.lock();
+		if (connection)
+			connection->sendInLoop();
+	}
+
+	BufferLength readableBytes() const override
+	{
+		return m_receiveBufferGather->availableBytes();
+	}
+
+	ByteArrayPeeker peek() override
+	{
+		return ByteArrayPeeker(m_receiveBufferGather->getBuffer());
+	}
+
+	ByteArray read() override
+	{
+		return ByteArray(m_receiveBufferGather->getBuffer());
+	}
+
 private:
 	EventLoop *_loop;
+	std::shared_ptr<BufferGather> m_sendBufferGather;
+	std::shared_ptr<BufferGather> m_receiveBufferGather;
 };
 
 TcpChannel::TcpChannel(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
@@ -102,4 +66,24 @@ TcpChannel::TcpChannel(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket)
 }
 
 TcpChannel::~TcpChannel() = default;
+
+void TcpChannel::send(const ByteArray &data)
+{
+	m_impl->send(data);
+}
+
+BufferLength TcpChannel::readableBytes() const
+{
+	return m_impl->readableBytes();
+}
+
+ByteArrayPeeker TcpChannel::peek()
+{
+	return m_impl->peek();
+}
+
+ByteArray TcpChannel::read()
+{
+	return m_impl->read();
+}
 }

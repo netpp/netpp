@@ -5,7 +5,7 @@
 #ifndef NETPP_BYTEARRAYGATHERGETTER_H
 #define NETPP_BYTEARRAYGATHERGETTER_H
 
-#include "buffer/BufferIOConversion.h"
+#include "buffer/BufferGather.h"
 extern "C" {
 #include <sys/socket.h>
 }

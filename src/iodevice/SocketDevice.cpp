@@ -3,31 +3,28 @@
 //
 
 #include "iodevice/SocketDevice.h"
-#include "buffer/BufferIOConversion.h"
+#include "buffer/BufferGather.h"
 #include <cstring>
-#include "buffer/TransferBuffer.h"
 extern "C" {
 #include <sys/socket.h>
 #include <sys/uio.h>
 }
 
 namespace netpp {
-void SocketDevice::read(std::shared_ptr<TransferBuffer> buffer)
+void SocketDevice::read(std::shared_ptr<BufferGather> buffer)
 {
-	auto bufferConverter = buffer->receiveBufferForIO();
 	// TODO: use ioctl(fd, FIONREAD, &n) to get pending read data on socket
-	std::size_t num = realRecv(bufferConverter->msghdr());
-	bufferConverter->adjustByteArray(static_cast<std::size_t>(num));
+	std::size_t num = realRecv(buffer->msghdr());
+	buffer->adjustByteArray(static_cast<std::size_t>(num));
 }
 
-std::size_t SocketDevice::write(std::shared_ptr<TransferBuffer> buffer)
+std::size_t SocketDevice::write(std::shared_ptr<BufferGather> buffer)
 {
-	auto bufferConverter = buffer->sendBufferForIO();
 //	std::size_t expectWriteSize = bufferConverter->availableBytes();
-	std::size_t actualSend = realSend(bufferConverter->msghdr());
+	std::size_t actualSend = realSend(buffer->msghdr());
 
 	auto sendSize = static_cast<std::size_t>(actualSend);
-	bufferConverter->adjustByteArray(sendSize);
+	buffer->adjustByteArray(sendSize);
 
 	return actualSend;
 }

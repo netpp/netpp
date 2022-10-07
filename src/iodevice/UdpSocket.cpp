@@ -6,8 +6,7 @@
 #include "support/Log.h"
 #include "support/Util.h"
 #include "error/Exception.h"
-#include "buffer/BufferIOConversion.h"
-#include "buffer/TransferBuffer.h"
+#include "buffer/BufferGather.h"
 #include <cstring>
 extern "C" {
 #include <sys/socket.h>
@@ -29,30 +28,28 @@ UdpSocket::~UdpSocket() noexcept
 	realClose();
 }
 
-Address UdpSocket::receive(std::unique_ptr<TransferBuffer> &&buffer)
+Address UdpSocket::receive(std::unique_ptr<BufferGather> &&buffer)
 {
-	auto bufferConverter = buffer->receiveBufferForIO();
-	::msghdr *msg = bufferConverter->msghdr();
+	::msghdr *msg = buffer->msghdr();
 	::sockaddr_in receivedFrom;
 	msg->msg_name = &receivedFrom;
 	msg->msg_namelen = sizeof(receivedFrom);
 
 	std::size_t num = realRecv(msg);
-	bufferConverter->adjustByteArray(static_cast<std::size_t>(num));
+	buffer->adjustByteArray(static_cast<std::size_t>(num));
 	return toAddress(receivedFrom);
 }
 
-std::size_t UdpSocket::send(std::unique_ptr<TransferBuffer> &&buffer, const Address &address)
+std::size_t UdpSocket::send(std::unique_ptr<BufferGather> &&buffer, const Address &address)
 {
-	auto bufferConverter = buffer->sendBufferForIO();
-	::msghdr *msg = bufferConverter->msghdr();
+	::msghdr *msg = buffer->msghdr();
 	auto destination = toSockAddress(address);
 	msg->msg_name = &destination;
 	msg->msg_namelen = sizeof(destination);
 	std::size_t actualSend = realSend(msg);
 
 	auto sendSize = static_cast<std::size_t>(actualSend);
-	bufferConverter->adjustByteArray(sendSize);
+	buffer->adjustByteArray(sendSize);
 	return sendSize;
 }
 

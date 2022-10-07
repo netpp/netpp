@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <cstring>
 #include "buffer/ByteArray.h"
-#include "buffer/BufferIOConversion.h"
+#include "buffer/BufferGather.h"
 #include "ByteArrayGatherGetter.h"
 extern "C" {
 #include <sys/types.h>

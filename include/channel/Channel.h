@@ -7,11 +7,12 @@
 
 #include <memory>
 #include "support/Types.h"
-#include "buffer/ByteArray.h"
 
 namespace netpp {
 class TransferBuffer;
 class SocketConnectionHandler;
+class ByteArray;
+class ByteArrayPeeker;
 class Channel {
 public:
 	virtual ~Channel() = default;
@@ -19,10 +20,10 @@ public:
 	/**
 	 * @brief Tell event loop data on this channel is ready to send, event loop will send it later,
 	 */
-	virtual void send(const ByteArray &data);
-	virtual ByteArray::LengthType readableBytes() const;
-	virtual ByteArray peek(ByteArray::LengthType size);
-	virtual ByteArray read(ByteArray::LengthType size);
+	virtual void send(const ByteArray &data) = 0;
+	[[nodiscard]] virtual BufferLength readableBytes() const = 0;
+	virtual ByteArrayPeeker peek() = 0;
+	virtual ByteArray read() = 0;
 
 	/**
 	 * @brief Close the channel
@@ -37,7 +38,6 @@ public:
 	virtual void setIdleTimeout(TimerInterval idleTime);
 
 protected:
-	std::weak_ptr<TransferBuffer> _buffer;
 	std::weak_ptr<SocketConnectionHandler> _connection;
 };
 } // netpp

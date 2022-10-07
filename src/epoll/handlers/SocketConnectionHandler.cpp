@@ -4,10 +4,9 @@
 #include "support/Log.h"
 #include "eventloop/EventLoop.h"
 #include "error/Exception.h"
-#include "buffer/TransferBuffer.h"
 #include "time/TickTimer.h"
 #include "iodevice/SocketDevice.h"
-#include "buffer/BufferIOConversion.h"
+#include "buffer/BufferGather.h"
 #include "channel/TcpChannel.h"
 
 using std::make_unique;
@@ -15,13 +14,14 @@ using std::make_shared;
 
 namespace netpp {
 SocketConnectionHandler::SocketConnectionHandler(EventLoop *loop, std::unique_ptr<SocketDevice> &&socket,
-												 std::shared_ptr<Channel> channelToBind, std::shared_ptr<TransferBuffer> buffer)
+												 std::shared_ptr<Channel> channelToBind,
+												 std::shared_ptr<BufferGather> readBuffer, std::shared_ptr<BufferGather> writeBuffer)
 		: EpollEventHandler(loop), m_state{TcpState::Established},
 		  m_isWaitWriting{false}, m_socket{std::move(socket)},
+		  m_readBuffer{std::move(readBuffer)}, m_writeBuffer{std::move(writeBuffer)},
 		  m_idleTimeInterval{-1}
 {
 	m_bindChannel = std::move(channelToBind);
-	m_connectionBuffer = std::move(buffer);
 
 	// set up events
 	activeEvents(EpollEv::IN | EpollEv::RDHUP);
@@ -67,7 +67,7 @@ void SocketConnectionHandler::handleIn()
 	try
 	{
 		renewWheel();
-		m_socket->read(m_connectionBuffer);
+		m_socket->read(m_readBuffer);
 		LOG_TRACE("Available size {}", m_receiveBuffer->readableBytes());
 		if (m_receivedCallback)
 			m_receivedCallback(m_bindChannel);
@@ -102,8 +102,8 @@ void SocketConnectionHandler::handleOut()
 		renewWheel();
 		// may not write all data this round, keep OUT event on and wait for next round
 		// TODO: handle read/write timeout
-		m_socket->write(m_connectionBuffer);
-		if (m_connectionBuffer->bytesCanBeSend() != 0)
+		m_socket->write(m_writeBuffer);
+		if (m_writeBuffer->availableBytes() != 0)
 		{
 			deactivateEvents(EpollEv::OUT);
 			// TODO: do we need high/low watermark to notify?

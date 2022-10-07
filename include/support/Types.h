@@ -13,6 +13,8 @@
 #include <memory>
 
 namespace netpp {
+using BufferLength = std::size_t;
+
 class Channel;
 
 /**

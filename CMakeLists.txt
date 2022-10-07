@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.18)
 project(netpp)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wconversion -Werror")
 
 option(NETPP_LOG_SUPPORT "enable log output" OFF)
 option(NETPP_HTTP_SUPPORT "enable http support" OFF)
 
 set(netpp_source
-        include/buffer/BufferIOConversion.h include/buffer/BufferNode.h include/buffer/ByteArray.h include/buffer/TransferBuffer.h include/buffer/CowLink.hpp
+        include/buffer/BufferGather.h include/buffer/Buffer.h
         include/channel/Channel.h include/channel/TcpChannel.h
         include/error/Error.h include/error/Exception.h
         include/eventloop/EventLoop.h include/eventloop/EventLoopData.h include/eventloop/EventLoopFactory.h include/eventloop/EventLoopManager.h
@@ -22,7 +22,7 @@ set(netpp_source
         include/time/TimerData.h include/time/Timer.h include/time/TimeWheel.h include/time/TickTimer.h
         include/Application.h include/Acceptor.h include/Connector.h
 
-        src/buffer/BufferIOConversion.cpp src/buffer/BufferNode.cpp src/buffer/ByteArray.cpp
+        src/buffer/BufferGather.cpp src/buffer/Buffer.cpp
         src/channel/Channel.cpp src/channel/TcpChannel.cpp
         src/error/Error.cpp src/error/Exception.cpp
         src/eventloop/EventLoop.cpp src/eventloop/EventLoopData.cpp src/eventloop/EventLoopFactory.cpp src/eventloop/EventLoopManager.cpp
@@ -35,7 +35,7 @@ set(netpp_source
         src/support/Log.cpp src/support/ThreadPool.cpp src/support/Util.cpp
         src/time/Timer.cpp src/time/TimeWheel.cpp src/time/TickTimer.cpp
         src/Application.cpp src/Acceptor.cpp src/Connector.cpp
-        src/channel/UdpChannel.cpp include/channel/UdpChannel.h src/buffer/Datagram.cpp include/buffer/Datagram.h)
+        src/buffer/ByteArray.cpp include/buffer/ByteArray.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
