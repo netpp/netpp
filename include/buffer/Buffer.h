@@ -12,6 +12,11 @@ namespace netpp {
 class Buffer {
 public:
 	/**
+	 * @brief The buffer node size
+	 */
+	static constexpr BufferLength DefaultBufferSize = 1024;
+
+	/**
 	 * @brief Default ByteArray
 	 *
 	 * By default, alloc
@@ -57,20 +62,27 @@ public:
 	 */
 	[[nodiscard]] BufferLength writeableBytes() const;
 
+	/**
+	 * @brief Get raw pointer
+	 * @return
+	 */
 	char *getRawPointer();
 
+	/**
+	 * @brief Move indexer manually when read some data by raw pointer
+	 * @param size
+	 */
 	void readOutSize(BufferLength size);
+	/**
+	 * @brief Move indexer manually when write some data by raw pointer
+	 * @param size
+	 */
 	void writeInSize(BufferLength size);
 
 private:
-	/**
-	 * @brief The buffer node size
-	 */
-	static constexpr BufferLength DefaultBufferSize = 1024;
-
 	void allocAtLeast(BufferLength size);
 
-	BufferLength m_bufferSize;
+	BufferLength m_bufferCapacity;
 	BufferLength m_start;
 	BufferLength m_end;
 	char *m_buffer;

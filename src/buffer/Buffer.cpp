@@ -8,23 +8,23 @@
 
 namespace netpp {
 Buffer::Buffer()
-		: m_bufferSize{DefaultBufferSize}, m_start{0}, m_end{0}
+		: m_bufferCapacity{DefaultBufferSize}, m_start{0}, m_end{0}
 {
 	m_buffer = new char[DefaultBufferSize];
 }
 
 Buffer::Buffer(const Buffer &other)
-		: m_bufferSize{other.m_bufferSize}, m_start{other.m_start}, m_end{other.m_end}
+		: m_bufferCapacity{other.m_bufferCapacity}, m_start{other.m_start}, m_end{other.m_end}
 {
-	m_buffer = new char[m_bufferSize];
+	m_buffer = new char[m_bufferCapacity];
 	std::memcpy(m_buffer, other.m_buffer + other.m_start, other.readableBytes());
 }
 
 Buffer::Buffer(Buffer &&other) noexcept
-		: m_bufferSize{other.m_bufferSize}, m_start{other.m_start}, m_end{other.m_end},
+		: m_bufferCapacity{other.m_bufferCapacity}, m_start{other.m_start}, m_end{other.m_end},
 		  m_buffer{other.m_buffer}
 {
-	other.m_bufferSize = 0;
+	other.m_bufferCapacity = 0;
 	other.m_start = 0;
 	other.m_end = 0;
 	other.m_buffer = nullptr;
@@ -40,10 +40,10 @@ void Buffer::write(const char *data, BufferLength length)
 {
 	LOG_TRACE("need to write {} bytes", length);
 
-	if (m_bufferSize - m_end <= length)
+	if (m_bufferCapacity - m_end <= length)
 		allocAtLeast(length);
 
-	std::memcpy(m_buffer + m_start, data, length);
+	std::memcpy(m_buffer + m_end, data, length);
 	m_end += length;
 }
 
@@ -64,16 +64,16 @@ BufferLength Buffer::readableBytes() const
 
 BufferLength Buffer::writeableBytes() const
 {
-	return m_bufferSize - m_end;
+	return m_bufferCapacity - m_end;
 }
 
 void Buffer::allocAtLeast(BufferLength size)
 {
 	do {
-		m_bufferSize *= 2;
-	} while (m_bufferSize < size);
+		m_bufferCapacity *= 2;
+	} while (m_bufferCapacity < size);
 	BufferLength currentReadableSize = readableBytes();
-	char *newBuffer = new char[m_bufferSize];
+	char *newBuffer = new char[m_bufferCapacity];
 	std::memcpy(newBuffer, m_buffer + m_start, currentReadableSize);
 	delete []m_buffer;
 	m_buffer = newBuffer;

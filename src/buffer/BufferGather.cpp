@@ -149,7 +149,7 @@ void SequentialBufferReadGather::addBufferNode(const std::shared_ptr<Buffer> &bu
 
 	delete []m_msghdr->msg_iov;
 	m_msghdr->msg_iov = vecNodes;
-	m_msghdr->msg_iovlen = size - 1;
+	m_msghdr->msg_iovlen = size;
 }
 
 std::shared_ptr<Buffer> SequentialBufferReadGather::getBuffer()
