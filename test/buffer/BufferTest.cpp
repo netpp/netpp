@@ -30,6 +30,19 @@ TEST_F(BufferTest, WriteIntoBuffer)
 	EXPECT_EQ(buffer.readableBytes(), str.length());
 }
 
+TEST_F(BufferTest, MoveBufferData)
+{
+	Buffer buffer;
+	constexpr BufferLength BufferSize = Buffer::DefaultBufferSize - 10;
+	char array[BufferSize];
+	char copy[BufferSize];
+	buffer.write(array, BufferSize);
+	buffer.retrieve(copy, BufferSize / 2);
+	// now data would move to head
+	buffer.write(array, 10);
+	EXPECT_EQ(buffer.readableBytes(), BufferSize / 2 + 10);
+}
+
 TEST_F(BufferTest, WriteLargeEntryIntoBuffer)
 {
 	Buffer buffer;

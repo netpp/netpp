@@ -82,3 +82,4 @@ build
 CMakeSettings.json
 
 doc/html
+.fleet

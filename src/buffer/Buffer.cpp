@@ -69,13 +69,33 @@ BufferLength Buffer::writeableBytes() const
 
 void Buffer::allocAtLeast(BufferLength size)
 {
-	do {
-		m_bufferCapacity *= 2;
-	} while (m_bufferCapacity < size);
+	BufferLength availableSize = m_bufferCapacity - m_end + m_start;
 	BufferLength currentReadableSize = readableBytes();
-	char *newBuffer = new char[m_bufferCapacity];
-	std::memcpy(newBuffer, m_buffer + m_start, currentReadableSize);
-	delete []m_buffer;
+	char *newBuffer;
+	if (size * 2 < availableSize)
+	{
+		// just move buffer data to head
+		BufferLength copySize = m_start;
+		BufferLength copyOffset = 0;
+		while (copyOffset + m_start < m_end)
+		{
+			std::memcpy(m_buffer + copyOffset, m_buffer + m_start + copyOffset, copySize);
+			if (copyOffset + m_start + copySize > m_end)
+				copySize = m_end - copyOffset - m_start;
+			copyOffset += copySize;
+		}
+		newBuffer = m_buffer;
+	}
+	else
+	{
+		// alloc more
+		do {
+			m_bufferCapacity *= 2;
+		} while (m_bufferCapacity < size);
+		newBuffer = new char[m_bufferCapacity];
+		std::memcpy(newBuffer, m_buffer + m_start, currentReadableSize);
+		delete []m_buffer;
+	}
 	m_buffer = newBuffer;
 	m_start = 0;
 	m_end = currentReadableSize;
